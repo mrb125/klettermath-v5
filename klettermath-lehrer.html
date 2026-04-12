@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KletterMath — Lehrerbereich</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--err:#ff5e5b;--text:#f0ead8;--text2:#a89880;
+  --blue:#5ba3d9;--purple:#b07fff;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);
+  font-family:'Nunito',sans-serif}
+
+/* LOGIN */
+#login-screen{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:100vh;gap:20px;padding:40px 20px}
+#login-screen h1{font-family:'Bebas Neue',sans-serif;font-size:36px;
+  letter-spacing:4px;color:var(--rope);text-align:center}
+#login-screen p{font-size:13px;color:var(--text2);text-align:center}
+.login-card{background:var(--bg2);border:1px solid var(--bg4);border-radius:12px;
+  padding:28px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
+.login-card label{font-size:11px;color:var(--text2);letter-spacing:1px}
+.login-card input{background:var(--bg);border:1px solid var(--bg5);border-radius:6px;
+  padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;
+  font-size:15px;width:100%;text-align:center;letter-spacing:3px}
+.login-card input:focus{outline:none;border-color:var(--rope)}
+.pw-err{color:var(--err);font-size:11px;text-align:center;display:none}
+.pw-err.show{display:block}
+
+/* MAIN PANEL */
+#main{display:none;max-width:600px;margin:0 auto;padding:24px 16px 60px}
+#main.show{display:block}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:24px;
+  padding-bottom:16px;border-bottom:2px solid var(--bg3)}
+.hdr h1{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;
+  color:var(--rope);flex:1}
+.hdr-sub{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
+/* SECTIONS */
+.section{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;
+  padding:18px;margin-bottom:16px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;
+  color:var(--text2);margin-bottom:4px}
+.section-desc{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+
+/* MISSION ROWS */
+.m-row{display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--bg3)}
+.m-row:last-of-type{border-bottom:none}
+.m-num{width:26px;height:26px;border-radius:50%;background:var(--bg4);
+  color:var(--text2);font-family:'Bebas Neue',sans-serif;font-size:14px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.m-num.teacher{background:var(--blue);color:var(--bg)}
+.m-num.done{background:var(--ok);color:var(--bg)}
+.m-info{flex:1;min-width:0}
+.m-title{font-size:13px;font-weight:700}
+.m-concept{font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+.m-badge{font-size:9px;font-family:'JetBrains Mono',monospace;
+  padding:2px 7px;border-radius:8px;flex-shrink:0;white-space:nowrap}
+.m-badge.free{background:rgba(91,163,217,.18);color:var(--blue)}
+.m-badge.done-b{background:rgba(107,203,119,.18);color:var(--ok)}
+.m-badge.locked-b{background:var(--bg4);color:var(--text2)}
+.m-badge.normal{background:rgba(200,131,58,.15);color:var(--rope)}
+
+/* TOGGLE */
+.toggle-wrap{position:relative;width:42px;height:24px;flex-shrink:0}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--bg4);border-radius:12px;
+  cursor:pointer;transition:background .2s}
+.toggle-wrap input:checked+.toggle-track{background:var(--blue)}
+.toggle-track:before{content:'';position:absolute;width:18px;height:18px;
+  background:white;border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.toggle-wrap input:checked+.toggle-track:before{transform:translateX(18px)}
+.toggle-wrap input:disabled+.toggle-track{opacity:.45;cursor:not-allowed}
+
+/* BUTTONS */
+.btn{padding:7px 16px;border-radius:6px;border:none;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;
+  transition:opacity .15s;white-space:nowrap}
+.btn:hover{opacity:.85}
+.btn-p{background:var(--rope);color:var(--bg)}
+.btn-s{background:var(--bg4);color:var(--text);border:1px solid var(--bg5)}
+.btn-danger{background:var(--err);color:white}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* DANGER */
+.section.danger{border-color:rgba(255,94,91,.3)}
+.section.danger .section-title{color:var(--err)}
+
+/* STATUS BAR */
+#status-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);
+  border-top:1px solid var(--bg3);padding:8px 20px;font-size:11px;
+  color:var(--text2);font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:12px}
+#status-msg{flex:1;color:var(--ok);transition:opacity .4s}
+#status-msg.hide{opacity:0}
+
+/* LOGOUT */
+.logout-btn{background:none;border:none;color:var(--text2);cursor:pointer;
+  font-size:11px;font-family:'Nunito',sans-serif;padding:4px 8px;
+  border-radius:4px;border:1px solid var(--bg4)}
+.logout-btn:hover{color:var(--text);background:var(--bg4)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div style="font-size:48px">🔑</div>
+  <h1>KletterMath<br>Lehrerbereich</h1>
+  <p>Zugang nur für Lehrkräfte</p>
+  <div class="login-card">
+    <label>PASSWORT</label>
+    <input type="password" id="pw-input" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="pw-err" id="pw-err">Falsches Passwort — bitte erneut versuchen.</div>
+    <button class="btn btn-p" onclick="doLogin()">Anmelden</button>
+  </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div id="main">
+  <div class="hdr">
+    <div>
+      <h1>Lehrerbereich</h1>
+      <div class="hdr-sub" id="hdr-sub">KletterMath v5 · Missionen verwalten</div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Abmelden</button>
+  </div>
+
+  <!-- Missionen -->
+  <div class="section">
+    <div class="section-title">Missionen freigeben</div>
+    <div class="section-desc">
+      Aktiviere einzelne Missionen direkt — unabhängig davon, ob Schüler
+      die Vorgänger-Missionen bereits abgeschlossen haben.
+      Die Freigabe gilt für diesen Browser.
+    </div>
+    <div id="missions-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-s" onclick="setAll(true)">✓ Alle freigeben</button>
+      <button class="btn btn-s" onclick="setAll(false)">✕ Alle sperren</button>
+    </div>
+  </div>
+
+  <!-- TÜV -->
+  <div class="section">
+    <div class="section-title">TÜV-Prüfung</div>
+    <div class="section-desc">
+      Standardmäßig nach Mission 7 freigeschaltet. Hier kann die
+      TÜV-Prüfung unabhängig vom Missionsfortschritt aktiviert werden.
+    </div>
+    <div class="m-row" style="border:none">
+      <span style="font-size:20px">🔧</span>
+      <div class="m-info">
+        <div class="m-title">TÜV-Prüfung</div>
+        <div class="m-concept">Freie Parkplanung + Regelprüfung</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="tuev-toggle" onchange="toggleTuev(this.checked)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Reset -->
+  <div class="section danger">
+    <div class="section-title">⚠ Schüler-Daten zurücksetzen</div>
+    <div class="section-desc">
+      Löscht den gesamten Missionsfortschritt aus dem Browser-Speicher.
+      Nicht rückgängig zu machen.
+    </div>
+    <button class="btn btn-danger" onclick="doReset()">
+      🗑 Fortschritt zurücksetzen
+    </button>
+  </div>
+</div>
+
+<div id="status-bar" style="display:none">
+  <span id="status-msg"></span>
+  <a href="klettermath-v5.html" target="_blank" style="color:var(--rope);font-size:11px;text-decoration:none">
+    → Schüler-App öffnen ↗
+  </a>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   KONFIGURATION — hier anpassen
+   ══════════════════════════════════════════════════════ */
+const LEHRER_PW   = 'Lehrer2025';   // ← Passwort ändern
+const SCHUELER_KEY = 'km5';         // localStorage-Key der Schüler-App
+const LEHRER_KEY   = 'km5-lehrer';  // localStorage-Key für Lehrer-Freigaben
+
+/* ══════════════════════════════════════════════════════
+   MISSION-DATEN (muss mit klettermath-v5.html übereinstimmen)
+   ══════════════════════════════════════════════════════ */
+const MISSIONS = [
+  {id:1, title:'Erste Schritte',        concept:'Ortsvektor'},
+  {id:2, title:'Das erste Seil',        concept:'Verbindungsvektor · Betrag'},
+  {id:3, title:'Die Seilbahn',          concept:'Parameterdarstellung'},
+  {id:4, title:'Liegt er auf dem Weg?', concept:'Punkt auf Geraden'},
+  {id:5, title:'Zwei Seile',            concept:'Lagebeziehung zweier Geraden'},
+  {id:6, title:'Der Aufprallwinkel',    concept:'Skalarprodukt · Winkel'},
+  {id:7, title:'Abstand zur Stütze',    concept:'Lotfußpunkt · Abstand Punkt→Gerade'},
+  {id:8, title:'Die Kletterwand',       concept:'Ebene · Normalenform'},
+  {id:9, title:'Wie weit zur Wand?',    concept:'Abstand Punkt → Ebene'},
+  {id:10,title:'Seilgondel trifft Wand',concept:'Schnitt Gerade · Ebene'},
+];
+
+/* ══════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════ */
+function loadCfg(){
+  try{ const s=localStorage.getItem(LEHRER_KEY); if(s) return JSON.parse(s); }catch(e){}
+  return {unlocked:[],tuevForced:false};
+}
+function saveCfg(cfg){
+  try{ localStorage.setItem(LEHRER_KEY,JSON.stringify(cfg)); }catch(e){}
+}
+function loadSchueler(){
+  try{ const s=localStorage.getItem(SCHUELER_KEY); if(s) return JSON.parse(s); }catch(e){}
+  return {done:[]};
+}
+
+/* ══════════════════════════════════════════════════════
+   LOGIN
+   ══════════════════════════════════════════════════════ */
+function doLogin(){
+  const val = document.getElementById('pw-input').value;
+  if(val === LEHRER_PW){
+    sessionStorage.setItem('km5-auth','1');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('main').classList.add('show');
+    document.getElementById('status-bar').style.display='flex';
+    renderPanel();
+  } else {
+    const err = document.getElementById('pw-err');
+    err.classList.add('show');
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+    setTimeout(()=>err.classList.remove('show'),2500);
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('km5-auth');
+  location.reload();
+}
+
+/* ══════════════════════════════════════════════════════
+   PANEL
+   ══════════════════════════════════════════════════════ */
+function renderPanel(){
+  const cfg      = loadCfg();
+  const schueler = loadSchueler();
+  const done     = schueler.done || [];
+
+  // TÜV toggle
+  document.getElementById('tuev-toggle').checked = cfg.tuevForced || done.includes(7);
+  document.getElementById('tuev-toggle').disabled = done.includes(7); // schon verdient
+
+  // Missions
+  const list = document.getElementById('missions-list');
+  list.innerHTML = '';
+  MISSIONS.forEach(m => {
+    const isTeacher = cfg.unlocked.includes(m.id);
+    const isDone    = done.includes(m.id);
+    // Normale Freischaltung durch Vorgänger
+    const isNormal  = m.id === 1 || MISSIONS.some(
+      prev => prev.id < m.id && done.includes(prev.id)
+    );
+
+    let badgeClass, badgeText;
+    if(isDone)         { badgeClass='done-b';  badgeText='✓ abgeschlossen'; }
+    else if(isTeacher) { badgeClass='free';    badgeText='🔑 Lehrer-Freigabe'; }
+    else if(isNormal)  { badgeClass='normal';  badgeText='verfügbar'; }
+    else               { badgeClass='locked-b';badgeText='gesperrt'; }
+
+    const row = document.createElement('div');
+    row.className = 'm-row';
+    row.innerHTML = `
+      <div class="m-num ${isDone?'done':(isTeacher?'teacher':'')}">${m.id}</div>
+      <div class="m-info">
+        <div class="m-title">${m.title}</div>
+        <div class="m-concept">${m.concept}</div>
+      </div>
+      <span class="m-badge ${badgeClass}">${badgeText}</span>
+      <label class="toggle-wrap">
+        <input type="checkbox"
+          ${(isTeacher||isDone||isNormal)?'checked':''}
+          ${isDone?'disabled':''}
+          onchange="toggleMission(${m.id},this.checked)">
+        <div class="toggle-track"></div>
+      </label>`;
+    list.appendChild(row);
+  });
+
+  // Header-Info
+  const doneCount = done.length;
+  document.getElementById('hdr-sub').textContent =
+    `KletterMath v5 · ${doneCount}/10 Missionen abgeschlossen`;
+}
+
+/* ══════════════════════════════════════════════════════
+   AKTIONEN
+   ══════════════════════════════════════════════════════ */
+function toggleMission(id, on){
+  const cfg = loadCfg();
+  if(on){ if(!cfg.unlocked.includes(id)) cfg.unlocked.push(id); }
+  else  { cfg.unlocked = cfg.unlocked.filter(x=>x!==id); }
+  saveCfg(cfg);
+  renderPanel();
+  showStatus(on ? `Mission ${id} freigegeben` : `Mission ${id} gesperrt`);
+}
+
+function setAll(on){
+  const schueler = loadSchueler();
+  const done = schueler.done || [];
+  const cfg = loadCfg();
+  if(on){
+    MISSIONS.forEach(m => { if(!done.includes(m.id) && !cfg.unlocked.includes(m.id)) cfg.unlocked.push(m.id); });
+  } else {
+    cfg.unlocked = [];
+  }
+  saveCfg(cfg);
+  renderPanel();
+  showStatus(on ? 'Alle Missionen freigegeben' : 'Alle Lehrer-Freigaben entfernt');
+}
+
+function toggleTuev(on){
+  const cfg = loadCfg();
+  cfg.tuevForced = on;
+  saveCfg(cfg);
+  showStatus(on ? 'TÜV-Prüfung aktiviert' : 'TÜV-Prüfung deaktiviert');
+}
+
+function doReset(){
+  if(!confirm('Gesamten Schüler-Fortschritt wirklich löschen?\nDieser Schritt kann nicht rückgängig gemacht werden.')) return;
+  try{ localStorage.removeItem(SCHUELER_KEY); }catch(e){}
+  renderPanel();
+  showStatus('Fortschritt zurückgesetzt');
+}
+
+function showStatus(msg){
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.classList.remove('hide');
+  setTimeout(()=>el.classList.add('hide'),2500);
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════ */
+// Auto-Login wenn Session noch aktiv
+if(sessionStorage.getItem('km5-auth')==='1'){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main').classList.add('show');
+  document.getElementById('status-bar').style.display='flex';
+  renderPanel();
+} else {
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
+</script>
+</body>
+</html>
