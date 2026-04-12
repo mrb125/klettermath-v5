@@ -1,0 +1,2677 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KletterMath v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--err:#ff5e5b;--text:#f0ead8;--text2:#a89880;
+  --blue:#5ba3d9;--purple:#b07fff;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif}
+
+/* CANVAS */
+#canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block}
+#lbl{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.ptl{position:absolute;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+     color:var(--gold);text-shadow:0 0 8px #000,0 0 4px #000;
+     transform:translate(-50%,-100%);pointer-events:none;white-space:nowrap}
+
+/* HEADER */
+#hdr{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:10px;
+     padding:8px 16px;background:rgba(26,22,20,.9);backdrop-filter:blur(8px);
+     border-bottom:1px solid var(--bg4)}
+#hdr h1{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--rope)}
+.phase-badge{padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;
+             background:var(--bg4);color:var(--text2);font-family:'JetBrains Mono',monospace}
+.phase-badge.tuev{background:var(--rope);color:var(--bg)}
+.score-badge{padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;
+             font-family:'JetBrains Mono',monospace;background:var(--bg4);color:var(--text2);display:none}
+.score-badge.show{display:inline-block}
+.score-badge.win{background:var(--ok);color:var(--bg)}
+#hdr-sp{flex:1}
+.menu-btn{background:none;border:1px solid var(--bg5);border-radius:5px;color:var(--text2);
+          padding:5px 11px;cursor:pointer;font-size:16px;line-height:1;transition:all .15s}
+.menu-btn:hover{background:var(--bg4);color:var(--text)}
+
+/* DRAWER */
+#drawer{position:fixed;top:0;right:0;bottom:0;width:370px;z-index:20;display:flex;
+        flex-direction:column;background:var(--bg2);border-left:1px solid var(--bg3);
+        transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+#drawer.open{transform:translateX(0)}
+#drw-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;
+         border-bottom:1px solid var(--bg3);flex-shrink:0}
+#drw-hdr h2{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;
+            color:var(--rope);flex:1}
+.close-btn{background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;
+           padding:2px 6px;line-height:1;border-radius:3px}
+.close-btn:hover{color:var(--text);background:var(--bg4)}
+#drw-body{flex:1;overflow-y:auto;padding:14px}
+#drw-body::-webkit-scrollbar{width:4px}
+#drw-body::-webkit-scrollbar-track{background:var(--bg2)}
+#drw-body::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+
+/* FORM */
+.sec{margin-bottom:16px}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;
+           color:var(--rope);margin-bottom:8px}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.row label{font-size:11px;color:var(--text2)}
+input[type=number],input[type=text]{background:var(--bg);border:1px solid var(--bg5);
+  border-radius:4px;padding:5px 7px;color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:12px;width:58px}
+input[type=text].name-inp{width:36px;text-transform:uppercase}
+select{background:var(--bg);border:1px solid var(--bg5);border-radius:4px;
+       padding:5px 7px;color:var(--text);font-family:'Nunito',sans-serif;
+       font-size:12px;cursor:pointer}
+.btn{padding:6px 14px;border-radius:5px;border:none;cursor:pointer;
+     font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;
+     transition:opacity .15s;white-space:nowrap}
+.btn:hover{opacity:.85}
+.btn-p{background:var(--rope);color:var(--bg)}
+.btn-s{background:var(--bg4);color:var(--text);border:1px solid var(--bg5)}
+.btn-ok{background:var(--ok);color:var(--bg)}
+.list-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:4px;
+           background:var(--bg3);margin-bottom:3px;
+           font-family:'JetBrains Mono',monospace;font-size:11px}
+.list-item.fixed{border-left:2px solid var(--rope);color:var(--gold)}
+.list-item.user{border-left:2px solid var(--blue)}
+.list-item span{flex:1}
+.del-btn{background:none;border:none;color:var(--text2);cursor:pointer;
+         font-size:14px;padding:0 3px;line-height:1}
+.del-btn:hover{color:var(--err)}
+.tag-fix{font-size:10px;color:var(--text2)}
+hr.div{border:none;border-top:1px solid var(--bg4);margin:14px 0}
+
+/* RULE CARDS */
+.rcard{background:var(--bg3);border-radius:8px;margin-bottom:8px;
+       border:1px solid var(--bg4);overflow:hidden;transition:border-color .2s}
+.rcard.pass{border-color:var(--ok)}
+.rcard.fail{border-color:var(--err)}
+.rcard.open{border-color:var(--rope)}
+.rhdr{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;user-select:none}
+.rhdr:hover{background:var(--bg4)}
+.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rtw{flex:1}
+.rtit{font-size:13px;font-weight:700}
+.rcat{font-size:10px;color:var(--text2)}
+.rst{font-size:15px}
+.rchev{font-size:10px;color:var(--text2)}
+.rbody{padding:11px 12px;border-top:1px solid var(--bg4)}
+.rbody.hide{display:none}
+.rctx{font-size:11px;color:var(--text2);margin-bottom:9px;line-height:1.6}
+.rctx b{color:var(--text)}
+.igroup{margin-bottom:8px}
+.igroup>label{display:block;font-size:11px;color:var(--text2);margin-bottom:3px}
+.vi{display:flex;gap:5px;align-items:center}
+.vi span{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)}
+.vi input[type=number]{width:62px}
+.rg{display:flex;gap:12px;margin-top:3px;flex-wrap:wrap}
+.rg label{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px}
+.hint{font-size:10px;color:var(--text2);margin-top:2px;font-style:italic}
+.brow{display:flex;gap:7px;margin-top:9px;align-items:center}
+.fb{margin-top:8px;padding:8px 10px;border-radius:5px;display:none;
+    font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.65;white-space:pre-line}
+.fb.show{display:block}
+.fb.ok{background:rgba(107,203,119,.1);border:1px solid var(--ok);color:var(--ok)}
+.fb.err{background:rgba(255,94,91,.1);border:1px solid var(--err);color:var(--err)}
+.sel-row{margin-bottom:8px}
+.sel-row label{display:block;font-size:11px;color:var(--text2);margin-bottom:3px}
+.sel-row select{width:100%}
+/* Seil-Tabelle */
+.rope-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:6px}
+.rope-table th{text-align:left;color:var(--text2);padding:3px 5px;border-bottom:1px solid var(--bg4);font-weight:600}
+.rope-table td{padding:4px 5px;border-bottom:1px solid var(--bg3)}
+.rope-table tr:last-child td{border-bottom:none}
+/* Papier-Hinweis */
+.paper-hint{background:rgba(232,160,48,.08);border:1px solid rgba(232,160,48,.35);border-radius:5px;
+  padding:6px 10px;font-size:11px;color:var(--gold);margin-bottom:9px}
+/* Karte X/Y */
+.rnum{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);margin-left:4px}
+/* Ergebnis-Seite */
+.result-wrap{padding:4px 0}
+.result-name-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.result-name-row label{font-size:12px;color:var(--text2);white-space:nowrap}
+.result-name-row input[type=text]{flex:1;background:var(--bg);border:1px solid var(--bg5);
+  border-radius:4px;padding:5px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;width:auto}
+.result-score{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;
+  margin-bottom:12px;text-align:center}
+.result-score.win{color:var(--ok)}
+.result-score.fail{color:var(--err)}
+.result-park{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);
+  margin-bottom:12px;line-height:1.7;background:var(--bg3);border-radius:5px;padding:8px 10px}
+.result-items{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.result-item{display:flex;align-items:flex-start;gap:7px;padding:7px 10px;border-radius:5px;font-size:11px}
+.result-item.ok{background:rgba(107,203,119,.08);border:1px solid rgba(107,203,119,.25)}
+.result-item.err{background:rgba(255,94,91,.08);border:1px solid rgba(255,94,91,.25)}
+.result-item .ri-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+.result-item .ri-body{flex:1;font-family:'JetBrains Mono',monospace}
+.result-item .ri-title{font-weight:600;margin-bottom:2px}
+.result-item .ri-steps{font-size:10px;color:var(--text2);white-space:pre-line;line-height:1.5}
+.result-btns{display:flex;gap:8px}
+.result-btns .btn{flex:1}
+/* Click Mode */
+.click-mode-btn.active{background:var(--blue)!important;color:var(--bg)!important;border-color:var(--blue)!important}
+.click-hint{font-size:11px;color:var(--blue);padding:5px 8px;background:rgba(91,163,217,.12);border-radius:4px;margin-top:5px;line-height:1.5}
+/* Drag cursor override */
+#canvas.grab{cursor:grab!important}
+#canvas.grabbing{cursor:grabbing!important}
+#canvas.crosshair{cursor:crosshair!important}
+/* Phase Buttons */
+.phase-btn{padding:4px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid var(--bg5);background:var(--bg3);color:var(--text2);
+  font-family:'JetBrains Mono',monospace;transition:all .15s}
+.phase-btn:hover{background:var(--bg4);color:var(--text)}
+.phase-btn.active{background:var(--rope);color:var(--bg);border-color:var(--rope)}
+.phase-btn.locked{opacity:.4;cursor:not-allowed}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+/* Kompendium Overlay */
+#comp-overlay{position:fixed;inset:0;z-index:50;background:rgba(26,22,20,.96);
+  backdrop-filter:blur(8px);display:none;flex-direction:column}
+#comp-overlay.show{display:flex}
+#comp-top{display:flex;align-items:center;padding:12px 20px;border-bottom:1px solid var(--bg4);flex-shrink:0}
+#comp-top h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--rope);flex:1}
+#comp-grid{flex:1;overflow-y:auto;padding:16px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.comp-card{background:var(--bg3);border-radius:8px;padding:14px;border:1px solid var(--bg4)}
+.comp-card h3{font-size:13px;font-weight:700;margin-bottom:6px}
+.comp-card.locked{opacity:.45}
+.comp-formula{margin:6px 0;font-size:12px;overflow-x:auto}
+.lock-msg{font-size:11px;color:var(--text3);font-style:italic}
+/* Mission Cards */
+.m-back{display:flex;align-items:center;gap:6px;margin-bottom:10px;cursor:pointer;
+  color:var(--text2);font-size:12px;padding:4px 0;user-select:none}
+.m-back:hover{color:var(--text)}
+.m-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;
+  background:var(--bg3);margin-bottom:6px;cursor:pointer;border:1px solid var(--bg4);transition:border-color .15s}
+.m-card:hover{border-color:var(--bg5)}
+.m-card.done{border-left:3px solid var(--ok)}
+.m-card.locked-m{opacity:.45;cursor:not-allowed}
+.m-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:14px;background:var(--bg4);color:var(--text2);flex-shrink:0}
+.m-card.done .m-num{background:var(--ok);color:var(--bg)}
+.m-info{flex:1}
+.m-info h3{font-size:12px;font-weight:700;margin-bottom:2px}
+.m-info small{font-size:10px;color:var(--text2)}
+.m-badge{font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:8px}
+.m-badge.done{background:rgba(107,203,119,.15);color:var(--ok)}
+.m-badge.avail{background:rgba(200,131,58,.15);color:var(--rope)}
+.m-badge.lock{background:var(--bg4);color:var(--text3)}
+.prog-bar{height:4px;background:var(--bg4);border-radius:2px;margin-bottom:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--ok);border-radius:2px;transition:width .3s}
+.prog-txt{font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-bottom:10px}
+/* Mission Runner */
+.mission-hdr{padding-bottom:8px;border-bottom:1px solid var(--bg4);margin-bottom:8px}
+.mission-hdr h2{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--rope)}
+.mission-hdr .concept{font-size:10px;color:var(--text2);letter-spacing:1px}
+.story-block{background:var(--bg3);border-radius:6px;padding:9px 11px;margin-bottom:7px;
+  font-size:11px;line-height:1.65;color:var(--text)}
+.task-block{border-left:3px solid var(--rope);padding:6px 10px;margin-bottom:9px;
+  background:rgba(200,131,58,.07);border-radius:0 5px 5px 0;font-size:11px;line-height:1.6}
+.task-block .lbl{font-size:9px;color:var(--rope);font-weight:700;letter-spacing:1px;margin-bottom:2px}
+.step-card{background:var(--bg3);border-radius:6px;padding:9px 11px;margin-bottom:6px;
+  border:1px solid var(--bg4);transition:border-color .2s}
+.step-card.done{border-color:rgba(107,203,119,.3)}
+.step-card.locked-s{opacity:.35}
+.step-lbl{font-size:9px;letter-spacing:1px;color:var(--text3);margin-bottom:3px;font-family:'JetBrains Mono',monospace}
+.step-prompt{font-size:11px;line-height:1.6;color:var(--text);margin-bottom:7px}
+.vec-wrap{display:flex;align-items:stretch;gap:3px;margin-bottom:5px}
+.vec-br{width:9px;border:2px solid var(--bg5);border-radius:3px}
+.vec-br-l{border-right:none}.vec-br-r{border-left:none}
+.vec-fields{display:flex;flex-direction:column;gap:3px}
+.vec-fields input{width:70px!important}
+input.num-input{width:90px!important}
+.choices{display:flex;flex-direction:column;gap:4px;margin-bottom:5px}
+.choice-btn{background:var(--bg4);border:1px solid var(--bg5);border-radius:4px;
+  color:var(--text);padding:5px 9px;cursor:pointer;text-align:left;
+  font-family:'Nunito',sans-serif;font-size:11px;transition:all .15s}
+.choice-btn:hover{border-color:var(--text2)}
+.choice-btn.selected{background:rgba(200,131,58,.2);border-color:var(--rope);color:var(--rope)}
+.step-btns{display:flex;gap:6px;margin-bottom:4px}
+.btn-check{background:var(--rope);color:var(--bg);border:none;border-radius:4px;
+  padding:5px 12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:11px}
+.btn-hint-s{background:var(--bg4);border:1px solid var(--bg5);border-radius:4px;
+  padding:5px 9px;cursor:pointer;font-size:11px;color:var(--text2);font-family:'Nunito',sans-serif}
+.hint-box{font-size:11px;color:var(--gold);background:rgba(232,160,48,.08);
+  border:1px solid rgba(232,160,48,.25);border-radius:4px;padding:5px 8px;margin-bottom:4px;display:none;line-height:1.5}
+.hint-box.show{display:block}
+.step-fb{font-size:11px;padding:5px 8px;border-radius:4px;display:none;
+  line-height:1.65;font-family:'JetBrains Mono',monospace;white-space:pre-line}
+.step-fb.show{display:block}
+.step-fb.ok{background:rgba(107,203,119,.1);border:1px solid var(--ok);color:var(--ok)}
+.step-fb.bad{background:rgba(255,94,91,.1);border:1px solid var(--err);color:var(--err)}
+.insight-card{background:rgba(176,127,255,.1);border:1px solid rgba(176,127,255,.3);
+  border-radius:7px;padding:11px 13px;margin-top:9px;font-size:11px;line-height:1.65}
+.insight-card h3{font-family:'Bebas Neue',sans-serif;font-size:15px;color:#b07fff;letter-spacing:1px;margin-bottom:5px}
+.ic-lbl{font-size:9px;color:rgba(176,127,255,.7);letter-spacing:1px;margin-bottom:3px}
+.btn-next-m{width:100%;margin-top:9px;padding:7px;background:var(--rope);color:var(--bg);
+  border:none;border-radius:5px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px}
+/* Print */
+@media print{
+  #canvas,#lbl,#hdr,#drawer .sec:not(#result-sec){display:none!important}
+  #drawer{position:static;transform:none!important;width:100%;border:none;height:auto;background:white;color:black}
+  .result-wrap,.result-score,.result-park,.result-items,.result-item{color:black!important}
+  .result-btns,.close-btn{display:none!important}
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="lbl"></div>
+
+<!-- Kompendium Overlay -->
+<div id="comp-overlay">
+  <div id="comp-top">
+    <h2>Kompendium</h2>
+    <button class="close-btn" onclick="closeComp()">✕</button>
+  </div>
+  <div id="comp-grid"></div>
+</div>
+
+<div id="hdr">
+  <h1 style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--rope)">KletterMath <span style="font-size:12px;opacity:.5;letter-spacing:1px">v5</span></h1>
+  <button class="phase-btn active" id="btn-missions" onclick="setPhase('missions')">Missionen</button>
+  <button class="phase-btn locked" id="btn-tuev" onclick="tryTuev()">TÜV-Prüfung</button>
+  <span class="score-badge" id="score-badge">0/10</span>
+  <div id="hdr-sp"></div>
+  <button class="menu-btn" onclick="openComp()" title="Kompendium">📖</button>
+  <button class="menu-btn" onclick="toggleDrawer()">☰</button>
+</div>
+
+<div id="drawer" class="open">
+  <div id="drw-hdr">
+    <h2 id="drw-title">Park aufbauen</h2>
+    <button class="close-btn" onclick="toggleDrawer()">✕</button>
+  </div>
+  <div id="drw-body"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════════════
+   KATEX HELPER
+   ══════════════════════════════════════════════════════ */
+function tex(s,display=false){
+  try{return katex.renderToString(s,{displayMode:display,throwOnError:false,strict:false});}
+  catch(e){return s;}
+}
+
+/* ══════════════════════════════════════════════════════
+   KM PARK-DATEN (fester Park für Missionen)
+   ══════════════════════════════════════════════════════ */
+const KM_PLATS=[
+  {lbl:'S',x:0,y:0,z:0},{lbl:'A',x:3,y:2,z:1},{lbl:'B',x:6,y:1,z:2},
+  {lbl:'G',x:2,y:4,z:4},{lbl:'T',x:5,y:3,z:5},{lbl:'H',x:0,y:5,z:3},
+  {lbl:'K',x:4,y:6,z:2},{lbl:'E',x:7,y:2,z:0},
+];
+const KM_ROPES=[[0,1],[0,3],[1,2],[1,3],[2,4],[2,7],[3,4],[3,5],[4,6],[5,6],[6,7]];
+
+/* ══════════════════════════════════════════════════════
+   MISSIONEN (10 Stück, vollständig)
+   ══════════════════════════════════════════════════════ */
+const MISSIONS=[
+{id:1,title:'Erste Schritte',concept:'Ortsvektor',platforms:[0,1,2,3,4,5,6,7],showRopes:false,
+ story:`Der alte Kletterpark liegt verlassen im Wald. Du findest das Notizbuch des Parkwarts — alle 8 Plattformen sind mit Koordinaten eingetragen. Gib für jede Plattform den <strong>Ortsvektor</strong> an.`,
+ task:`Gib die Ortsvektoren aller 8 Plattformen an.`,
+ steps:[
+  {prompt:`Plattform <strong>S — Start</strong> ${tex('S(0|0|0)')}: Gib ${tex('\\vec{OS}')} an.`,type:'vector3',answer:[0,0,0],tol:0.05,hint:'Die Koordinaten von S direkt übernehmen.',worked:`${tex('\\vec{OS}=\\begin{pmatrix}0\\\\0\\\\0\\end{pmatrix}',true)}`},
+  {prompt:`Plattform <strong>A — Adlerhorst</strong> ${tex('A(3|2|1)')}: Gib ${tex('\\vec{OA}')} an.`,type:'vector3',answer:[3,2,1],tol:0.05,hint:'x=3, y=2, z=1.',worked:`${tex('\\vec{OA}=\\begin{pmatrix}3\\\\2\\\\1\\end{pmatrix}',true)}`},
+  {prompt:`Plattform <strong>B — Brückenknoten</strong> ${tex('B(6|1|2)')}: Gib ${tex('\\vec{OB}')} an.`,type:'vector3',answer:[6,1,2],tol:0.05,hint:'x=6, y=1, z=2.',worked:`${tex('\\vec{OB}=\\begin{pmatrix}6\\\\1\\\\2\\end{pmatrix}',true)}`},
+  {prompt:`Plattform <strong>G — Gipfel</strong> ${tex('G(2|4|4)')}: Gib ${tex('\\vec{OG}')} an.`,type:'vector3',answer:[2,4,4],tol:0.05,hint:'x=2, y=4, z=4.',worked:`${tex('\\vec{OG}=\\begin{pmatrix}2\\\\4\\\\4\\end{pmatrix}',true)}`},
+  {prompt:`Plattform <strong>T — Trapez</strong> ${tex('T(5|3|5)')}: Gib ${tex('\\vec{OT}')} an.`,type:'vector3',answer:[5,3,5],tol:0.05,hint:'x=5, y=3, z=5.',worked:`${tex('\\vec{OT}=\\begin{pmatrix}5\\\\3\\\\5\\end{pmatrix}',true)}`},
+  {prompt:`Plattform <strong>H — Hängenest</strong> ${tex('H(0|5|3)')}: Gib ${tex('\\vec{OH}')} an.`,type:'vector3',answer:[0,5,3],tol:0.05,hint:'x=0, y=5, z=3.',worked:`${tex('\\vec{OH}=\\begin{pmatrix}0\\\\5\\\\3\\end{pmatrix}',true)}`},
+  {prompt:`Plattform <strong>K — Kletternetz</strong> ${tex('K(4|6|2)')}: Gib ${tex('\\vec{OK}')} an.`,type:'vector3',answer:[4,6,2],tol:0.05,hint:'x=4, y=6, z=2.',worked:`${tex('\\vec{OK}=\\begin{pmatrix}4\\\\6\\\\2\\end{pmatrix}',true)}`},
+  {prompt:`Plattform <strong>E — Endstation</strong> ${tex('E(7|2|0)')}: Gib ${tex('\\vec{OE}')} an.`,type:'vector3',answer:[7,2,0],tol:0.05,hint:'x=7, y=2, z=0.',worked:`${tex('\\vec{OE}=\\begin{pmatrix}7\\\\2\\\\0\\end{pmatrix}',true)}`},
+ ],
+ insight:{title:'Ortsvektor',body:`${tex('\\vec{OP}=\\begin{pmatrix}a\\\\b\\\\c\\end{pmatrix}\\quad\\text{für }P(a|b|c)',true)}Zeigt immer vom Ursprung ${tex('O')} zum Punkt ${tex('P')} — seine Komponenten sind die Koordinaten.`},
+ unlocks:[2]},
+
+{id:2,title:'Das erste Seil',concept:'Verbindungsvektor · Betrag',platforms:[0,1],showRopes:false,
+ story:`Du willst das Seil vom Eingang ${tex('S(0|0|0)')} zum Adlerhorst ${tex('A(3|2|1)')} wieder spannen. Die <strong>Seillänge</strong> fehlt noch.`,
+ task:`Berechne ${tex('\\vec{SA}')} und die Länge ${tex('|\\vec{SA}|')}.`,
+ steps:[
+  {prompt:`${tex('\\vec{SA}=\\vec{OA}-\\vec{OS}')} — Welche Komponenten hat der Verbindungsvektor?`,type:'vector3',answer:[3,2,1],tol:0.05,hint:'A minus S = (3−0 | 2−0 | 1−0)',worked:`${tex('\\vec{SA}=\\begin{pmatrix}3\\\\2\\\\1\\end{pmatrix}',true)}`},
+  {prompt:`${tex('|\\vec{SA}|=\\sqrt{x^2+y^2+z^2}')} — Wie lang ist das Seil? (2 Dezimalstellen)`,type:'number',answer:Math.sqrt(14),tol:0.1,hint:'√(9+4+1) = √14 ≈ 3,74',worked:`${tex('|\\vec{SA}|=\\sqrt{9+4+1}=\\sqrt{14}\\approx 3{,}74',true)}`},
+ ],
+ insight:{title:'Verbindungsvektor & Betrag',body:`${tex('\\vec{AB}=\\vec{OB}-\\vec{OA}',true)}${tex('|\\vec{AB}|=\\sqrt{(\\Delta x)^2+(\\Delta y)^2+(\\Delta z)^2}',true)}`},
+ unlocks:[3]},
+
+{id:3,title:'Die Seilbahn',concept:'Parameterdarstellung',platforms:[0,1],showRopes:false,
+ story:`Eine Seilbahn soll vom Eingang ${tex('S(0|0|0)')} in Richtung Adlerhorst fahren. Ihre <strong>Gleichung</strong> muss in die Parkkarte eingetragen werden.`,
+ task:`Stelle die Parametergleichung auf: durch ${tex('S(0|0|0)')} mit Richtungsvektor ${tex('\\vec{d}=\\begin{pmatrix}3\\\\2\\\\1\\end{pmatrix}')}.`,
+ steps:[
+  {prompt:`Welchen Aufpunkt wählst du?`,type:'vector3',answer:[0,0,0],tol:0.05,hint:'S(0|0|0) liegt auf der Seilbahn.',worked:`${tex('\\vec{p}=\\begin{pmatrix}0\\\\0\\\\0\\end{pmatrix}',true)}`},
+  {prompt:`Welcher Vektor gibt die Fahrtrichtung an?`,type:'vector3',answer:[3,2,1],tol:0.05,hint:'Richtungsvektor = SA = (3|2|1)',worked:`${tex('g:\\vec{x}=\\begin{pmatrix}0\\\\0\\\\0\\end{pmatrix}+t\\cdot\\begin{pmatrix}3\\\\2\\\\1\\end{pmatrix},\\;t\\in\\mathbb{R}',true)}`},
+ ],
+ insight:{title:'Parameterdarstellung einer Geraden',body:`${tex('g:\\vec{x}=\\underbrace{\\vec{p}}_{\\text{Aufpunkt}}+t\\cdot\\underbrace{\\vec{d}}_{\\text{Richtung}},\\quad t\\in\\mathbb{R}',true)}`},
+ unlocks:[4]},
+
+{id:4,title:'Liegt er auf dem Weg?',concept:'Punkt auf Geraden',platforms:[0,1],showRopes:false,
+ story:`Auf der alten Karte findest du Punkt ${tex('M(1{,}5|1|0{,}5)')} — eine versteckte Haltestation. Liegt ${tex('M')} auf der Seilbahn ${tex('g')}?`,
+ task:`Prüfe, ob ${tex('M(1{,}5|1|0{,}5)')} auf ${tex('g:\\vec{x}=t\\cdot\\begin{pmatrix}3\\\\2\\\\1\\end{pmatrix}')} liegt.`,
+ steps:[
+  {prompt:`Welches ${tex('t')} liefert die erste Komponente? (${tex('1{,}5=3\\cdot t')})`,type:'number',answer:0.5,tol:0.02,hint:'1,5 = 3·t → t = 0,5',worked:`${tex('1{,}5=3t\\;\\Rightarrow\\;t=0{,}5',true)}`},
+  {prompt:`Probe: ${tex('2\\cdot 0{,}5=1\\checkmark')} und ${tex('1\\cdot 0{,}5=0{,}5\\checkmark')}. Liegt ${tex('M')} auf ${tex('g')}?`,type:'choice',answer:'ja',options:['Ja, M liegt auf g','Nein, M liegt nicht auf g'],values:['ja','nein'],worked:`Alle drei Gleichungen liefern t=0,5 → M liegt auf g.`},
+ ],
+ insight:{title:'Punkt auf einer Geraden prüfen',body:`${tex('P')} liegt auf ${tex('g')} genau dann, wenn alle 3 Gleichungen von ${tex('\\vec{a}+t\\vec{d}=\\vec{OP}')} dasselbe ${tex('t')} liefern.`},
+ unlocks:[5]},
+
+{id:5,title:'Zwei Seile',concept:'Lagebeziehung zweier Geraden',platforms:[0,1,2,3],showRopes:false,
+ lines:[{p:[0,0,0],d:[3,2,1],tRange:[-0.1,1.6],color:'rgba(232,160,48,0.85)',label:'g'},{p:[6,1,2],d:[-4,3,2],tRange:[-0.1,1.4],color:'rgba(107,203,119,0.85)',label:'h'}],
+ story:`Du planst zwei Seilbahnen: ${tex('g')} von Start zu Adlerhorst, ${tex('h')} von Brückenknoten zu Gipfel. Kreuzen sie sich?`,
+ task:`Untersuche die Lagebeziehung von ${tex('g:\\vec{x}=t\\begin{pmatrix}3\\\\2\\\\1\\end{pmatrix}')} und ${tex('h:\\vec{x}=\\begin{pmatrix}6\\\\1\\\\2\\end{pmatrix}+s\\begin{pmatrix}-4\\\\3\\\\2\\end{pmatrix}')}.`,
+ steps:[
+  {prompt:`Prüfe Parallelität: Gilt ${tex('\\vec{d_1}=\\lambda\\cdot\\vec{d_2}')}?`,type:'choice',answer:'nein',options:['Ja, parallel','Nein, nicht parallel'],values:['ja','nein'],hint:`${tex('\\tfrac{3}{-4}\\neq\\tfrac{2}{3}')} → nicht parallel.`,worked:`Quotienten stimmen nicht überein → nicht parallel.`},
+  {prompt:`LGS: Aus Gl.(1) und (3): berechne ${tex('t')}`,type:'number',answer:2,tol:0.06,hint:'t=2+2s in 3t=6−4s: 10s=0, t=2',worked:`${tex('t=2',true)}`},
+  {prompt:`Probe Gl.(2): ${tex('2t=4')} vs. ${tex('1+3s=1')}. Ergebnis?`,type:'choice',answer:'windschief',options:['Konsistent → schneidend','Widerspruch → windschief'],values:['schneidend','windschief'],worked:`4≠1 → Widerspruch → windschief.`},
+ ],
+ insight:{title:'Lagebeziehung zweier Geraden',body:`<strong>Parallel:</strong> ${tex('\\vec{d_1}=\\lambda\\vec{d_2}')} &nbsp; <strong>Schneidend:</strong> LGS konsistent &nbsp; <strong>Windschief:</strong> LGS inkonsistent`},
+ unlocks:[6]},
+
+{id:6,title:'Der Aufprallwinkel',concept:'Skalarprodukt · Winkel',platforms:[1,2,3],showRopes:false,
+ story:`Zwei Seile mit Richtungen ${tex('\\vec{a}=\\begin{pmatrix}2\\\\2\\\\1\\end{pmatrix}')} und ${tex('\\vec{b}=\\begin{pmatrix}1\\\\2\\\\2\\end{pmatrix}')}. Wie abrupt ist der Richtungswechsel?`,
+ task:`Berechne den Winkel ${tex('\\varphi')} zwischen ${tex('\\vec{a}')} und ${tex('\\vec{b}')}.`,
+ steps:[
+  {prompt:`${tex('\\vec{a}\\cdot\\vec{b}=')}?`,type:'number',answer:8,tol:0.05,hint:'2·1+2·2+1·2=8',worked:`${tex('\\vec{a}\\cdot\\vec{b}=8',true)}`},
+  {prompt:`${tex('|\\vec{a}|=')}?`,type:'number',answer:3,tol:0.05,hint:'√(4+4+1)=3',worked:`${tex('|\\vec{a}|=3',true)}`},
+  {prompt:`${tex('|\\vec{b}|=')}?`,type:'number',answer:3,tol:0.05,hint:'√(1+4+4)=3',worked:`${tex('|\\vec{b}|=3',true)}`},
+  {prompt:`${tex('\\varphi=')}? (in Grad, 1 Dezimalstelle)`,type:'number',answer:Math.acos(8/9)*180/Math.PI,tol:0.8,hint:'arccos(8/9)≈27,3°',worked:`${tex('\\varphi=\\arccos\\tfrac{8}{9}\\approx 27{,}3°',true)}`},
+ ],
+ insight:{title:'Skalarprodukt & Winkel',body:`${tex('\\cos\\varphi=\\dfrac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}|\\cdot|\\vec{b}|}',true)}`},
+ unlocks:[7]},
+
+{id:7,title:'Abstand zur Stütze',concept:'Lotfußpunkt · Abstand Punkt→Gerade',platforms:[0,4],showRopes:false,
+ story:`Die Seilbahn ${tex('g')} ab Ursprung mit ${tex('\\vec{d}=\\begin{pmatrix}2\\\\2\\\\1\\end{pmatrix}')}. Das Trapez bei ${tex('T(5|3|5)')}. Wie nah ist es?`,
+ task:`Berechne den Abstand von ${tex('T(5|3|5)')} zur Geraden ${tex('g:\\vec{x}=t\\cdot\\begin{pmatrix}2\\\\2\\\\1\\end{pmatrix}')}.`,
+ steps:[
+  {prompt:`${tex('\\vec{OT}\\cdot\\vec{d}=')}?`,type:'number',answer:21,tol:0.1,hint:'5·2+3·2+5·1=21',worked:`${tex('\\vec{OT}\\cdot\\vec{d}=21',true)}`},
+  {prompt:`${tex('t_0=\\frac{21}{9}\\approx 2{,}33')}. x-Koordinate von F?`,type:'number',answer:14/3,tol:0.12,hint:'(7/3)·2=14/3≈4,67',worked:`${tex('F=\\tfrac{7}{3}\\cdot\\begin{pmatrix}2\\\\2\\\\1\\end{pmatrix}\\approx\\begin{pmatrix}4{,}67\\\\4{,}67\\\\2{,}33\\end{pmatrix}',true)}`},
+  {prompt:`${tex('d=|\\overrightarrow{TF}|=')}? Tipp: ${tex('\\overrightarrow{TF}=\\begin{pmatrix}-1/3\\\\5/3\\\\-8/3\\end{pmatrix}')}`,type:'number',answer:Math.sqrt(10),tol:0.1,hint:'√(1/9+25/9+64/9)=√10≈3,16',worked:`${tex('d=\\sqrt{10}\\approx 3{,}16',true)}`},
+ ],
+ insight:{title:'Abstand Punkt → Gerade',body:`${tex('t_0=\\dfrac{\\vec{AP}\\cdot\\vec{d}}{|\\vec{d}|^2}',true)}${tex('F=A+t_0\\cdot\\vec{d}\\quad(\\text{Lotfußpunkt})',true)}${tex('d=|\\overrightarrow{PF}|',true)}`},
+ unlocks:[8]},
+
+{id:8,title:'Die Kletterwand',concept:'Ebene · Normalenform',platforms:[0,1,2],showRopes:false,
+ story:`Drei Ankerpunkte fixieren die Kletterwand: ${tex('S(0|0|0)')}, ${tex('A(3|2|1)')} und ${tex('B(6|1|2)')}. Leite die <strong>Ebenengleichung</strong> ab.`,
+ task:`Bestimme die Normalenform der Ebene durch ${tex('S')}, ${tex('A')}, ${tex('B')}.`,
+ steps:[
+  {prompt:`${tex('\\vec{SA}=')}?`,type:'vector3',answer:[3,2,1],tol:0.05,hint:'A−S=(3|2|1)',worked:`${tex('\\vec{SA}=\\begin{pmatrix}3\\\\2\\\\1\\end{pmatrix}',true)}`},
+  {prompt:`${tex('\\vec{SB}=')}?`,type:'vector3',answer:[6,1,2],tol:0.05,hint:'B−S=(6|1|2)',worked:`${tex('\\vec{SB}=\\begin{pmatrix}6\\\\1\\\\2\\end{pmatrix}',true)}`},
+  {prompt:`${tex('n_x=a_y b_z-a_z b_y=')}?`,type:'number',answer:3,tol:0.05,hint:'2·2−1·1=3',worked:`${tex('n_x=3',true)}`},
+  {prompt:`${tex('n_y=a_z b_x-a_x b_z=')}?`,type:'number',answer:0,tol:0.05,hint:'1·6−3·2=0',worked:`${tex('n_y=0',true)}`},
+  {prompt:`${tex('n_z=a_x b_y-a_y b_x=')}?`,type:'number',answer:-9,tol:0.05,hint:'3·1−2·6=−9',worked:`${tex('\\vec{n}=\\begin{pmatrix}3\\\\0\\\\-9\\end{pmatrix}\\;\\to\\;E:\\;x-3z=0',true)}`},
+  {prompt:`${tex('d=\\vec{n}\\cdot\\vec{OS}=')}?`,type:'number',answer:0,tol:0.05,hint:'1·0+0·0+(−3)·0=0',worked:`${tex('\\boxed{E:\\;x-3z=0}',true)}`},
+ ],
+ insight:{title:'Ebene — Normalenform',body:`${tex('E:\\vec{n}\\cdot(\\vec{x}-\\vec{p})=0',true)}Normalvektor: ${tex('\\vec{n}=\\vec{v_1}\\times\\vec{v_2}')}. Koordinatenform: ${tex('n_1x+n_2y+n_3z=d')}.`},
+ unlocks:[9]},
+
+{id:9,title:'Wie weit zur Wand?',concept:'Abstand Punkt → Ebene',platforms:[4,0,1,2],showRopes:false,
+ story:`Die Kletterwand: ${tex('E:\\,x-3z=0')}. Trapez bei ${tex('T(5|3|5)')}. Ist es weit genug?`,
+ task:`Berechne den Abstand von ${tex('T(5|3|5)')} zur Ebene ${tex('E:\\,x-3z=0')}.`,
+ steps:[
+  {prompt:`Einsetzen von ${tex('T')}: ${tex('1\\cdot 5+0\\cdot 3+(-3)\\cdot 5=')}?`,type:'number',answer:-10,tol:0.05,hint:'5−15=−10',worked:`${tex('-10',true)}`},
+  {prompt:`${tex('|\\vec{n}|=')}? für ${tex('\\vec{n}=\\begin{pmatrix}1\\\\0\\\\-3\\end{pmatrix}')}`,type:'number',answer:Math.sqrt(10),tol:0.09,hint:'√(1+0+9)=√10',worked:`${tex('|\\vec{n}|=\\sqrt{10}',true)}`},
+  {prompt:`Abstand ${tex('d=\\frac{|-10|}{\\sqrt{10}}=')}?`,type:'number',answer:Math.sqrt(10),tol:0.1,hint:'10/√10=√10≈3,16',worked:`${tex('d=\\sqrt{10}\\approx 3{,}16',true)}`},
+ ],
+ insight:{title:'Abstand Punkt → Ebene',body:`${tex('d=\\dfrac{|n_1p_1+n_2p_2+n_3p_3-d_E|}{|\\vec{n}|}',true)}`},
+ unlocks:[10]},
+
+{id:10,title:'Seilgondel trifft Wand',concept:'Schnitt Gerade · Ebene',platforms:[4,0,1,2],showRopes:false,
+ story:`Eine Gondel startet am Trapez ${tex('T(5|3|5)')} und fährt senkrecht nach unten. Wo durchquert sie die Wand ${tex('E:\\,x-3z=0')}?`,
+ task:`Schnittpunkt von ${tex('g:\\vec{x}=\\begin{pmatrix}5\\\\3\\\\5\\end{pmatrix}+t\\begin{pmatrix}0\\\\0\\\\-1\\end{pmatrix}')} mit ${tex('E:\\,x-3z=0')}.`,
+ steps:[
+  {prompt:`${tex('g')} in ${tex('E')} einsetzen: ${tex('5-3(5-t)=0')} → ${tex('t=')}?`,type:'number',answer:10/3,tol:0.09,hint:'5−15+3t=0 → t=10/3',worked:`${tex('t=\\tfrac{10}{3}',true)}`},
+  {prompt:`z-Koordinate des Schnittpunkts: ${tex('z=5-t=')}?`,type:'number',answer:5/3,tol:0.09,hint:'5−10/3=5/3',worked:`${tex('z=\\tfrac{5}{3}',true)}`},
+  {prompt:`Probe: ${tex('5-3\\cdot\\tfrac{5}{3}=')}?`,type:'number',answer:0,tol:0.05,hint:'5−5=0 ✓',worked:`${tex('5-5=0\\;\\checkmark\\quad S\\left(5|3|\\tfrac{5}{3}\\right)',true)}`},
+ ],
+ insight:{title:'Schnitt Gerade · Ebene',body:`① Parameterdarstellung in Ebenengleichung einsetzen<br>② Nach ${tex('t')} lösen<br>③ ${tex('t')} in ${tex('g')} einsetzen → Schnittpunkt<br>④ Probe`},
+ unlocks:[]}
+];
+
+/* ══════════════════════════════════════════════════════
+   KOMPENDIUM (10 Karten)
+   ══════════════════════════════════════════════════════ */
+const COMP=[
+ {mid:1,title:'Ortsvektor',formula:'\\vec{OP}=\\begin{pmatrix}a\\\\b\\\\c\\end{pmatrix}\\text{ für }P(a|b|c)',note:'Zeigt vom Ursprung O(0|0|0) zum Punkt P.'},
+ {mid:2,title:'Verbindungsvektor & Betrag',formula:'\\vec{AB}=\\vec{OB}-\\vec{OA},\\quad|\\vec{v}|=\\sqrt{v_x^2+v_y^2+v_z^2}',note:'Betrag = Abstand der Punkte.'},
+ {mid:3,title:'Parameterdarstellung',formula:'g:\\vec{x}=\\vec{p}+t\\cdot\\vec{d},\\quad t\\in\\mathbb{R}',note:'p = Aufpunkt, d = Richtungsvektor.'},
+ {mid:4,title:'Punkt auf Geraden',formula:'\\vec{a}+t\\vec{d}=\\vec{OP}\\;\\Rightarrow\\;\\text{alle 3 Gl. selbes }t?',note:'Konsistentes t → liegt auf g.'},
+ {mid:5,title:'Lagebeziehung zweier Geraden',formula:'\\text{Parallel}\\;|\\;\\text{Schneidend}\\;|\\;\\text{Windschief}',note:'① Parallelität ② LGS (2 Gl.) ③ Probe (3. Gl.)'},
+ {mid:6,title:'Skalarprodukt & Winkel',formula:'\\cos\\varphi=\\dfrac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}|\\cdot|\\vec{b}|}',note:'a·b=0 → senkrecht.'},
+ {mid:7,title:'Abstand Punkt → Gerade',formula:'t_0=\\dfrac{\\vec{AP}\\cdot\\vec{d}}{|\\vec{d}|^2},\\;F=A+t_0\\vec{d},\\;d=|\\overrightarrow{PF}|',note:'F = Lotfußpunkt.'},
+ {mid:8,title:'Ebene — Normalenform',formula:'E:\\vec{n}\\cdot(\\vec{x}-\\vec{p})=0',note:'n = v₁ × v₂ (Kreuzprodukt der Spannvektoren).'},
+ {mid:9,title:'Abstand Punkt → Ebene',formula:'d=\\dfrac{|n_1p_1+n_2p_2+n_3p_3-d_E|}{|\\vec{n}|}',note:'Zähler: Punkt in Koordinatenform einsetzen.'},
+ {mid:10,title:'Schnitt Gerade · Ebene',formula:'g\\text{ in }E\\text{ einsetzen}\\;\\Rightarrow\\;t\\;\\Rightarrow\\;S=g(t)',note:'Kein t → parallel. Alle t → enthalten.'},
+];
+
+/* ══════════════════════════════════════════════════════
+   LEHRER-KONFIGURATION
+   ══════════════════════════════════════════════════════ */
+const PARK_CONFIG = {
+  A: [4, 1, 3]
+};
+const RULES = ['A1', 'C1', 'C3', 'D1', 'E1', 'B1', 'F1', 'G1']; // aktive Regeln — werden gemischt
+
+/* ── Plattform-Varianten (pro Buchstabe wählbar) ──────────
+   Verfügbare Varianten:
+     0 = Start-Bogen       (S)
+     1 = Baumhaus          (A) — ein dicker Stamm, Blätterkrone
+     2 = Scheibenpfosten   (B) — einzelner Pfosten, Kreisscheibe
+     3 = Wimpelturm        (G) — dicker Stamm, Sechseckplatte, Wimpel
+     4 = A-Rahmen-Turm     (T) — vier schräge Beine, Dach
+     5 = Einzelmast        (H/K/E) — schlanker Metallmast, Querarm
+   ──────────────────────────────────────────────────── */
+const PLAT_VARIANTS = {
+  S: 0,   // Start
+  A: 1,   // Adlerhorst
+  B: 2,   // Brückenknoten
+  G: 3,   // Gipfel
+  T: 4,   // Trapez / Aussichtsturm
+  H: 5,   // Hängenest
+  K: 5,   // Kletternetz
+  E: 5,   // Endstation
+};
+
+/* ── Baum-Positionen und -Typen ───────────────────────────
+   Format: [x₁, x₂, Höhe, Typ]
+
+   Verfügbare Typen:
+     0 = Fichte         — gestapelte Kegel, spitz
+     1 = Laubbaum rund  — runde Blattkrone (3 Kugeln)
+     2 = Birke          — schlanker weißer Stamm, flache Krone
+     3 = Palme          — geschwungener Stamm, Fächerblätter
+     4 = Weißtanne      — ein langer schlanker Kegel
+     5 = Zypresse       — schmal-zylindrisch, sehr hoch
+     6 = Eiche knorrig  — dicker Stamm, unregelmäßige Krone
+     7 = Busch          — kein Stamm, breite niedrige Kugelgruppe
+     8 = Totbaum        — kahler Stamm mit Ästen
+     9 = Kirschbaum     — heller Stamm, rosafarbene Krone
+   ──────────────────────────────────────────────────── */
+const SCENE_TREES = [
+  // Nadelwald links
+  [-1.5, 4,  3.2, 0],
+  [-2.5, 6.5,4.5, 0],
+  [-1,   0.5,2.8, 4],
+  // Laubbäume oben
+  [3,    7.5, 2.5, 1],
+  [5.5,  9,   1.8, 9],
+  [0.5,  10,  2.2, 6],
+  // Palmen / exotisch rechts
+  [12,   6,   3.0, 3],
+  [11,   3.5, 2.5, 3],
+  // Zypressen hinten
+  [9,    5.5, 3.8, 5],
+  [12.5, 1,   4.0, 5],
+  // Büsche / Totbäume vorne
+  [4,   -1.5, 1.4, 7],
+  [2.5, -2,   1.0, 7],
+  [10,  -1,   2.0, 8],
+  // Birken rechts
+  [8.5,  1,   2.2, 2],
+  [9.5,  8,   2.6, 2],
+];
+
+// Plattform-Typen mit festem x₃ (aus KletterMath v4)
+const PLAT_TYPES = {
+  S:{x3:0,label:'Start-Tor'},
+  A:{x3:1,label:'Adlerhorst'},
+  B:{x3:2,label:'Brücke'},
+  G:{x3:3,label:'Gipfel'},
+  T:{x3:4,label:'Aussichtsturm'},
+  H:{x3:3,label:'Hängestation'},
+  K:{x3:5,label:'Kletterturm'},
+  E:{x3:0,label:'Endstation'},
+};
+
+/* ══════════════════════════════════════════════════════
+   VEKTORMATHEMATIK
+   ══════════════════════════════════════════════════════ */
+const V = {
+  sub:   (a,b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]],
+  add:   (a,b) => [a[0]+b[0], a[1]+b[1], a[2]+b[2]],
+  sc:    (v,k) => [v[0]*k, v[1]*k, v[2]*k],
+  dot:   (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+  cross: (a,b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]],
+  len:   v => Math.sqrt(v[0]**2+v[1]**2+v[2]**2),
+  unit:  v => { const l=V.len(v); return [v[0]/l,v[1]/l,v[2]/l]; },
+  par:   (a,b) => V.len(V.cross(a,b)) < 0.02,
+  eq3:   (a,b,t=0.1) => Math.abs(a[0]-b[0])<t && Math.abs(a[1]-b[1])<t && Math.abs(a[2]-b[2])<t,
+  str:   v => `(${v.map(x=>n2(x)).join('|')})`,
+};
+const deg = r => r*180/Math.PI;
+const n   = x => (x===Math.round(x)) ? String(+x.toFixed(0)) : String(+x.toFixed(3));
+const n2  = x => (+x.toFixed(2)).toString();
+
+/* ══════════════════════════════════════════════════════
+   APP STATE
+   ══════════════════════════════════════════════════════ */
+const APP = {
+  phase: 'missions',  // 'missions' | 'tuev'
+  mView: 'list',      // 'list' | 'runner'
+  mActive: null,      // active mission id (number)
+  mSteps: {},         // {stepIdx: 'ok'|'bad'} for current mission run
+  tuevPhase: 'build', // 'build' | 'inspect'
+  plats: { S:{x:0,y:0,z:0,fixed:true} },
+  ropes: [],
+  order: [], ruleRopes: {}, ruleScen: {}, results: {}
+};
+
+const STATE = {
+  d: { done: [] },
+  load(){
+    try{ const s=localStorage.getItem('km5'); if(s) this.d=JSON.parse(s); }catch(e){}
+    if(!this.d) this.d={done:[]};
+    if(!this.d.done) this.d.done=[];
+  },
+  save(){ try{ localStorage.setItem('km5',JSON.stringify(this.d)); }catch(e){} },
+  isDone(id){ return this.d.done.includes(id); },
+  isAvail(id){
+    if(id===1) return true;
+    return MISSIONS.some(m=>m.unlocks&&m.unlocks.includes(id)&&this.isDone(m.id));
+  },
+  isTuevUnlocked(){ return this.isDone(7); },
+  complete(id){ if(!this.isDone(id)) this.d.done.push(id); this.save(); },
+  reset(){ this.d={done:[]}; this.save(); }
+};
+
+function ropeKey(r){ return `${r.from}→${r.to}`; }
+function ropeVecByKey(key){
+  const r = APP.ropes.find(x => ropeKey(x)===key); if(!r) return null;
+  return ropeVecOf(r);
+}
+function ropeVecOf(r){
+  const a=APP.plats[r.from], b=APP.plats[r.to]; if(!a||!b) return null;
+  return V.sub([b.x,b.y,b.z],[a.x,a.y,a.z]);
+}
+function platPt(id){ const p=APP.plats[id]; return [p.x,p.y,p.z]; }
+
+/* ══════════════════════════════════════════════════════
+   THREE.JS — PLATTFORM-TÜRME (aus KletterMath V4)
+   ══════════════════════════════════════════════════════ */
+let renderer, scene3, camera, ctrl;
+const obj3 = { plats:[], ropes:[], mLines:[] };
+const _treeObjs = [];
+
+// ── Interaktion State ──
+let clickMode = false;
+let ghostGroup = null;
+let selectedPlatType = null;
+let _dragId = null;
+let _mouseDown = false;
+const _rc = new THREE.Raycaster();
+const _mv = new THREE.Vector2();
+const _gridPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+
+// Koordinatensystem: x₁=x, x₂=y (Tiefe), x₃=z (Höhe)
+// Three.js: X=x₁, Y=x₃ (Höhe), Z=x₂ (Tiefe)
+function pt2v3(pt){ return new THREE.Vector3(pt.x, pt.z, pt.y); }
+
+/* ── Simplex Noise (aus KletterMath V4) ── */
+class SimplexNoise {
+  constructor() {
+    this.p = [];
+    for (let i = 0; i < 256; i++) this.p[i] = Math.floor(Math.random() * 256);
+    for (let i = 0; i < 256; i++) this.p[256 + i] = this.p[i];
+  }
+  fade(t) { return t * t * t * (t * (t * 6 - 15) + 10) }
+  lerp(t, a, b) { return a + t * (b - a) }
+  grad(hash, x, y) {
+    const h = hash & 15, u = h < 8 ? x : y, v = h < 8 ? y : x;
+    return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+  }
+  noise(x, y) {
+    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+    const xf = x - Math.floor(x), yf = y - Math.floor(y);
+    const u = this.fade(xf), v = this.fade(yf), p = this.p;
+    const aa = p[p[X]+Y], ab = p[p[X]+Y+1], ba = p[p[X+1]+Y], bb = p[p[X+1]+Y+1];
+    return this.lerp(v, this.lerp(u, this.grad(aa,xf,yf), this.grad(ba,xf-1,yf)),
+                        this.lerp(u, this.grad(ab,xf,yf-1), this.grad(bb,xf-1,yf-1)));
+  }
+}
+const _sn = new SimplexNoise();
+
+function createWoodTexture() {
+  const c = document.createElement('canvas'); c.width=c.height=256;
+  const ctx = c.getContext('2d'), img = ctx.createImageData(256,256), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const x = (i/4)%256, y = Math.floor((i/4)/256);
+    const v = Math.floor(Math.sin(Math.hypot(x-128,y-128)*0.05)*50+100 + _sn.noise(x*0.1,y*0.05)*30);
+    d[i]=Math.min(255,v+50); d[i+1]=Math.min(255,v+20); d[i+2]=Math.max(0,v-30); d[i+3]=255;
+  }
+  ctx.putImageData(img,0,0); return new THREE.CanvasTexture(c);
+}
+function createBarkTexture() {
+  const c = document.createElement('canvas'); c.width=c.height=256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle='#4a3a2a'; ctx.fillRect(0,0,256,256);
+  const img = ctx.getImageData(0,0,256,256), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = _sn.noise(((i/4)%256)*0.08, Math.floor((i/4)/256)*0.12)*40;
+    d[i]=Math.min(255,d[i]+n); d[i+1]=Math.max(0,d[i+1]-n); d[i+2]=Math.max(0,d[i+2]-n*.5);
+  }
+  ctx.putImageData(img,0,0); return new THREE.CanvasTexture(c);
+}
+
+let _wood, _bark, _leaf, _ropeMat3d;
+function getMats() {
+  if (!_wood) {
+    _wood     = new THREE.MeshStandardMaterial({ map:createWoodTexture(), color:0x8b6f47, roughness:0.7 });
+    _bark     = new THREE.MeshStandardMaterial({ map:createBarkTexture(), color:0x5a4a3a, roughness:0.95 });
+    _leaf     = new THREE.MeshStandardMaterial({ color:0x3a7a2a, roughness:0.7 });
+    _ropeMat3d= new THREE.MeshStandardMaterial({ color:0xc8833a, roughness:0.9 });
+  }
+  return { wood:_wood, bark:_bark, leaf:_leaf, ropeMat:_ropeMat3d };
+}
+
+/* ── Plattform-Geometrien (schlank, wenige Stützen) ── */
+function buildParkObject(idx, g, p) {
+  const { wood, bark, leaf, ropeMat } = getMats();
+  const h = Math.max(p.z, 0.4);
+  const gy = -p.z;
+  const metal = new THREE.MeshStandardMaterial({color:0x7a7a8a,roughness:0.35,metalness:0.75});
+  const redMat = new THREE.MeshStandardMaterial({color:0x8a3a2a,roughness:0.6});
+
+  if (idx === 0) {
+    // S: Start — einfacher Bogen aus zwei schlanken Pfosten
+    const post1=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.06,1.0,7),bark);
+    post1.position.set(-0.28,gy+0.5,0); g.add(post1);
+    const post2=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.06,1.0,7),bark);
+    post2.position.set(0.28,gy+0.5,0); g.add(post2);
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.64,6),wood);
+    beam.rotation.z=Math.PI/2; beam.position.set(0,gy+1.0,0); g.add(beam);
+    const sign=new THREE.Mesh(new THREE.BoxGeometry(0.38,0.12,0.03),new THREE.MeshStandardMaterial({color:0x2a6a1a,roughness:0.6}));
+    sign.position.set(0,gy+0.82,0.04); g.add(sign);
+    const plat=new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.06,10),wood);
+    plat.position.y=-0.04; g.add(plat);
+
+  } else if (idx === 1) {
+    // A: Adlerhorst — Baumhaus auf einem starken Stamm, keine Geländerpfosten
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.19,h+0.5,8),bark);
+    trunk.position.y=gy+(h+0.5)/2; g.add(trunk);
+    const plat=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.38,0.07,10),wood);
+    plat.position.y=-0.04; g.add(plat);
+    // Nur Blattwerk, keine Stäbe
+    const cr=new THREE.Mesh(new THREE.SphereGeometry(0.42,8,6),leaf);
+    cr.scale.y=0.7; cr.position.y=0.45; g.add(cr);
+    const cr2=new THREE.Mesh(new THREE.SphereGeometry(0.28,7,5),leaf);
+    cr2.position.set(0.3,0.6,0.2); g.add(cr2);
+
+  } else if (idx === 2) {
+    // B: Brückenknoten — einzelner Pfosten mit kreisrunder Scheibe
+    const post=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.1,h+0.4,8),wood);
+    post.position.y=gy+(h+0.4)/2; g.add(post);
+    const plat=new THREE.Mesh(new THREE.CylinderGeometry(0.44,0.44,0.07,12),wood);
+    plat.position.y=-0.04; g.add(plat);
+    // Seilführungsring
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(0.18,0.02,6,14),metal);
+    ring.rotation.x=Math.PI/2; ring.position.y=0.15; g.add(ring);
+
+  } else if (idx === 3) {
+    // G: Gipfel — dicker Stamm, sechseckige Plattform, Wimpel
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.2,h+0.7,8),bark);
+    trunk.position.y=gy+(h+0.7)/2; g.add(trunk);
+    const plat=new THREE.Mesh(new THREE.CylinderGeometry(0.48,0.48,0.07,6),wood);
+    plat.position.y=-0.04; g.add(plat);
+    // Wimpelstange
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.55,5),metal);
+    pole.position.set(0,0.32,0); g.add(pole);
+    const flag=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.12,0.02),redMat);
+    flag.position.set(0.1,0.58,0); g.add(flag);
+    const cr=new THREE.Mesh(new THREE.SphereGeometry(0.32,7,5),leaf);
+    cr.position.set(0.3,0.5,0); g.add(cr);
+
+  } else if (idx === 4) {
+    // T: Aussichtsturm — zwei A-förmige Stützen (statt 4 Einzelpfosten)
+    const legMat=new THREE.MeshStandardMaterial({color:0x6a5a4a,roughness:0.75});
+    // Vorderes A
+    const lf=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.055,h+0.5,6),legMat);
+    lf.position.set(-0.22,gy+(h+0.5)/2,0.22); lf.rotation.z=0.18; g.add(lf);
+    const rf=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.055,h+0.5,6),legMat);
+    rf.position.set(0.22,gy+(h+0.5)/2,0.22); rf.rotation.z=-0.18; g.add(rf);
+    // Hinteres A
+    const lb=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.055,h+0.5,6),legMat);
+    lb.position.set(-0.22,gy+(h+0.5)/2,-0.22); lb.rotation.z=0.18; g.add(lb);
+    const rb=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.055,h+0.5,6),legMat);
+    rb.position.set(0.22,gy+(h+0.5)/2,-0.22); rb.rotation.z=-0.18; g.add(rb);
+    const plat=new THREE.Mesh(new THREE.BoxGeometry(0.65,0.06,0.65),wood);
+    plat.position.y=-0.04; g.add(plat);
+    const roof=new THREE.Mesh(new THREE.ConeGeometry(0.46,0.38,4),redMat);
+    roof.position.y=0.28; roof.rotation.y=Math.PI/4; g.add(roof);
+
+  } else {
+    // H/K/E: schlanker Einzelmast mit Scheibe
+    const mast=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.06,h+0.55,8),metal);
+    mast.position.y=gy+(h+0.55)/2; g.add(mast);
+    const platTop=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.06,10),wood);
+    platTop.position.y=-0.04; g.add(platTop);
+    // kleiner Querarm
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.5,6),metal);
+    arm.rotation.z=Math.PI/2; arm.position.y=0.08; g.add(arm);
+  }
+}
+
+// Tower-Typ je Buchstabe — aus PLAT_VARIANTS (Lehrer-Konfiguration) oder Fallback
+function towerIdx(id){
+  if(PLAT_VARIANTS[id] !== undefined) return PLAT_VARIANTS[id];
+  return (id.charCodeAt(0) - 65) % 6;
+}
+
+/* ── Plattform-Gruppe bauen ── */
+function buildPlatformGroup(id, pt) {
+  const col = id==='S' ? '#c8833a' : pt.fixed ? '#e8a030' : '#5ba3d9';
+  const g = new THREE.Group();
+  buildParkObject(towerIdx(id), g, pt);
+  // Leuchtender Indikator auf der Plattformoberfläche
+  const ind = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12,12,12),
+    new THREE.MeshStandardMaterial({ color:new THREE.Color(col), emissive:new THREE.Color(col),
+      emissiveIntensity:0.6, roughness:0.3, metalness:0.5 })
+  );
+  ind.position.y = 0.12;
+  g.add(ind);
+  // Gruppe in Three.js-Koordinaten positionieren: x₃=Höhe → Y
+  g.position.set(pt.x, pt.z, pt.y);
+  g.userData.id = id;
+  return g;
+}
+
+/* ── Dekorative Bäume (10 Typen) ── */
+function buildTree(x1,x2,h,typ=0){
+  const {bark,leaf}=getMats();
+  const g=new THREE.Group();
+  const th=h*0.5;
+
+  // gemeinsame Materialien je Typ
+  const birkMat=new THREE.MeshStandardMaterial({color:0xd8d0c0,roughness:0.8});
+  const palmMat=new THREE.MeshStandardMaterial({color:0x8b7a40,roughness:0.9});
+  const pinkMat=new THREE.MeshStandardMaterial({color:0xf0a0b0,roughness:0.7});
+  const darkLeaf=new THREE.MeshStandardMaterial({color:0x2a5a20,roughness:0.75});
+  const deadMat=new THREE.MeshStandardMaterial({color:0x7a6a55,roughness:0.95});
+
+  if(typ===0){
+    // Fichte — 3 gestapelte Kegel
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.08,th,7),bark);
+    trunk.position.y=th/2; g.add(trunk);
+    [[h*0.36,h*0.58,th+h*0.1],[h*0.24,h*0.38,th+h*0.36],[h*0.13,h*0.22,th+h*0.56]].forEach(([r,ht,y])=>{
+      const c=new THREE.Mesh(new THREE.ConeGeometry(r,ht,8),darkLeaf);
+      c.position.y=y; g.add(c);
+    });
+
+  } else if(typ===1){
+    // Laubbaum rund — 3 Kugeln
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.1,th,7),bark);
+    trunk.position.y=th/2; g.add(trunk);
+    const r=h*0.38;
+    const crown=new THREE.Mesh(new THREE.SphereGeometry(r,9,7),leaf);
+    crown.scale.y=0.75; crown.position.y=th+r*0.55; g.add(crown);
+    const s1=new THREE.Mesh(new THREE.SphereGeometry(r*0.58,7,5),leaf);
+    s1.position.set(r*0.5,th+r*0.25,r*0.3); g.add(s1);
+    const s2=new THREE.Mesh(new THREE.SphereGeometry(r*0.52,7,5),leaf);
+    s2.position.set(-r*0.42,th+r*0.2,-r*0.28); g.add(s2);
+
+  } else if(typ===2){
+    // Birke — weißer Stamm, flache breite Krone
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.06,th*1.1,6),birkMat);
+    trunk.position.y=th*0.55; g.add(trunk);
+    const r=h*0.42;
+    const crown=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),leaf);
+    crown.scale.set(1.2,0.55,1.1); crown.position.y=th*1.05+r*0.35; g.add(crown);
+
+  } else if(typ===3){
+    // Palme — geschwungener Stamm, Fächerblätter oben
+    const segments=5;
+    let cy=0, cx=0;
+    for(let i=0;i<segments;i++){
+      const seg=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.07,th/segments,6),palmMat);
+      const angle=Math.sin(i*0.5)*0.18;
+      seg.rotation.z=angle;
+      seg.position.set(cx, cy+th/segments/2, 0); g.add(seg);
+      cy+=th/segments; cx+=Math.sin(angle)*th/segments*0.3;
+    }
+    // Fächerblätter
+    for(let i=0;i<7;i++){
+      const a=(i/7)*Math.PI*2;
+      const blade=new THREE.Mesh(new THREE.ConeGeometry(h*0.08,h*0.55,4),leaf);
+      blade.position.set(Math.cos(a)*h*0.22, cy+h*0.08, Math.sin(a)*h*0.22);
+      blade.rotation.z=Math.cos(a)*0.7; blade.rotation.x=Math.sin(a)*0.7;
+      g.add(blade);
+    }
+
+  } else if(typ===4){
+    // Weißtanne — ein langer schlanker Kegel
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.07,th*0.7,7),bark);
+    trunk.position.y=th*0.35; g.add(trunk);
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(h*0.22,h*0.88,8),darkLeaf);
+    cone.position.y=th*0.35+h*0.44; g.add(cone);
+
+  } else if(typ===5){
+    // Zypresse — schmal-zylindrisch
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.05,th*0.5,6),bark);
+    trunk.position.y=th*0.25; g.add(trunk);
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(h*0.1,h*0.16,h*0.85,7),darkLeaf);
+    body.position.y=th*0.5+h*0.42; g.add(body);
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(h*0.08,h*0.2,6),darkLeaf);
+    tip.position.y=th*0.5+h*0.95; g.add(tip);
+
+  } else if(typ===6){
+    // Eiche knorrig — dicker Stamm, unregelmäßige Krone aus 4 Kugeln
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.16,th*1.1,7),bark);
+    trunk.position.y=th*0.55; g.add(trunk);
+    const r=h*0.35;
+    [[0,0.6,0],[0.3,0.45,0.25],[-0.28,0.5,-0.2],[0.1,0.7,-0.3]].forEach(([ox,oy,oz])=>{
+      const c=new THREE.Mesh(new THREE.SphereGeometry(r*(0.7+Math.random()*0.4),8,6),leaf);
+      c.position.set(ox*h,th*1.0+oy*h,oz*h); g.add(c);
+    });
+
+  } else if(typ===7){
+    // Busch — kein Stamm, breite niedrige Kugelgruppe
+    const r=h*0.45;
+    [[0,r*0.5,0],[r*0.5,r*0.3,0.1],[- r*0.4,r*0.35,-0.1],[0.15,r*0.55,r*0.3],[-0.1,r*0.28,-r*0.3]].forEach(([ox,oy,oz])=>{
+      const c=new THREE.Mesh(new THREE.SphereGeometry(r*(0.5+Math.random()*0.35),7,5),leaf);
+      c.position.set(ox,oy,oz); g.add(c);
+    });
+
+  } else if(typ===8){
+    // Totbaum — kahler Stamm mit zwei Ästen
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.09,h*0.9,7),deadMat);
+    trunk.position.y=h*0.45; g.add(trunk);
+    const arm1=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.04,h*0.35,5),deadMat);
+    arm1.rotation.z=0.9; arm1.position.set(h*0.1,h*0.65,0); g.add(arm1);
+    const arm2=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.035,h*0.28,5),deadMat);
+    arm2.rotation.z=-1.1; arm2.position.set(-h*0.08,h*0.55,0); g.add(arm2);
+
+  } else {
+    // typ===9: Kirschbaum — heller Stamm, rosafarbene Krone
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.07,th,7),birkMat);
+    trunk.position.y=th/2; g.add(trunk);
+    const r=h*0.36;
+    const crown=new THREE.Mesh(new THREE.SphereGeometry(r,9,7),pinkMat);
+    crown.scale.y=0.8; crown.position.y=th+r*0.6; g.add(crown);
+    const s1=new THREE.Mesh(new THREE.SphereGeometry(r*0.55,7,5),pinkMat);
+    s1.position.set(r*0.45,th+r*0.2,r*0.3); g.add(s1);
+  }
+
+  g.position.set(x1,0,x2);
+  return g;
+}
+function addTrees(){
+  _treeObjs.forEach(o=>scene3.remove(o));
+  _treeObjs.length=0;
+  for(const [x1,x2,h,typ=0] of SCENE_TREES){
+    const t=buildTree(x1,x2,h,typ);
+    scene3.add(t); _treeObjs.push(t);
+  }
+}
+
+/* ── Seil-Geometrien ── */
+function _sagCurve(pA,pB,sag){
+  const mid=pA.clone().lerp(pB,0.5);
+  mid.y-=pA.distanceTo(pB)*sag;
+  return new THREE.CatmullRomCurve3([pA,mid,pB]);
+}
+function _buildZipline(grp,pA,pB,col){
+  const mat=new THREE.MeshStandardMaterial({color:col,roughness:0.5,metalness:0.4});
+  const metal=new THREE.MeshStandardMaterial({color:0x7a7a8a,metalness:0.85,roughness:0.25});
+  const curve=_sagCurve(pA,pB,0.015);
+  grp.add(new THREE.Mesh(new THREE.TubeGeometry(curve,24,0.028,6,false),mat));
+  const tPos=curve.getPoint(0.42), tDir=curve.getTangent(0.42).normalize();
+  const trolley=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.18,8),metal);
+  trolley.quaternion.copy(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),tDir));
+  trolley.position.copy(tPos); grp.add(trolley);
+  const cord=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.18,5),
+    new THREE.MeshStandardMaterial({color:col,roughness:0.9}));
+  cord.position.copy(tPos); cord.position.y-=0.09; grp.add(cord);
+}
+function _buildBridge(grp,pA,pB,col){
+  const mat=new THREE.MeshStandardMaterial({color:col,roughness:0.75});
+  const wmat=getMats().wood;
+  const dir=pB.clone().sub(pA).normalize();
+  const dist=pA.distanceTo(pB);
+  let right=new THREE.Vector3(0,1,0).cross(dir).normalize();
+  if(right.length()<0.01) right.set(1,0,0);
+  for(const s of [-0.18,0.18]){
+    const rA=pA.clone().addScaledVector(right,s);
+    const rB=pB.clone().addScaledVector(right,s);
+    const rmid=rA.clone().lerp(rB,0.5); rmid.y-=dist*0.008;
+    const curve=new THREE.CatmullRomCurve3([rA,rmid,rB]);
+    grp.add(new THREE.Mesh(new THREE.TubeGeometry(curve,20,0.022,6,false),mat));
+  }
+  const nPlanks=Math.max(3,Math.ceil(dist*1.2));
+  for(let i=0;i<=nPlanks;i++){
+    const pos=pA.clone().lerp(pB,i/nPlanks);
+    const plank=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.025,0.09),wmat);
+    plank.position.copy(pos); plank.lookAt(pos.clone().add(dir)); grp.add(plank);
+    if(i>0&&i<nPlanks){
+      const post=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.25,5),mat);
+      post.position.copy(pos); post.position.y+=0.1; grp.add(post);
+    }
+  }
+}
+function _buildHSeil(grp,pA,pB,col){
+  const mat=new THREE.MeshStandardMaterial({color:col,roughness:0.85});
+  grp.add(new THREE.Mesh(new THREE.TubeGeometry(_sagCurve(pA,pB,0.05),20,0.032,6,false),mat));
+}
+function buildRopeMesh3D(rope){
+  const a=APP.plats[rope.from], b=APP.plats[rope.to]; if(!a||!b) return null;
+  return buildRopeMesh3DFromPts(a, b, !!(a.fixed&&b.fixed));
+}
+function buildRopeMesh3DFromPts(pa, pb, fixed=true){
+  const pA=new THREE.Vector3(pa.x,pa.z,pa.y);
+  const pB=new THREE.Vector3(pb.x,pb.z,pb.y);
+  const dz=pb.z-pa.z;
+  const col=fixed?0xc8833a:0x5ba3d9;
+  const grp=new THREE.Group();
+  if(dz<-0.3)     _buildZipline(grp,pA,pB,col);
+  else if(dz>0.3) _buildBridge(grp,pA,pB,col);
+  else            _buildHSeil(grp,pA,pB,col);
+  return grp;
+}
+
+function initScene(){
+  const canvas = document.getElementById('canvas');
+  renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0x1a1614, 1);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  scene3 = new THREE.Scene();
+  scene3.fog = new THREE.FogExp2(0x1a1614, 0.018);
+
+  camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 200);
+  camera.position.set(12, 7, 14);
+
+  ctrl = new THREE.OrbitControls(camera, canvas);
+  ctrl.enableDamping = true;
+  ctrl.dampingFactor = 0.08;
+  ctrl.target.set(3, 2, 2);
+  ctrl.update();
+
+  scene3.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const sun = new THREE.DirectionalLight(0xffeedd, 1.2);
+  sun.position.set(6, 10, 5);
+  scene3.add(sun);
+  const fill = new THREE.DirectionalLight(0xaabbcc, 0.3);
+  fill.position.set(-5, 3, -5);
+  scene3.add(fill);
+  scene3.add(new THREE.GridHelper(30, 30, 0x332e28, 0x2a2520));
+  scene3.add(new THREE.AxesHelper(2));
+
+  const cv = document.getElementById('canvas');
+  cv.addEventListener('mousemove', onCanvasMouseMove);
+  cv.addEventListener('mousedown', onCanvasMouseDown);
+  cv.addEventListener('mouseup',   onCanvasMouseUp);
+  cv.addEventListener('click',     onCanvasClick);
+
+  window.addEventListener('resize', ()=>{
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  rebuild3();
+  addTrees();
+  (function loop(){ requestAnimationFrame(loop); ctrl.update(); renderer.render(scene3,camera); updateLbls(); })();
+}
+
+function rebuild3(){
+  obj3.plats.forEach(o=>scene3.remove(o));
+  obj3.ropes.forEach(o=>scene3.remove(o));
+  obj3.mLines.forEach(o=>scene3.remove(o));
+  obj3.plats=[]; obj3.ropes=[]; obj3.mLines=[];
+
+  if(APP.phase==='missions'){
+    for(const p of KM_PLATS){
+      const grp=buildPlatformGroup(p.lbl,{x:p.x,y:p.y,z:p.z,fixed:true});
+      scene3.add(grp); obj3.plats.push(grp);
+    }
+    for(const [a,b] of KM_ROPES){
+      const pa=KM_PLATS[a], pb=KM_PLATS[b];
+      const grp=buildRopeMesh3DFromPts(pa,pb,true);
+      scene3.add(grp); obj3.ropes.push(grp);
+    }
+  } else {
+    for(const [id,pt] of Object.entries(APP.plats)){
+      const grp=buildPlatformGroup(id,pt);
+      scene3.add(grp); obj3.plats.push(grp);
+    }
+    for(const rope of APP.ropes){
+      const grp=buildRopeMesh3D(rope);
+      if(grp){ scene3.add(grp); obj3.ropes.push(grp); }
+    }
+  }
+}
+
+function applyMissionHighlight(m){
+  if(!m) return;
+  const activeLbls=(m.platforms||[0,1,2,3,4,5,6,7]).map(i=>KM_PLATS[i].lbl);
+  obj3.plats.forEach(grp=>{
+    const lbl=grp.userData.id;
+    const active=activeLbls.includes(lbl);
+    grp.traverse(obj=>{
+      if(obj.isMesh&&obj.material){
+        if(obj.material.emissive){
+          obj.material.emissive.set(active?0xe8a030:0x000000);
+          obj.material.emissiveIntensity=active?0.5:0;
+        }
+        obj.material.opacity=active?1.0:0.3;
+        obj.material.transparent=!active;
+      }
+    });
+  });
+  const showR=m.showRopes!==false;
+  obj3.ropes.forEach(o=>{ o.visible=showR; });
+  buildMissionLines(m.lines||[]);
+}
+
+function buildMissionLines(lines){
+  obj3.mLines.forEach(o=>scene3.remove(o)); obj3.mLines=[];
+  if(!lines||!lines.length) return;
+  for(const l of lines){
+    const [t0,t1]=l.tRange, pts=[];
+    for(let i=0;i<=40;i++){
+      const t=t0+(t1-t0)*i/40;
+      pts.push(new THREE.Vector3(
+        l.p[0]+t*l.d[0],
+        l.p[2]+t*l.d[2],
+        l.p[1]+t*l.d[1]
+      ));
+    }
+    const geo=new THREE.BufferGeometry().setFromPoints(pts);
+    const mat=new THREE.LineBasicMaterial({color:new THREE.Color(l.color||'#ffff00'),linewidth:2});
+    const line=new THREE.Line(geo,mat);
+    scene3.add(line); obj3.mLines.push(line);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAG & CLICK-MODUS
+   ══════════════════════════════════════════════════════ */
+function snapG(v, step=0.5){ return Math.round(v/step)*step; }
+
+function getGridPt(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  _mv.x = ((e.clientX-r.left)/r.width)*2-1;
+  _mv.y = -((e.clientY-r.top)/r.height)*2+1;
+  _rc.setFromCamera(_mv, camera);
+  const pt = new THREE.Vector3();
+  return _rc.ray.intersectPlane(_gridPlane, pt) ? pt : null;
+}
+
+function getPlatHit(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  _mv.x = ((e.clientX-r.left)/r.width)*2-1;
+  _mv.y = -((e.clientY-r.top)/r.height)*2+1;
+  _rc.setFromCamera(_mv, camera);
+  const meshes = [];
+  obj3.plats.forEach(g => g.traverse(o => { if(o.isMesh) meshes.push(o); }));
+  const hits = _rc.intersectObjects(meshes, false);
+  if(!hits.length) return null;
+  let obj = hits[0].object;
+  while(obj && !obj.userData.id) obj = obj.parent;
+  return (obj && obj.userData.id) ? obj : null;
+}
+
+function buildGhostGroup(type, x1, x3, x2){
+  const pt = {x:x1, y:x2, z:x3, fixed:false};
+  const g = buildPlatformGroup(type, pt);
+  g.traverse(obj => {
+    if(obj.isMesh && obj.material){
+      obj.material = obj.material.clone();
+      obj.material.transparent = true;
+      obj.material.opacity = 0.45;
+    }
+  });
+  g.userData.ghostType = type;
+  return g;
+}
+
+function selectPlatType(type){
+  selectedPlatType = type;
+  setClickMode(true);
+  renderDrawer();
+}
+
+function setClickMode(v){
+  clickMode = v;
+  ctrl.enabled = !v;
+  if(!v && ghostGroup){ scene3.remove(ghostGroup); ghostGroup = null; }
+  if(!v) selectedPlatType = null;
+  const cv = document.getElementById('canvas');
+  cv.className = v ? 'crosshair' : '';
+  // Update palette highlight
+  document.querySelectorAll('.plat-chip').forEach(b => {
+    b.style.background = b.dataset.type === selectedPlatType ? 'var(--rope)' : 'var(--bg4)';
+    b.style.color = b.dataset.type === selectedPlatType ? 'var(--bg)' : 'var(--text)';
+    b.style.borderColor = b.dataset.type === selectedPlatType ? 'var(--rope)' : 'var(--bg5)';
+  });
+  const hint = document.getElementById('click-hint');
+  if(hint) hint.style.display = v ? 'block' : 'none';
+}
+
+function onCanvasMouseMove(e){
+  if(APP.phase!=='tuev'||APP.tuevPhase!=='build') return;
+  const cv = document.getElementById('canvas');
+
+  if(_dragId){
+    const pt = getGridPt(e); if(!pt) return;
+    APP.plats[_dragId].x = snapG(pt.x);
+    APP.plats[_dragId].y = snapG(pt.z);
+    rebuild3();
+    return;
+  }
+
+  if(clickMode){
+    const pt = getGridPt(e); if(!pt) return;
+    const sx = snapG(pt.x), sy = snapG(pt.z);
+    const type = selectedPlatType || 'E';
+    const x3 = PLAT_TYPES[type]?.x3 ?? 0;
+    if(!ghostGroup || ghostGroup.userData.ghostType !== type){
+      if(ghostGroup) scene3.remove(ghostGroup);
+      ghostGroup = buildGhostGroup(type, sx, x3, sy);
+      scene3.add(ghostGroup);
+    } else {
+      ghostGroup.position.set(sx, x3, sy);
+    }
+    return;
+  }
+
+  // Hover-Cursor für Drag
+  const hit = getPlatHit(e);
+  if(hit && !APP.plats[hit.userData.id]?.fixed){
+    cv.className = 'grab';
+  } else {
+    cv.className = '';
+  }
+}
+
+function onCanvasMouseDown(e){
+  if(APP.phase!=='tuev'||APP.tuevPhase!=='build'||clickMode||e.button!==0) return;
+  _mouseDown = true;
+  const hit = getPlatHit(e);
+  if(hit){
+    const id = hit.userData.id;
+    if(id && !APP.plats[id]?.fixed){
+      _dragId = id;
+      ctrl.enabled = false;
+      document.getElementById('canvas').className = 'grabbing';
+      e.preventDefault();
+    }
+  }
+}
+
+function onCanvasMouseUp(e){
+  if(_dragId){
+    _dragId = null;
+    ctrl.enabled = true;
+    renderDrawer();
+    document.getElementById('canvas').className = '';
+  }
+  _mouseDown = false;
+}
+
+function onCanvasClick(e){
+  if(!clickMode||APP.phase!=='tuev'||APP.tuevPhase!=='build') return;
+  const pt = getGridPt(e); if(!pt) return;
+  const sx = snapG(pt.x), sy = snapG(pt.z);
+
+  if(selectedPlatType && PLAT_TYPES[selectedPlatType]){
+    const type = selectedPlatType;
+    if(APP.plats[type]){
+      // Bereits platziert — trotzdem Koordinaten setzen
+      APP.plats[type].x = sx; APP.plats[type].y = sy;
+      rebuild3(); setClickMode(false); renderDrawer(); return;
+    }
+    APP.plats[type] = {x:sx, y:sy, z:PLAT_TYPES[type].x3, fixed:false};
+    rebuild3(); setClickMode(false); renderDrawer(); return;
+  }
+  // Fallback: Werte in Formular eintragen
+  const xi = document.getElementById('pk-x'), yi = document.getElementById('pk-y');
+  if(xi) xi.value = sx; if(yi) yi.value = sy;
+  setClickMode(false);
+  const ni = document.getElementById('pk-name');
+  if(ni){ ni.focus(); ni.select(); }
+}
+
+function updateLbls(){
+  const lbl = document.getElementById('lbl');
+  lbl.innerHTML = '';
+  for(const grp of obj3.plats){
+    const id = grp.userData.id; if(!id) continue;
+    const pt = APP.phase==='missions'
+      ? KM_PLATS.find(p=>p.lbl===id)
+      : APP.plats[id];
+    if(!pt) continue;
+    const pos = grp.position.clone();
+    pos.y += 0.6;
+    pos.project(camera);
+    if(pos.z > 1) continue;
+    const el = document.createElement('div');
+    el.className = 'ptl';
+    el.style.left = (pos.x*.5+.5)*window.innerWidth+'px';
+    el.style.top  = ((-pos.y*.5+.5)*window.innerHeight-10)+'px';
+    el.textContent = `${id}(${pt.x}|${pt.y}|${pt.z})`;
+    lbl.appendChild(el);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAWER
+   ══════════════════════════════════════════════════════ */
+let drawerOpen = true;
+
+function toggleDrawer(){
+  drawerOpen = !drawerOpen;
+  document.getElementById('drawer').classList.toggle('open', drawerOpen);
+}
+
+function renderDrawer(){
+  const title = document.getElementById('drw-title');
+  const body  = document.getElementById('drw-body');
+  body.innerHTML = '';
+  if(APP.phase==='missions'){
+    title.textContent = 'Missionen';
+    body.appendChild(APP.mView==='runner' ? buildMissionRunner() : buildMissionList());
+  } else {
+    if(APP.tuevPhase==='build'){
+      title.textContent = 'Park aufbauen';
+      body.appendChild(buildDrawerPark());
+    } else {
+      title.textContent = 'TÜV-Prüfung';
+      body.appendChild(buildDrawerTuev());
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAWER — PARKBAU
+   ══════════════════════════════════════════════════════ */
+function buildDrawerPark(){
+  const frag = document.createDocumentFragment();
+
+  // ── Plattform-Typen Palette ──
+  const platTypeSec = document.createElement('div');
+  platTypeSec.className = 'sec';
+  const availChips = Object.entries(PLAT_TYPES)
+    .filter(([id]) => !APP.plats[id] || id === selectedPlatType)
+    .map(([id, info]) => {
+      const isSel = selectedPlatType === id;
+      return `<button class="plat-chip" data-type="${id}" onclick="selectPlatType('${id}')"
+        style="background:${isSel?'var(--rope)':'var(--bg4)'};color:${isSel?'var(--bg)':'var(--text)'};border:1px solid ${isSel?'var(--rope)':'var(--bg5)'};border-radius:4px;padding:4px 9px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;margin:2px"
+        title="${info.label}  x₃=${info.x3}">${id} <span style="font-size:9px;opacity:.7">x₃=${info.x3}</span></button>`;
+    }).join('');
+  platTypeSec.innerHTML = `<div class="sec-title">🏔 Plattform-Typ wählen</div>
+    <div style="margin-bottom:6px">${availChips || '<span style="font-size:11px;color:var(--text2)">Alle Typen platziert</span>'}</div>
+    <div id="click-hint" class="click-hint" style="display:${clickMode?'block':'none'}">
+      ${selectedPlatType?`<b>${selectedPlatType}</b> — ${PLAT_TYPES[selectedPlatType]?.label}, x₃ = ${PLAT_TYPES[selectedPlatType]?.x3} (fest)<br>`:''}
+      Maus über 3D-Grid → Vorschau. Klick = Platzieren.<br>
+      <span style="color:var(--text2)">Blaue Plattformen lassen sich per Drag verschieben.</span>
+    </div>`;
+  frag.appendChild(platTypeSec);
+
+  // ── Plattform manuell hinzufügen ──
+  const addSec = document.createElement('div');
+  addSec.className = 'sec';
+  addSec.innerHTML = `<div class="sec-title" style="color:var(--text2);font-size:12px">Manuell (freier Typ)</div>
+    <div class="row">
+      <label>Name</label>
+      <input type="text" id="pk-name" class="name-inp" maxlength="1" placeholder="B">
+      <label>x₁</label><input type="number" id="pk-x" step="0.5" placeholder="0">
+      <label>x₂</label><input type="number" id="pk-y" step="0.5" placeholder="0">
+      <label>x₃</label><input type="number" id="pk-z" step="0.5" placeholder="0">
+    </div>
+    <button class="btn btn-s" style="font-size:11px" onclick="addPlat()">+ Manuell setzen</button>`;
+  frag.appendChild(addSec);
+
+  // ── Plattform-Liste ──
+  const platSec = document.createElement('div');
+  platSec.className = 'sec';
+  platSec.innerHTML = '<div class="sec-title">Plattformen</div>';
+  for(const [id,pt] of Object.entries(APP.plats)){
+    const item = document.createElement('div');
+    item.className = 'list-item ' + (pt.fixed ? 'fixed' : 'user');
+    item.innerHTML = `<span>${id}(${pt.x}|${pt.y}|${pt.z})</span>
+      ${pt.fixed
+        ? '<span class="tag-fix">[fix]</span>'
+        : `<button class="del-btn" onclick="delPlat('${id}')">×</button>`}`;
+    platSec.appendChild(item);
+  }
+  frag.appendChild(platSec);
+
+  // ── Seil spannen ──
+  const platIds = Object.keys(APP.plats);
+  const opts = platIds.map(id=>`<option value="${id}">${id}</option>`).join('');
+  const ropeSec = document.createElement('div');
+  ropeSec.className = 'sec';
+  ropeSec.innerHTML = `<div class="sec-title">🔗 Seil spannen</div>
+    <div class="row">
+      <label>Von</label><select id="rope-from">${opts}</select>
+      <label>→ Zu</label><select id="rope-to">${opts}</select>
+    </div>
+    <button class="btn btn-p" onclick="addRope()">Spannen</button>`;
+  frag.appendChild(ropeSec);
+
+  // ── Seil-Liste ──
+  if(APP.ropes.length > 0){
+    const ropeListSec = document.createElement('div');
+    ropeListSec.className = 'sec';
+    ropeListSec.innerHTML = '<div class="sec-title">Seile</div>';
+    APP.ropes.forEach((r,i)=>{
+      const isFixed = APP.plats[r.from]?.fixed && APP.plats[r.to]?.fixed;
+      const item = document.createElement('div');
+      item.className = 'list-item ' + (isFixed ? 'fixed' : 'user');
+      item.innerHTML = `<span>${r.from} → ${r.to}</span>
+        ${isFixed
+          ? '<span class="tag-fix">[fix]</span>'
+          : `<button class="del-btn" onclick="delRope(${i})">×</button>`}`;
+      ropeListSec.appendChild(item);
+    });
+    frag.appendChild(ropeListSec);
+  }
+
+  // ── Seil-Übersicht (Richtungsvektoren) ──
+  if(APP.ropes.length > 0){
+    const vecSec = document.createElement('div');
+    vecSec.className = 'sec';
+    let rows = APP.ropes.map(r=>{
+      const a=APP.plats[r.from], b=APP.plats[r.to]; if(!a||!b) return '';
+      const d=V.sub([b.x,b.y,b.z],[a.x,a.y,a.z]);
+      const len=V.len(d);
+      return `<tr>
+        <td>${r.from}${r.to}</td>
+        <td>${V.str([a.x,a.y,a.z])}</td>
+        <td>${V.str([b.x,b.y,b.z])}</td>
+        <td>${V.str(d)}</td>
+        <td>${n2(len)} m</td>
+      </tr>`;
+    }).join('');
+    vecSec.innerHTML=`<div class="sec-title">📐 Richtungsvektoren</div>
+      <table class="rope-table">
+        <tr><th>Seil</th><th>Von</th><th>Zu</th><th>d⃗</th><th>|d⃗|</th></tr>
+        ${rows}
+      </table>
+      <div class="hint" style="margin-top:5px">→ Diese Tabelle hilft beim Vorrechnen auf Papier</div>`;
+    frag.appendChild(vecSec);
+  }
+
+  const hr = document.createElement('hr'); hr.className='div';
+  frag.appendChild(hr);
+
+  const startBtn = document.createElement('button');
+  startBtn.className = 'btn btn-ok';
+  startBtn.style.cssText = 'width:100%;padding:10px;font-size:13px';
+  startBtn.textContent = '🔧 TÜV-Prüfung starten →';
+  startBtn.onclick = startTuev;
+  frag.appendChild(startBtn);
+
+  return frag;
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAWER — MISSIONEN
+   ══════════════════════════════════════════════════════ */
+function buildMissionList(){
+  const frag=document.createDocumentFragment();
+  const done=STATE.d.done.length;
+  const bar=document.createElement('div');
+  bar.innerHTML=`<div class="prog-bar"><div class="prog-fill" style="width:${done*10}%"></div></div>
+    <div class="prog-txt">${done} / 10 Missionen abgeschlossen</div>`;
+  frag.appendChild(bar);
+  MISSIONS.forEach(m=>{
+    const isDone=STATE.isDone(m.id), isAvail=STATE.isAvail(m.id);
+    const card=document.createElement('div');
+    card.className='m-card'+(isDone?' done':'')+(!isAvail?' locked-m':'');
+    if(isAvail) card.onclick=()=>openMission(m.id);
+    const badge=isDone
+      ?`<span class="m-badge done">✓ Fertig</span>`
+      :isAvail
+        ?`<span class="m-badge avail">Verfügbar</span>`
+        :`<span class="m-badge lock">🔒</span>`;
+    card.innerHTML=`<div class="m-num">${m.id}</div>
+      <div class="m-info"><h3>${m.title}</h3><small>${m.concept}</small></div>
+      ${badge}`;
+    frag.appendChild(card);
+  });
+  return frag;
+}
+
+function openMission(id){
+  const m=MISSIONS.find(x=>x.id===id); if(!m) return;
+  APP.mActive=id; APP.mView='runner'; APP.mSteps={};
+  rebuild3(); applyMissionHighlight(m);
+  renderDrawer();
+  if(!drawerOpen) toggleDrawer();
+}
+
+function buildMissionRunner(){
+  const m=MISSIONS.find(x=>x.id===APP.mActive);
+  if(!m) return document.createDocumentFragment();
+  const frag=document.createDocumentFragment();
+
+  const back=document.createElement('div'); back.className='m-back';
+  back.innerHTML='← Alle Missionen';
+  back.onclick=()=>{
+    APP.mView='list'; APP.mActive=null; APP.mSteps={};
+    applyMissionHighlight({platforms:[0,1,2,3,4,5,6,7],showRopes:false});
+    rebuild3(); renderDrawer();
+  };
+  frag.appendChild(back);
+
+  const hdr=document.createElement('div'); hdr.className='mission-hdr';
+  hdr.innerHTML=`<div class="concept">${m.concept.toUpperCase()}</div><h2>${m.id}. ${m.title}</h2>`;
+  frag.appendChild(hdr);
+
+  const story=document.createElement('div'); story.className='story-block';
+  story.innerHTML=m.story; frag.appendChild(story);
+
+  const task=document.createElement('div'); task.className='task-block';
+  task.innerHTML=`<div class="lbl">AUFGABE</div>${m.task}`; frag.appendChild(task);
+
+  const isDone=STATE.isDone(m.id);
+  m.steps.forEach((step,idx)=>frag.appendChild(makeStepCard(m.id,idx,step,isDone)));
+
+  if(isDone&&m.insight){
+    appendInsight(frag,m.insight);
+    const nextBtn=document.createElement('button'); nextBtn.className='btn-next-m';
+    const nextId=m.unlocks&&m.unlocks[0];
+    const nextM=nextId?MISSIONS.find(x=>x.id===nextId):null;
+    if(nextM){
+      nextBtn.textContent=`Weiter: ${nextM.title} →`;
+      nextBtn.onclick=()=>openMission(nextId);
+    } else {
+      nextBtn.textContent='← Zurück zur Liste';
+      nextBtn.onclick=()=>{ APP.mView='list'; APP.mActive=null; renderDrawer(); };
+    }
+    frag.appendChild(nextBtn);
+  }
+  return frag;
+}
+
+function makeStepCard(mId,idx,step,missionDone){
+  const card=document.createElement('div');
+  card.className='step-card'+(missionDone?' done':'');
+  card.id=`step-${mId}-${idx}`;
+
+  const lbl=document.createElement('div'); lbl.className='step-lbl';
+  lbl.textContent=`SCHRITT ${idx+1}`; card.appendChild(lbl);
+
+  const prompt=document.createElement('div'); prompt.className='step-prompt';
+  prompt.innerHTML=step.prompt; card.appendChild(prompt);
+
+  if(missionDone){
+    if(step.worked){
+      const ws=document.createElement('div');
+      ws.style.cssText='font-size:11px;color:var(--ok);margin-top:3px;line-height:1.6';
+      ws.innerHTML='✓ '+step.worked; card.appendChild(ws);
+    }
+    return card;
+  }
+
+  // Input area
+  if(step.type==='vector3'){
+    const wrap=document.createElement('div'); wrap.className='vec-wrap';
+    const lBr=document.createElement('div'); lBr.className='vec-br vec-br-l'; wrap.appendChild(lBr);
+    const fields=document.createElement('div'); fields.className='vec-fields';
+    fields.innerHTML=`<input type="number" id="si-${mId}-${idx}-0" step="0.01" placeholder="x₁">
+      <input type="number" id="si-${mId}-${idx}-1" step="0.01" placeholder="x₂">
+      <input type="number" id="si-${mId}-${idx}-2" step="0.01" placeholder="x₃">`;
+    wrap.appendChild(fields);
+    const rBr=document.createElement('div'); rBr.className='vec-br vec-br-r'; wrap.appendChild(rBr);
+    card.appendChild(wrap);
+  } else if(step.type==='number'){
+    const inp=document.createElement('input'); inp.type='number';
+    inp.className='num-input'; inp.id=`si-${mId}-${idx}-n`;
+    inp.step='0.01'; inp.placeholder='Antwort'; card.appendChild(inp);
+  } else if(step.type==='choice'){
+    const choices=document.createElement('div'); choices.className='choices';
+    step.options.forEach((opt,oi)=>{
+      const btn=document.createElement('button'); btn.className='choice-btn';
+      btn.textContent=opt; btn.dataset.value=step.values[oi];
+      btn.onclick=function(){ choices.querySelectorAll('.choice-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); };
+      choices.appendChild(btn);
+    });
+    card.appendChild(choices);
+  }
+
+  const hintBox=document.createElement('div'); hintBox.className='hint-box'; hintBox.id=`hint-${mId}-${idx}`;
+  if(step.hint) hintBox.textContent=step.hint;
+  card.appendChild(hintBox);
+
+  const btns=document.createElement('div'); btns.className='step-btns';
+  const checkBtn=document.createElement('button'); checkBtn.className='btn-check'; checkBtn.textContent='Prüfen';
+  checkBtn.onclick=()=>checkStep(mId,idx);
+  btns.appendChild(checkBtn);
+  if(step.hint){
+    const hintBtn=document.createElement('button'); hintBtn.className='btn-hint-s'; hintBtn.textContent='Tipp';
+    hintBtn.onclick=()=>hintBox.classList.toggle('show');
+    btns.appendChild(hintBtn);
+  }
+  card.appendChild(btns);
+
+  const fb=document.createElement('div'); fb.className='step-fb'; fb.id=`sfb-${mId}-${idx}`;
+  card.appendChild(fb);
+  return card;
+}
+
+function checkStep(mId,idx){
+  const m=MISSIONS.find(x=>x.id===mId); if(!m) return;
+  const step=m.steps[idx]; if(!step) return;
+  let correct=false;
+  if(step.type==='vector3'){
+    const ans=[0,1,2].map(i=>parseFloat(document.getElementById(`si-${mId}-${idx}-${i}`)?.value)||0);
+    correct=ans.every((v,i)=>Math.abs(v-step.answer[i])<=(step.tol||0.1));
+  } else if(step.type==='number'){
+    const ans=parseFloat(document.getElementById(`si-${mId}-${idx}-n`)?.value);
+    correct=!isNaN(ans)&&Math.abs(ans-step.answer)<=(step.tol||0.1);
+  } else if(step.type==='choice'){
+    const sel=document.getElementById(`step-${mId}-${idx}`)?.querySelector('.choice-btn.selected');
+    correct=sel?.dataset.value===step.answer;
+  }
+  const fb=document.getElementById(`sfb-${mId}-${idx}`); if(!fb) return;
+  if(!APP.mSteps) APP.mSteps={};
+  if(correct){
+    fb.className='step-fb show ok'; fb.innerHTML='✓ Richtig! '+(step.worked||'');
+    APP.mSteps[idx]='ok';
+    const allDone=m.steps.every((_,i)=>APP.mSteps[i]==='ok');
+    if(allDone&&!STATE.isDone(mId)){
+      STATE.complete(mId);
+      updateProgBadge();
+      if(STATE.isTuevUnlocked()){
+        document.getElementById('btn-tuev').classList.remove('locked');
+      }
+      setTimeout(()=>renderDrawer(),450);
+    }
+  } else {
+    fb.className='step-fb show bad';
+    fb.innerHTML='✗ Noch nicht ganz.'+(step.worked?` Lösung: ${step.worked}`:'');
+    APP.mSteps[idx]='bad';
+  }
+}
+
+function appendInsight(frag,insight){
+  const card=document.createElement('div'); card.className='insight-card';
+  card.innerHTML=`<div class="ic-lbl">EINBLICK</div><h3>${insight.title}</h3><div>${insight.body}</div>`;
+  frag.appendChild(card);
+}
+
+/* ══════════════════════════════════════════════════════
+   PLATTFORM & SEIL MANAGEMENT
+   ══════════════════════════════════════════════════════ */
+function addPlat(){
+  const nameInp = document.getElementById('pk-name');
+  const name = (nameInp?.value||'').trim().toUpperCase();
+  if(!name || name.length!==1 || !/[A-Z]/.test(name) || APP.plats[name]) return;
+  const x = parseFloat(document.getElementById('pk-x')?.value)||0;
+  const y = parseFloat(document.getElementById('pk-y')?.value)||0;
+  const z = parseFloat(document.getElementById('pk-z')?.value)||0;
+  APP.plats[name] = { x, y, z, fixed:false };
+  rebuild3();
+  renderDrawer();
+}
+
+function delPlat(id){
+  if(APP.plats[id]?.fixed) return;
+  delete APP.plats[id];
+  APP.ropes = APP.ropes.filter(r => r.from!==id && r.to!==id);
+  rebuild3();
+  renderDrawer();
+}
+
+function addRope(){
+  const from = document.getElementById('rope-from')?.value;
+  const to   = document.getElementById('rope-to')?.value;
+  if(!from || !to || from===to) return;
+  const exists = APP.ropes.some(r => (r.from===from&&r.to===to)||(r.from===to&&r.to===from));
+  if(exists) return;
+  APP.ropes.push({ from, to });
+  rebuild3();
+  renderDrawer();
+}
+
+function delRope(i){
+  const r = APP.ropes[i]; if(!r) return;
+  if(APP.plats[r.from]?.fixed && APP.plats[r.to]?.fixed) return;
+  APP.ropes.splice(i, 1);
+  rebuild3();
+  renderDrawer();
+}
+
+/* ══════════════════════════════════════════════════════
+   PHASE NAVIGATION
+   ══════════════════════════════════════════════════════ */
+function setPhase(phase){
+  if(phase==='tuev'&&!STATE.isTuevUnlocked()) return;
+  APP.phase=phase;
+  document.getElementById('btn-missions').classList.toggle('active',phase==='missions');
+  document.getElementById('btn-tuev').classList.toggle('active',phase==='tuev');
+  if(phase!=='tuev') setClickMode(false);
+  rebuild3();
+  if(phase==='missions'){
+    const m=MISSIONS.find(x=>x.id===APP.mActive);
+    applyMissionHighlight(m||{platforms:[0,1,2,3,4,5,6,7],showRopes:false});
+  }
+  updateProgBadge();
+  renderDrawer();
+}
+
+function tryTuev(){
+  if(!STATE.isTuevUnlocked()){
+    const btn=document.getElementById('btn-tuev');
+    btn.style.animation='shake 0.35s ease';
+    setTimeout(()=>{ btn.style.animation=''; },400);
+    return;
+  }
+  setPhase('tuev');
+}
+
+function updateProgBadge(){
+  const b=document.getElementById('score-badge');
+  if(APP.phase==='missions'){
+    const d=STATE.d.done.length;
+    b.textContent=`${d}/10 Missionen`;
+    b.className='score-badge show'+(d===10?' win':'');
+  } else {
+    const pass=Object.values(APP.results).filter(Boolean).length;
+    const total=APP.order.length;
+    b.textContent=`${pass}/${total||8} Regeln`;
+    b.className='score-badge show'+(pass===total&&total>0?' win':'');
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   KOMPENDIUM
+   ══════════════════════════════════════════════════════ */
+function openComp(){ renderComp(); document.getElementById('comp-overlay').classList.add('show'); }
+function closeComp(){ document.getElementById('comp-overlay').classList.remove('show'); }
+function renderComp(){
+  const grid=document.getElementById('comp-grid'); grid.innerHTML='';
+  COMP.forEach(card=>{
+    const done=STATE.isDone(card.mid);
+    const div=document.createElement('div');
+    div.className='comp-card'+(done?'':' locked');
+    if(done){
+      div.innerHTML=`<h3>${card.title}</h3>
+        <div class="comp-formula">${tex(card.formula,true)}</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.5">${card.note}</div>`;
+    } else {
+      div.innerHTML=`<h3>${card.title}</h3>
+        <div class="lock-msg">🔒 Schließe Mission ${card.mid} ab, um diese Karte freizuschalten.</div>`;
+    }
+    grid.appendChild(div);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   TÜV-PRÜFUNG STARTEN (aus Bau-Phase)
+   ══════════════════════════════════════════════════════ */
+function startTuev(){
+  if(APP.ropes.length===0){ alert('Erst mindestens ein Seil spannen.'); return; }
+  APP.tuevPhase='inspect';
+  APP.order=shuffle(RULES.filter(id=>RDEFS[id]));
+  APP.results={}; APP.ruleRopes={}; APP.ruleScen={};
+  updateProgBadge();
+  renderDrawer();
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAWER — TÜV
+   ══════════════════════════════════════════════════════ */
+const CAT_COL = {
+  'Parameterdarstellung':'#b07fff',
+  'Betrag':'#5ba3d9',
+  'Winkel':'#ff8c42',
+  'Parallelität':'#6bcb77',
+  'Abstand':'#20c997',
+  'Lagebeziehung':'#ff6b6b'
+};
+
+function buildDrawerTuev(){
+  const frag = document.createDocumentFragment();
+
+  // Back to build
+  const backRow=document.createElement('div');
+  backRow.style.cssText='display:flex;gap:6px;margin-bottom:10px';
+  const backBtn=document.createElement('button'); backBtn.className='btn btn-s';
+  backBtn.textContent='← Park ändern';
+  backBtn.onclick=()=>{ APP.tuevPhase='build'; renderDrawer(); };
+  backRow.appendChild(backBtn);
+  frag.appendChild(backRow);
+
+  const total = APP.order.length;
+  APP.order.forEach((rid, i) => {
+    const def = RDEFS[rid]; if(!def) return;
+    frag.appendChild(buildCard(rid, def, i+1, total));
+  });
+  // Ergebnis-Button am Ende
+  const resBtn = document.createElement('button');
+  resBtn.className = 'btn btn-ok'; resBtn.id = 'btn-result';
+  resBtn.style.cssText = 'width:100%;padding:10px;font-size:13px;margin-top:8px';
+  resBtn.textContent = '🎓 Ergebnis anzeigen →';
+  resBtn.onclick = showResult;
+  frag.appendChild(resBtn);
+  return frag;
+}
+
+function buildCard(rid, def, idx, total){
+  const card = document.createElement('div');
+  card.className = 'rcard'; card.id = 'c-'+rid;
+  const res = APP.results[rid];
+  if(res===true)  card.classList.add('pass');
+  if(res===false) card.classList.add('fail');
+
+  const col  = CAT_COL[def.cat]||'#888';
+  const icon = res===true?'✓':res===false?'✗':'○';
+  const icol = res===true?'var(--ok)':res===false?'var(--err)':'var(--text2)';
+  const numStr = (idx && total) ? `<span class="rnum">[${idx}/${total}]</span>` : '';
+
+  const hdr = document.createElement('div'); hdr.className='rhdr';
+  hdr.innerHTML=`<div class="cdot" style="background:${col}"></div>
+    <div class="rtw"><div class="rtit">${def.title}${numStr}</div><div class="rcat">${def.cat}</div></div>
+    <div class="rst" style="color:${icol}">${icon}</div>
+    <div class="rchev">▼</div>`;
+
+  const body = document.createElement('div'); body.className='rbody hide'; body.id='b-'+rid;
+  if(def.vorschrift){
+    const vs=document.createElement('div');
+    vs.style.cssText='font-size:11px;color:var(--gold);background:rgba(200,131,58,.1);border:1px solid rgba(200,131,58,.3);border-radius:4px;padding:5px 9px;margin-bottom:8px;line-height:1.5';
+    vs.textContent=def.vorschrift;
+    body.appendChild(vs);
+  }
+  body.appendChild(buildRopeSelectors(rid, def.twoRopes));
+  const cc = document.createElement('div'); cc.id='cc-'+rid;
+  if(APP.ruleRopes[rid]) cc.appendChild(buildCardContent(rid, def));
+  body.appendChild(cc);
+
+  hdr.addEventListener('click',()=>{
+    body.classList.toggle('hide');
+    hdr.querySelector('.rchev').textContent = body.classList.contains('hide')?'▼':'▲';
+    card.classList.toggle('open', !body.classList.contains('hide'));
+  });
+  card.appendChild(hdr); card.appendChild(body);
+  return card;
+}
+
+function buildRopeSelectors(rid, twoRopes){
+  const wrap = document.createElement('div');
+  const opts = APP.ropes.map(r=>`<option value="${ropeKey(r)}">${r.from}→${r.to}</option>`).join('');
+
+  if(!twoRopes){
+    wrap.className = 'sel-row';
+    wrap.innerHTML = `<label>Welches Seil?</label>
+      <select id="sel1-${rid}" onchange="onRopeSelect('${rid}')">
+        <option value="">— Seil wählen —</option>${opts}
+      </select>`;
+    if(APP.ruleRopes[rid]) wrap.querySelector('select').value = APP.ruleRopes[rid];
+  } else {
+    wrap.innerHTML = `
+      <div class="sel-row"><label>Seil 1</label>
+        <select id="sel1-${rid}" onchange="onRopeSelect('${rid}')">
+          <option value="">— Seil 1 —</option>${opts}
+        </select></div>
+      <div class="sel-row"><label>Seil 2</label>
+        <select id="sel2-${rid}" onchange="onRopeSelect('${rid}')">
+          <option value="">— Seil 2 —</option>${opts}
+        </select></div>`;
+    if(APP.ruleRopes[rid]){
+      wrap.querySelectorAll('select')[0].value = APP.ruleRopes[rid][0];
+      wrap.querySelectorAll('select')[1].value = APP.ruleRopes[rid][1];
+    }
+  }
+  return wrap;
+}
+
+function onRopeSelect(rid){
+  const def = RDEFS[rid]; if(!def) return;
+  const sel1 = document.getElementById('sel1-'+rid);
+  const sel2 = document.getElementById('sel2-'+rid);
+  if(def.twoRopes){
+    if(!sel1?.value || !sel2?.value || sel1.value===sel2.value) return;
+    APP.ruleRopes[rid] = [sel1.value, sel2.value];
+  } else {
+    if(!sel1?.value) return;
+    APP.ruleRopes[rid] = sel1.value;
+  }
+  if(def.genScen) APP.ruleScen[rid] = def.genScen(rid);
+  delete APP.results[rid];
+  const cc = document.getElementById('cc-'+rid);
+  if(cc){ cc.innerHTML=''; cc.appendChild(buildCardContent(rid,def)); }
+  updateScore();
+}
+
+function _cardBtns(rid,def,wrap){
+  const brow=document.createElement('div'); brow.className='brow';
+  const btnP=document.createElement('button'); btnP.className='btn btn-p'; btnP.textContent='🔍 Prüfen';
+  btnP.onclick=()=>evalRule(rid,def);
+  const btnR=document.createElement('button'); btnR.className='btn btn-s'; btnR.textContent='Reset';
+  btnR.onclick=()=>resetRule(rid);
+  brow.appendChild(btnP); brow.appendChild(btnR); wrap.appendChild(brow);
+  const fb=document.createElement('div'); fb.className='fb'; fb.id='fb-'+rid;
+  wrap.appendChild(fb);
+}
+
+/* Variante 3 — Fehlersuche */
+function buildCardFehler(rid,def,wrap){
+  const sc=APP.ruleScen[rid];
+  if(!sc?.fehlerLines){ wrap.innerHTML='<div class="rctx">Seil wählen…</div>'; return wrap; }
+  const ctx=document.createElement('div'); ctx.className='rctx';
+  ctx.innerHTML=`<b>Fehlersuche:</b> Ein TÜV-Inspektor hat folgende Rechnung protokolliert. <b>Genau ein Schritt enthält einen Fehler.</b>`;
+  wrap.appendChild(ctx);
+  const steps=document.createElement('div');
+  steps.style.cssText='background:var(--bg3);border-radius:5px;padding:10px 14px;margin:8px 0;font-family:"JetBrains Mono",monospace;font-size:11px;line-height:2.2';
+  steps.innerHTML=sc.fehlerLines.map((l,i)=>`<div><span style="color:var(--text2);margin-right:10px">${i+1}.</span>${l}</div>`).join('');
+  wrap.appendChild(steps);
+  const ig=document.createElement('div'); ig.className='igroup';
+  const radios=sc.fehlerLines.map((_,i)=>`<label><input type="radio" name="${rid}_fehler" value="${i}"> Schritt ${i+1}</label>`).join('');
+  ig.innerHTML=`<label>In welchem Schritt steckt der Fehler?</label><div class="rg">${radios}</div>`;
+  wrap.appendChild(ig);
+  _cardBtns(rid,def,wrap);
+  return wrap;
+}
+
+/* Variante 4b — Multiple Choice */
+function buildCardMC(rid,def,wrap){
+  const sc=APP.ruleScen[rid];
+  const ctx=document.createElement('div'); ctx.className='rctx'; ctx.innerHTML=def.ctx(rid);
+  wrap.appendChild(ctx);
+  const opts=sc?.mcOpts||[];
+  if(!opts.length){ wrap.innerHTML+='<div class="rctx" style="color:var(--text2)">Seil wählen…</div>'; return wrap; }
+  const ig=document.createElement('div'); ig.className='igroup';
+  ig.innerHTML=`<label>Welche Aussage ist korrekt?</label>
+    <div style="margin-top:7px">${opts.map((o,i)=>`<label style="display:flex;align-items:flex-start;gap:7px;margin-bottom:7px"><input type="radio" name="${rid}_mc" value="${i}" style="margin-top:2px;flex-shrink:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6">${o.text}</span></label>`).join('')}</div>`;
+  wrap.appendChild(ig);
+  _cardBtns(rid,def,wrap);
+  return wrap;
+}
+
+/* Variante 6 — Blind-Modus + Standard */
+function buildCardContent(rid, def){
+  const wrap=document.createElement('div');
+  const v=def.variant||'guided';
+  if(v==='fehler') return buildCardFehler(rid,def,wrap);
+  if(v==='mc')     return buildCardMC(rid,def,wrap);
+
+  const ctxDiv=document.createElement('div');
+  ctxDiv.className='rctx'; ctxDiv.innerHTML=def.ctx(rid);
+  wrap.appendChild(ctxDiv);
+
+  if(v!=='blind'){
+    const hint=document.createElement('div'); hint.className='paper-hint';
+    hint.textContent='📝 Rechnet zuerst auf Papier — dann eingeben und prüfen!';
+    wrap.appendChild(hint);
+  }
+
+  const form=document.createElement('div');
+  for(const inp of def.inputs){
+    const g=document.createElement('div'); g.className='igroup';
+    if(inp.type==='num'){
+      g.innerHTML=`<label>${inp.label}${inp.unit?` [${inp.unit}]`:''}</label>
+        <div class="vi">
+          <input type="number" id="${rid}_${inp.id}" step="${inp.step||0.01}" placeholder="0">
+          ${inp.unit?`<span>${inp.unit}</span>`:''}
+        </div>${v!=='blind'&&inp.hint?`<div class="hint">${inp.hint}</div>`:''}`;
+    } else if(inp.type==='vec3'){
+      g.innerHTML=`<label>${inp.label}</label>
+        <div class="vi"><span>(</span>
+          <input type="number" id="${rid}_${inp.id}_0" step="0.01" placeholder="0">
+          <span>|</span>
+          <input type="number" id="${rid}_${inp.id}_1" step="0.01" placeholder="0">
+          <span>|</span>
+          <input type="number" id="${rid}_${inp.id}_2" step="0.01" placeholder="0">
+        <span>)</span></div>
+        ${v!=='blind'&&inp.hint?`<div class="hint">${inp.hint}</div>`:''}`;
+    } else if(inp.type==='radio'){
+      const ropts=inp.opts.map(o=>`<label><input type="radio" name="${rid}_${inp.id}" value="${o.v}"> ${o.l}</label>`).join('');
+      g.innerHTML=`<label>${inp.label}</label><div class="rg">${ropts}</div>`;
+    }
+    form.appendChild(g);
+  }
+  const brow=document.createElement('div'); brow.className='brow';
+  const btnP=document.createElement('button'); btnP.className='btn btn-p'; btnP.textContent='🔍 Prüfen';
+  btnP.onclick=()=>evalRule(rid,def);
+  const btnR=document.createElement('button'); btnR.className='btn btn-s'; btnR.textContent='Reset';
+  btnR.onclick=()=>resetRule(rid);
+  brow.appendChild(btnP); brow.appendChild(btnR);
+  form.appendChild(brow); wrap.appendChild(form);
+  const fb=document.createElement('div'); fb.className='fb'; fb.id='fb-'+rid;
+  wrap.appendChild(fb);
+  return wrap;
+}
+
+/* ══════════════════════════════════════════════════════
+   EVAL & SCORE
+   ══════════════════════════════════════════════════════ */
+function collectVals(rid, def){
+  const v={};
+  for(const inp of def.inputs){
+    if(inp.type==='num'){
+      v[inp.id]=document.getElementById(`${rid}_${inp.id}`)?.value||'';
+    } else if(inp.type==='vec3'){
+      v[inp.id]=[0,1,2].map(i=>document.getElementById(`${rid}_${inp.id}_${i}`)?.value||'0');
+    } else if(inp.type==='radio'){
+      v[inp.id]=document.querySelector(`input[name="${rid}_${inp.id}"]:checked`)?.value;
+    }
+  }
+  return v;
+}
+
+function evalRule(rid, def){
+  const v=def.variant||'guided';
+  let res;
+  if(v==='fehler'){
+    const sc=APP.ruleScen[rid];
+    const chosen=document.querySelector(`input[name="${rid}_fehler"]:checked`)?.value;
+    const ok=chosen!==undefined && parseInt(chosen)===sc?.fehlerIdx;
+    res={ok, steps:ok
+      ?`✓ Richtig! Fehler war in Schritt ${(sc.fehlerIdx+1)}.\n\n${sc.fehlerExpl||''}`
+      :`✗ Falsch — Fehler war in Schritt ${(sc?.fehlerIdx??0)+1}.\n\n${sc?.fehlerExpl||''}`};
+  } else if(v==='mc'){
+    const sc=APP.ruleScen[rid];
+    const chosen=document.querySelector(`input[name="${rid}_mc"]:checked`)?.value;
+    const opts=sc?.mcOpts||[];
+    const ci=chosen!==undefined?parseInt(chosen):-1;
+    const ok=ci>=0&&opts[ci]?.correct;
+    const ri=opts.findIndex(o=>o.correct);
+    res={ok, steps:ok
+      ?`✓ Richtig!\n${opts[ci]?.expl||''}`
+      :`✗ Falsch${ri>=0?` — Antwort ${ri+1} war korrekt`:''}\n${opts[ri]?.expl||''}`};
+  } else {
+    const vals=collectVals(rid,def);
+    res=def.check(rid,vals);
+  }
+  APP.results[rid]=res.ok;
+  const fb=document.getElementById('fb-'+rid);
+  fb.className=`fb show ${res.ok?'ok':'err'}`;
+  fb.textContent=res.steps||'';
+  const card=document.getElementById('c-'+rid);
+  card.classList.remove('pass','fail');
+  card.classList.add(res.ok?'pass':'fail');
+  const st=card.querySelector('.rst');
+  st.textContent=res.ok?'✓':'✗';
+  st.style.color=res.ok?'var(--ok)':'var(--err)';
+  updateScore();
+}
+
+function resetRule(rid){
+  delete APP.results[rid];
+  const fb=document.getElementById('fb-'+rid);
+  if(fb){fb.className='fb';fb.textContent='';}
+  const card=document.getElementById('c-'+rid);
+  if(card){
+    card.classList.remove('pass','fail');
+    const st=card.querySelector('.rst');
+    if(st){st.textContent='○';st.style.color='var(--text2)';}
+  }
+  updateScore();
+}
+
+function updateScore(){
+  const total=APP.order.length;
+  const pass=Object.values(APP.results).filter(Boolean).length;
+  const b=document.getElementById('score-badge');
+  b.textContent=`${pass}/${total} Regeln`;
+  b.className='score-badge show'+(pass===total&&total>0?' win':'');
+}
+
+function showResult(){
+  const title = document.getElementById('drw-title');
+  const body  = document.getElementById('drw-body');
+  title.textContent = 'Ergebnis';
+  body.innerHTML = '';
+
+  const total=APP.order.length;
+  const pass=Object.values(APP.results).filter(Boolean).length;
+  const allDone = Object.keys(APP.results).length === total;
+
+  // Park-Zusammenfassung als Text für Kopieren
+  const parkLines = APP.ropes.map(r=>{
+    const a=APP.plats[r.from], b=APP.plats[r.to]; if(!a||!b) return '';
+    const d=V.sub([b.x,b.y,b.z],[a.x,a.y,a.z]);
+    return `${r.from}${r.to}: ${r.from}${V.str([a.x,a.y,a.z])} → ${r.to}${V.str([b.x,b.y,b.z])}, d⃗=${V.str(d)}, |d⃗|=${n2(V.len(d))}m`;
+  });
+
+  const itemLines = APP.order.map(rid=>{
+    const def=RDEFS[rid]; if(!def) return '';
+    const res=APP.results[rid];
+    const rk=APP.ruleRopes[rid];
+    const seilStr=Array.isArray(rk)?rk.join(' & '):rk||'—';
+    const fb=document.getElementById('fb-'+rid)?.textContent||'';
+    return `${res===true?'✓':'res'===undefined?'○':'✗'} [${rid}] ${def.title} — Seil: ${seilStr}` + (fb?'\n   '+fb.split('\n')[fb.split('\n').length-1]:'');
+  });
+
+  const copyText = [
+    `ZiplineTÜV — TÜV-Protokoll`,
+    `Name: ${document.getElementById('result-name')?.value||''}`,
+    `Score: ${pass}/${total}`,
+    ``,
+    `=== Park ===`,
+    ...parkLines,
+    ``,
+    `=== Regelkarten ===`,
+    ...itemLines,
+  ].join('\n');
+
+  const wrap = document.createElement('div'); wrap.className='result-wrap'; wrap.id='result-sec';
+
+  // Name-Zeile
+  const nameRow = document.createElement('div'); nameRow.className='result-name-row';
+  nameRow.innerHTML=`<label>Namen:</label><input type="text" id="result-name" placeholder="Vorname, Nachname">`;
+  wrap.appendChild(nameRow);
+
+  // Score
+  const scoreDiv = document.createElement('div');
+  scoreDiv.className='result-score'+(pass===total&&total>0?' win':pass>0?' ':' fail');
+  scoreDiv.textContent=`${pass} / ${total} ${pass===total&&total>0?'🎉':''}`;
+  wrap.appendChild(scoreDiv);
+
+  // Park-Info
+  const parkDiv = document.createElement('div'); parkDiv.className='result-park';
+  parkDiv.innerHTML='<b>Park:</b><br>'+APP.ropes.map(r=>{
+    const a=APP.plats[r.from], b=APP.plats[r.to]; if(!a||!b) return '';
+    const d=V.sub([b.x,b.y,b.z],[a.x,a.y,a.z]);
+    return `${r.from}${r.to}:  d⃗ = ${V.str(d)},  |d⃗| = ${n2(V.len(d))} m`;
+  }).join('<br>');
+  wrap.appendChild(parkDiv);
+
+  // Regelkarten-Items
+  const itemsDiv = document.createElement('div'); itemsDiv.className='result-items';
+  APP.order.forEach(rid=>{
+    const def=RDEFS[rid]; if(!def) return;
+    const res=APP.results[rid];
+    const rk=APP.ruleRopes[rid];
+    const seilStr=Array.isArray(rk)?rk.join(' & '):rk||'nicht gewählt';
+    const fbEl=document.getElementById('fb-'+rid);
+    const fbText=fbEl?.textContent||'—';
+    const item=document.createElement('div');
+    item.className='result-item '+(res===true?'ok':'err');
+    item.innerHTML=`<div class="ri-icon">${res===true?'✓':res===false?'✗':'○'}</div>
+      <div class="ri-body">
+        <div class="ri-title">[${rid}] ${def.title} — ${seilStr}</div>
+        <div class="ri-steps">${fbText}</div>
+      </div>`;
+    itemsDiv.appendChild(item);
+  });
+  wrap.appendChild(itemsDiv);
+
+  // Buttons
+  const btns = document.createElement('div'); btns.className='result-btns';
+  const cpBtn = document.createElement('button'); cpBtn.className='btn btn-s';
+  cpBtn.textContent='📋 Kopieren';
+  cpBtn.onclick=()=>{
+    const name=document.getElementById('result-name')?.value||'';
+    const txt=copyText.replace('Name: ','Name: '+name);
+    navigator.clipboard.writeText(txt).then(()=>{ cpBtn.textContent='✓ Kopiert!'; setTimeout(()=>cpBtn.textContent='📋 Kopieren',2000); });
+  };
+  const prBtn = document.createElement('button'); prBtn.className='btn btn-s';
+  prBtn.textContent='🖨 Drucken';
+  prBtn.onclick=()=>window.print();
+  btns.appendChild(cpBtn); btns.appendChild(prBtn);
+  wrap.appendChild(btns);
+
+  body.appendChild(wrap);
+  if(!drawerOpen) toggleDrawer();
+}
+
+/* ══════════════════════════════════════════════════════
+   HILFSFUNKTIONEN FÜR REGELN
+   ══════════════════════════════════════════════════════ */
+function getRd1(rid){
+  const key=APP.ruleRopes[rid]; if(!key) return null;
+  const rope=APP.ropes.find(r=>ropeKey(r)===key); if(!rope) return null;
+  const sv=platPt(rope.from), av=platPt(rope.to);
+  const d=V.sub(av,sv);
+  return { rope, sv, av, d, lbl:`${rope.from}→${rope.to}` };
+}
+
+function getRd2(rid){
+  const keys=APP.ruleRopes[rid]; if(!Array.isArray(keys)||keys.length<2) return null;
+  const r1=APP.ropes.find(r=>ropeKey(r)===keys[0]);
+  const r2=APP.ropes.find(r=>ropeKey(r)===keys[1]);
+  if(!r1||!r2) return null;
+  const sv1=platPt(r1.from), av1=platPt(r1.to), d1=V.sub(av1,sv1);
+  const sv2=platPt(r2.from), av2=platPt(r2.to), d2=V.sub(av2,sv2);
+  return { r1,r2,sv1,av1,d1,sv2,av2,d2 };
+}
+
+function errR(msg){ return { ok:false, steps:'⚠ '+msg }; }
+
+/* ══════════════════════════════════════════════════════
+   REGEL-DEFINITIONEN
+   ══════════════════════════════════════════════════════ */
+const RDEFS = {
+
+  A1: {
+    cat:'Parameterdarstellung', title:'Seilgerade aufstellen',
+    twoRopes: false,
+    vorschrift:'§2 — Jedes Seil ist im Lageplan als Gerade einzutragen: Stützvektor + Richtungsvektor.',
+    variant:'fehler',
+    genScen(rid){
+      const rd=getRd1(rid); if(!rd) return {};
+      const {sv,av,d}=rd, f=rd.rope.from, t=rd.rope.to;
+      const wd=[-d[0],-d[1],-d[2]]; // Fehler: A−B statt B−A
+      return {
+        fehlerLines:[
+          `Stützvektor:       sv = ${f}${V.str(sv)}`,
+          `Richtungsvektor:   d⃗ = ${f}${V.str(sv)} − ${t}${V.str(av)} = ${V.str(wd)}`,
+          `Gerade:            g: x⃗ = ${V.str(sv)} + t · ${V.str(wd)}`,
+        ],
+        fehlerIdx:1,
+        fehlerExpl:`Richtungsvektor: d⃗ = ${t}−${f} = ${t}${V.str(av)} − ${f}${V.str(sv)} = ${V.str(d)}`,
+      };
+    },
+    ctx(rid){
+      const rd=getRd1(rid); if(!rd) return '';
+      return `Vorschrift §2: Jedes Seil muss im technischen Lageplan als <b>Gerade</b> eingetragen sein.<br>
+        Seil ${rd.lbl}: von <b>${rd.rope.from}${V.str(rd.sv)}</b> nach <b>${rd.rope.to}${V.str(rd.av)}</b>.<br>
+        Stelle die Geradengleichung auf (Stütz- und Richtungsvektor).`;
+    },
+    inputs:[
+      { type:'vec3', id:'sv', label:'Stützvektor' },
+      { type:'vec3', id:'rv', label:'Richtungsvektor' },
+    ],
+    check(rid, vals){
+      const rd=getRd1(rid); if(!rd) return errR('Erst Seil wählen');
+      const {sv,av,d}=rd;
+      const es=vals.sv.map(parseFloat), er=vals.rv.map(parseFloat);
+      const sok=V.eq3(es,sv,0.1)||V.eq3(es,av,0.1);
+      const rok=V.par(er,d)&&V.len(er)>0.01;
+      return { ok:sok&&rok, steps:[
+        `Korrekte Geradengleichung:`,
+        `g: x⃗ = ${V.str(sv)} + t · ${V.str(d)}`,
+        ``,
+        `Dein Stützvektor ${V.str(es)}:`,
+        sok ? `  ✓ (entspricht ${rd.rope.from} oder ${rd.rope.to})`
+            : `  ✗ (muss ${rd.rope.from}${V.str(sv)} oder ${rd.rope.to}${V.str(av)} sein)`,
+        `Dein Richtungsvektor ${V.str(er)}:`,
+        rok ? `  ✓ (parallel zu ${V.str(d)})`
+            : `  ✗ (muss parallel zu ${V.str(d)} sein)`,
+      ].join('\n')};
+    }
+  },
+
+  C1: {
+    cat:'Betrag', title:'Seillänge berechnen',
+    twoRopes: false,
+    vorschrift:'§3 — Seile müssen mind. 4 m und dürfen höchstens 20 m lang sein.',
+    variant:'mc',
+    genScen(rid){
+      const rd=getRd1(rid); if(!rd) return {};
+      const {d}=rd, [dx,dy,dz]=d;
+      const len=V.len(d), rok=len>=4&&len<=20;
+      const wL1=Math.abs(dx)+Math.abs(dy)+Math.abs(dz);
+      const wL2=dx*dx+dy*dy+dz*dz;
+      const fmt=(l,v)=>`${l} → ${v>=4&&v<=20?'✓ Zulässig':'✗ Nicht zulässig'}`;
+      return { mcOpts: shuffle([
+        { text:`|d⃗| = √(${n(dx)}²+${n(dy)}²+${n(dz)}²) = ${n2(len)} m   ${fmt('',len)}`, correct:true,
+          expl:`Formel: Betrag = Wurzel der Quadratsumme. ${n2(len)} m ${rok?'liegt in [4,20]':'liegt außerhalb [4,20]'}.` },
+        { text:`|d⃗| = |${n(dx)}|+|${n(dy)}|+|${n(dz)}| = ${n2(wL1)} m   ${fmt('',wL1)}`, correct:false,
+          expl:`Fehler: Betrag ≠ Summe der Beträge. Richtige Formel: √(d₁²+d₂²+d₃²).` },
+        { text:`|d⃗| = ${n(dx)}²+${n(dy)}²+${n(dz)}² = ${n2(wL2)} m   ${fmt('',wL2)}`, correct:false,
+          expl:`Fehler: Wurzel fehlt. Richtige Formel: |d⃗| = √(d₁²+d₂²+d₃²).` },
+        { text:`|d⃗| = √(${n(dx)}²+${n(dy)}²+${n(dz)}²) = ${n2(len)} m   → ${rok?'✗ Nicht zulässig':'✓ Zulässig'}  (Urteil umgekehrt)`, correct:false,
+          expl:`Fehler: Betrag korrekt (${n2(len)} m), aber Urteil falsch. ${n2(len)} m ${rok?'liegt in [4,20] → Zulässig':'liegt außerhalb [4,20] → Nicht zulässig'}.` },
+      ])};
+    },
+    ctx(rid){
+      const rd=getRd1(rid); if(!rd) return '';
+      return `Vorschrift §3: Seile dürfen nicht kürzer als <b>4 m</b> oder länger als <b>20 m</b> sein.<br>
+        Seil ${rd.lbl}: von ${V.str(rd.sv)} nach ${V.str(rd.av)}.`;
+    },
+    inputs:[
+      { type:'num', id:'L', label:'Seillänge', unit:'m', step:0.01 },
+      { type:'radio', id:'urteil', label:'TÜV-Urteil',
+        opts:[{v:'pass',l:'✓ Zulässig'},{v:'fail',l:'✗ Nicht zulässig'}] }
+    ],
+    check(rid, vals){
+      const rd=getRd1(rid); if(!rd) return errR('Erst Seil wählen');
+      const {d}=rd;
+      const [dx,dy,dz]=d, len=V.len(d);
+      const ent=parseFloat(vals.L), cok=Math.abs(ent-len)<0.06, rok=len>=4&&len<=20;
+      const urteilOk=(vals.urteil==='pass')===rok;
+      return { ok:cok&&urteilOk, steps:[
+        `d⃗ = ${V.str(d)}`,
+        `|d⃗| = √(${n(dx)}² + ${n(dy)}² + ${n(dz)}²)`,
+        `    = √${n2(dx*dx+dy*dy+dz*dz)} ≈ ${n2(len)} m`,
+        cok ? (rok ? `✓ ${n2(len)} m ∈ [4, 20] → Zulässig`
+                   : `✗ ${n2(len)} m ∉ [4, 20] → Nicht zulässig`)
+            : `✗ Rechenfehler — erwartet ${n2(len)} m`,
+        !urteilOk ? `✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}` : '',
+      ].filter(Boolean).join('\n')};
+    }
+  },
+
+  C3: {
+    cat:'Betrag', title:'Fahrtrichtungsvektor',
+    twoRopes: false,
+    vorschrift:'§9 — Die Bremsanlage benötigt den Einheitsvektor (Länge = 1) der Fahrtrichtung.',
+    variant:'blind',
+    ctx(rid){
+      const rd=getRd1(rid); if(!rd) return '';
+      return `Vorschrift §9: Die Bremsanlage benötigt den <b>Einheitsvektor</b> (Länge = 1) in Fahrtrichtung.<br>
+        Seil ${rd.lbl}: von ${V.str(rd.sv)} nach ${V.str(rd.av)}.`;
+    },
+    inputs:[
+      { type:'vec3', id:'e', label:'Einheitsvektor ê',
+        hint:'Komponenten auf 2 Dezimalstellen runden' }
+    ],
+    check(rid, vals){
+      const rd=getRd1(rid); if(!rd) return errR('Erst Seil wählen');
+      const {d}=rd;
+      const len=V.len(d), unit=V.unit(d), ent=vals.e.map(parseFloat);
+      const ok=V.eq3(ent,unit,0.015);
+      return { ok, steps:[
+        `d⃗ = ${V.str(d)},   |d⃗| = ${n2(len)}`,
+        `ê = d⃗ ÷ |d⃗| = (${unit.map(x=>x.toFixed(2)).join(' | ')})`,
+        ok ? `✓ Korrekt!` : `✗ Erwartet: (${unit.map(x=>x.toFixed(2)).join(' | ')})`,
+      ].join('\n')};
+    }
+  },
+
+  D1: {
+    cat:'Winkel', title:'Neigungswinkel',
+    twoRopes: false,
+    vorschrift:'§5 — Neigungswinkel zur Horizontalen: 20°–60°. Zu flach → Fahrer bleibt stecken; zu steil → Bremse versagt.',
+    variant:'fehler',
+    genScen(rid){
+      const rd=getRd1(rid); if(!rd) return {};
+      const {d}=rd;
+      const len=V.len(d), dz=Math.abs(d[2]);
+      const sinVal=dz/len, alphaRight=deg(Math.asin(sinVal));
+      // Fehler: cos statt sin
+      const alphaWrong=n2(deg(Math.acos(sinVal)));
+      return {
+        fehlerLines:[
+          `d⃗ = ${V.str(d)},   |d⃗| = √${n2(len*len)} = ${n2(len)}`,
+          `cos α = |Δx₃| / |d⃗| = ${n2(dz)} / ${n2(len)} = ${n2(sinVal)}`,
+          `α = arccos(${n2(sinVal)}) ≈ ${alphaWrong}°`,
+        ],
+        fehlerIdx:1,
+        fehlerExpl:`Schritt 2: Es gilt sin α = |Δx₃| / |d⃗|, nicht cos α.\nα = arcsin(${n2(sinVal)}) ≈ ${n2(alphaRight)}°`,
+      };
+    },
+    ctx(rid){
+      const rd=getRd1(rid); if(!rd) return '';
+      return `Vorschrift §5: Zulässiger Neigungswinkel zur Horizontalen: <b>20° – 60°</b>.<br>
+        (Zu flach: Fahrer bleibt stecken. Zu steil: Bremse versagt.)<br>
+        Seil ${rd.lbl}: von ${V.str(rd.sv)} nach ${V.str(rd.av)}.`;
+    },
+    inputs:[
+      { type:'num', id:'a', label:'Neigungswinkel α', unit:'°', step:0.1 },
+      { type:'radio', id:'urteil', label:'TÜV-Urteil',
+        opts:[{v:'pass',l:'✓ Zulässig'},{v:'fail',l:'✗ Nicht zulässig'}] }
+    ],
+    check(rid, vals){
+      const rd=getRd1(rid); if(!rd) return errR('Erst Seil wählen');
+      const {d}=rd;
+      const len=V.len(d), dz=Math.abs(d[2]);
+      const sinA=dz/len, alpha=deg(Math.asin(sinA));
+      const ent=parseFloat(vals.a), cok=Math.abs(ent-alpha)<0.6, rok=alpha>=20&&alpha<=60;
+      const urteilOk=(vals.urteil==='pass')===rok;
+      return { ok:cok&&urteilOk, steps:[
+        `sin α = |Δz| ÷ |d⃗| = ${n2(dz)} ÷ ${n2(len)} = ${n2(sinA)}`,
+        `α = arcsin(${n2(sinA)}) ≈ ${n2(alpha)}°`,
+        cok ? (rok ? `✓ ${n2(alpha)}° ∈ [20°, 60°]` : `✗ ${n2(alpha)}° ∉ [20°, 60°]`)
+            : `✗ Rechenfehler — erwartet ${n2(alpha)}°`,
+        !urteilOk ? `✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}` : '',
+      ].filter(Boolean).join('\n')};
+    }
+  },
+
+  E1: {
+    cat:'Parallelität', title:'Parallelität zweier Seile',
+    twoRopes: true,
+    vorschrift:'§8 — Parallele Seile dürfen nicht in entgegengesetzte Richtungen verlaufen (kein Gegenverkehr).',
+    variant:'mc',
+    genScen(rid){
+      const rd=getRd2(rid); if(!rd) return {};
+      const {d1,d2}=rd;
+      const cross=V.cross(d1,d2), lc=V.len(cross);
+      const isPar=lc<0.02;
+      const sameDir=isPar&&V.dot(d1,d2)>0;
+      const correctText=isPar
+        ?`d⃗₁ × d⃗₂ = ${V.str(cross)} ≈ 0⃗  →  Seile sind parallel`
+        :`d⃗₁ × d⃗₂ = ${V.str(cross)},  |…| = ${n2(lc)} ≠ 0  →  Seile sind nicht parallel`;
+      return { mcOpts: shuffle([
+        { text:correctText, correct:true,
+          expl:`Kreuzprodukt ${isPar?'≈ 0⃗ → parallel':'≠ 0⃗ → nicht parallel'}.${isPar?` Skalarprodukt = ${n2(V.dot(d1,d2))} → ${sameDir?'Gleiche Richtung':'Gegenrichtung'}.`:''}` },
+        { text:`d⃗₁ · d⃗₂ = ${n2(V.dot(d1,d2))} ≠ 0  →  Seile sind nicht parallel`, correct:false,
+          expl:`Fehler: Skalarprodukt ≠ 0 bedeutet nicht "nicht parallel". Für Parallelität gilt: Kreuzprodukt = 0⃗.` },
+        { text:isPar
+          ?`d⃗₁ × d⃗₂ = ${V.str(cross)}  →  Seile sind nicht parallel`
+          :`d⃗₁ × d⃗₂ = ${V.str(cross)},  |…| = ${n2(lc)}  →  Seile sind parallel`,
+          correct:false, expl:`Fehler: Schlussfolgerung umgekehrt. |Kreuzprodukt| = 0 ↔ parallel.` },
+        { text:`|d⃗₁| = ${n2(V.len(d1))},  |d⃗₂| = ${n2(V.len(d2))}  →  gleiche Länge belegt Parallelität`, correct:false,
+          expl:`Fehler: Gleiche Länge ist kein Kriterium für Parallelität.` },
+      ])};
+    },
+    ctx(rid){
+      const rd=getRd2(rid); if(!rd) return '';
+      return `Vorschrift §8: Parallele Seile müssen in dieselbe Richtung weisen (kein Gegenverkehr).<br>
+        Seil 1 (${rd.r1.from}→${rd.r1.to}): d⃗₁ = ${V.str(rd.d1)}<br>
+        Seil 2 (${rd.r2.from}→${rd.r2.to}): d⃗₂ = ${V.str(rd.d2)}<br>
+        Sind die Seile parallel?`;
+    },
+    inputs:[
+      { type:'radio', id:'urteil', label:'Urteil',
+        opts:[{v:'ja',l:'Ja, parallel'},{v:'nein',l:'Nein, nicht parallel'}] }
+    ],
+    check(rid, vals){
+      const rd=getRd2(rid); if(!rd) return errR('Erst beide Seile wählen');
+      const {d1,d2}=rd;
+      const cross=V.cross(d1,d2), lenCross=V.len(cross);
+      const isPar=lenCross<0.02;
+      const sameDir=isPar && V.dot(d1,d2)>0;
+      const urteilOk=(vals.urteil==='ja')===isPar;
+      return { ok:urteilOk, steps:[
+        `d⃗₁ × d⃗₂ = ${V.str(cross)}`,
+        `|d⃗₁ × d⃗₂| = ${n2(lenCross)}`,
+        isPar ? `⟹ ≈ 0  →  Seile sind parallel`
+              : `⟹ ≠ 0  →  Seile sind nicht parallel`,
+        isPar ? `d⃗₁ · d⃗₂ = ${n2(V.dot(d1,d2))}  →  ${sameDir?'Gleiche Richtung (kein Gegenverkehr ✓)':'Gegenrichtung ⚠ Gegenverkehr!'}`
+              : '',
+        urteilOk ? `✓ Korrekt!`
+                 : `✗ Antwort falsch — korrekt: ${isPar?'Ja, parallel':'Nein, nicht parallel'}`,
+      ].filter(Boolean).join('\n')};
+    }
+  },
+
+  B1: {
+    cat:'Parameterdarstellung', title:'Hindernischeck',
+    twoRopes: false,
+    vorschrift:'§6 — Kein Hindernis darf sich auf dem Seilpfad befinden (Parameterwert t prüfen).',
+    variant:'blind',
+    genScen(rid){
+      const key=APP.ruleRopes[rid]; if(!key) return {};
+      const rope=APP.ropes.find(r=>ropeKey(r)===key); if(!rope) return {};
+      const sv=platPt(rope.from), d=V.sub(platPt(rope.to),sv);
+      const onLine=Math.random()>0.5;
+      const t=+(0.25+Math.random()*0.5).toFixed(2);
+      const base=[sv[0]+t*d[0], sv[1]+t*d[1], sv[2]+t*d[2]];
+      let P;
+      if(onLine){
+        P=base.map(x=>Math.round(x*10)/10);
+      } else {
+        // Versatz senkrecht zur Seilrichtung
+        let perp=V.cross(d,[0,1,0]);
+        if(V.len(perp)<0.1) perp=V.cross(d,[1,0,0]);
+        const pu=V.unit(perp);
+        const off=1+Math.round(Math.random()); // 1 oder 2
+        P=[
+          Math.round((base[0]+pu[0]*off)*10)/10,
+          Math.round((base[1]+pu[1]*off)*10)/10,
+          Math.round((base[2]+pu[2]*off)*10)/10,
+        ];
+      }
+      return { P };
+    },
+    ctx(rid){
+      const rd=getRd1(rid); if(!rd) return '';
+      const sc=APP.ruleScen[rid]; if(!sc?.P) return `Seil ${rd.lbl} gewählt — Szenario lädt…`;
+      const [px,py,pz]=sc.P;
+      return `Vorschrift §6: Kein Hindernis darf im Seilpfad stehen.<br>
+        Seilgerade: g: x⃗ = ${V.str(rd.sv)} + t · ${V.str(rd.d)}<br>
+        Ein Baum steht bei <b>P(${px}|${py}|${pz})</b>. Liegt er auf dem Seilpfad?`;
+    },
+    inputs:[
+      { type:'radio', id:'on', label:'Liegt P auf dem Seilpfad?',
+        opts:[{v:'ja',l:'Ja'},{v:'nein',l:'Nein'}] },
+      { type:'num', id:'t', label:'Falls ja: Parameterwert t', step:0.001,
+        hint:'Leer lassen wenn Nein' },
+    ],
+    check(rid, vals){
+      const rd=getRd1(rid); if(!rd) return errR('Erst Seil wählen');
+      const sc=APP.ruleScen[rid]; if(!sc?.P) return errR('Szenario fehlt');
+      const {sv,d}=rd, P=sc.P;
+      let tc=null;
+      for(let i=0;i<3;i++){ if(Math.abs(d[i])>0.001){tc=(P[i]-sv[i])/d[i];break;} }
+      const eol=tc!==null&&[0,1,2].every(i=>Math.abs(sv[i]+tc*d[i]-P[i])<0.05);
+      const uon=vals.on==='ja', radOk=uon===eol;
+      const tent=parseFloat(vals.t), tOk=!uon||(eol&&!isNaN(tent)&&Math.abs(tent-tc)<0.05);
+      const steps=[`g: x⃗ = ${V.str(sv)} + t · ${V.str(d)}`, `P = (${P.join('|')})`];
+      for(let i=0;i<3;i++) if(Math.abs(d[i])>0.001){
+        const ti=(P[i]-sv[i])/d[i];
+        steps.push(`  ${['x','y','z'][i]}-Komp.: t = (${n2(P[i])} − ${n2(sv[i])}) ÷ ${n2(d[i])} = ${n2(ti)}`);
+      }
+      if(tc!==null){
+        steps.push(eol ? `Probe mit t=${n2(tc)}:` : `Widerspruch → P liegt nicht auf g`);
+        if(eol) [0,1,2].forEach(i=>{
+          const v=sv[i]+tc*d[i];
+          steps.push(`  ${['x','y','z'][i]}: ${n2(v)} ${Math.abs(v-P[i])<0.05?'✓':'✗ ≠ '+n2(P[i])}`);
+        });
+      }
+      steps.push(eol?`⟹ Baum liegt auf Seilpfad (t = ${n2(tc)})`:`⟹ Baum liegt NICHT auf Seilpfad`);
+      if(!radOk) steps.push(`✗ Antwort falsch — korrekt: ${eol?'Ja':'Nein'}`);
+      else if(!tOk) steps.push(`✗ t-Wert falsch — erwartet: ${n2(tc)}`);
+      else steps.push(`✓ Korrekt!`);
+      return { ok:radOk&&tOk, steps:steps.join('\n') };
+    }
+  },
+
+  F1: {
+    cat:'Abstand', title:'Sicherheitsabstand',
+    twoRopes: false,
+    vorschrift:'§7 — Mindestabstand jedes Objekts zum Seilpfad: 3 m (Lotfußpunkt berechnen).',
+    variant:'fehler',
+    genScen(rid){
+      const key=APP.ruleRopes[rid]; if(!key) return {};
+      const rope=APP.ropes.find(r=>ropeKey(r)===key); if(!rope) return {};
+      const sv=platPt(rope.from), d=V.sub(platPt(rope.to),sv);
+      const t0=+(0.2+Math.random()*0.6).toFixed(2);
+      const base=[sv[0]+t0*d[0], sv[1]+t0*d[1], sv[2]+t0*d[2]];
+      let perp=V.cross(d,[0,1,0]);
+      if(V.len(perp)<0.1) perp=V.cross(d,[1,0,0]);
+      const pu=V.unit(perp);
+      const distP=2+Math.floor(Math.random()*3);
+      const P=[
+        Math.round((base[0]+pu[0]*distP)*2)/2,
+        Math.round((base[1]+pu[1]*distP)*2)/2,
+        Math.round((base[2]+pu[2]*distP)*2)/2,
+      ];
+      // Korrekte Rechnung
+      const d2=V.dot(d,d), dlen=V.len(d);
+      const num=V.dot(V.sub(P,sv),d);
+      const tc=num/d2;
+      const F=[sv[0]+tc*d[0], sv[1]+tc*d[1], sv[2]+tc*d[2]];
+      const dist=V.len(V.sub(P,F));
+      // Fehler: ÷|d| statt ÷|d|²
+      const tcW=num/dlen;
+      const Fw=[sv[0]+tcW*d[0], sv[1]+tcW*d[1], sv[2]+tcW*d[2]];
+      const distW=V.len(V.sub(P,Fw));
+      return {
+        P,
+        fehlerLines:[
+          `Schritt 1:  (P − sv) · d⃗ = ${V.str(V.sub(P,sv))} · ${V.str(d)} = ${n2(num)}`,
+          `Schritt 2:  t = ${n2(num)} ÷ |d⃗| = ${n2(num)} ÷ ${n2(dlen)} = ${n2(tcW)}`,
+          `Schritt 3:  F = ${V.str(sv)} + ${n2(tcW)} · ${V.str(d)} = ${V.str(Fw.map(x=>Math.round(x*100)/100))}`,
+          `Schritt 4:  |PF| = ${n2(distW)} m`,
+        ],
+        fehlerIdx:1,
+        fehlerExpl:`Schritt 2: Nenner muss |d⃗|² = ${n2(d2)} sein, nicht |d⃗| = ${n2(dlen)}.\nt = ${n2(num)} ÷ ${n2(d2)} = ${n2(tc)},   F = ${V.str(F.map(x=>Math.round(x*100)/100))},   |PF| = ${n2(dist)} m`,
+      };
+    },
+    ctx(rid){
+      const rd=getRd1(rid); if(!rd) return '';
+      const sc=APP.ruleScen[rid]; if(!sc?.P) return 'Seil wählen…';
+      return `Vorschrift §7: Kein Objekt darf dem Seilpfad auf <b>weniger als 3 m</b> nahekommen.<br>
+        Seilgerade: g: x⃗ = ${V.str(rd.sv)} + t · ${V.str(rd.d)}<br>
+        Eine Überwachungskamera steht bei <b>P${V.str(sc.P)}</b>.<br>
+        Berechne den Lotfußpunkt F auf g und den Abstand |PF|.`;
+    },
+    inputs:[
+      { type:'num',  id:'t', label:'Parameterwert t des Lotfußpunkts', step:0.001 },
+      { type:'vec3', id:'F', label:'Lotfußpunkt F', hint:'Komponenten auf 2 Dezimalstellen runden' },
+      { type:'num',  id:'dist', label:'Abstand |PF|', unit:'m', step:0.01 },
+      { type:'radio', id:'urteil', label:'TÜV-Urteil',
+        opts:[{v:'pass',l:'✓ Zulässig (≥ 3 m)'},{v:'fail',l:'✗ Nicht zulässig (< 3 m)'}] },
+    ],
+    check(rid, vals){
+      const rd=getRd1(rid); if(!rd) return errR('Erst Seil wählen');
+      const sc=APP.ruleScen[rid]; if(!sc?.P) return errR('Szenario fehlt');
+      const {sv,d}=rd, P=sc.P;
+      const d2=V.dot(d,d);
+      const tc=V.dot(V.sub(P,sv),d)/d2;
+      const F=[sv[0]+tc*d[0], sv[1]+tc*d[1], sv[2]+tc*d[2]];
+      const PFvec=V.sub(P,F), dist=V.len(PFvec);
+      const Frnd=F.map(x=>Math.round(x*100)/100);
+
+      const entT=parseFloat(vals.t);
+      const entF=vals.F.map(parseFloat);
+      const entD=parseFloat(vals.dist);
+      const tOk=Math.abs(entT-tc)<0.05;
+      const fOk=V.eq3(entF,Frnd,0.11);
+      const dOk=Math.abs(entD-dist)<0.12;
+      const rok=dist>=3;
+      const uOk=(vals.urteil==='pass')===rok;
+
+      const dotVal=n2(V.dot(V.sub(P,sv),d));
+      return { ok:tOk&&fOk&&dOk&&uOk, steps:[
+        `g: x⃗ = ${V.str(sv)} + t · ${V.str(d)},   P = ${V.str(P)}`,
+        ``,
+        `Lotfußpunkt: (F − P) · d⃗ = 0`,
+        `t = (P − sv) · d⃗ ÷ |d⃗|²`,
+        `  = ${V.str(V.sub(P,sv))} · ${V.str(d)} ÷ ${n2(d2)}`,
+        `  = ${dotVal} ÷ ${n2(d2)} = ${n2(tc)}`,
+        tOk ? `✓ t korrekt` : `✗ t erwartet: ${n2(tc)}`,
+        ``,
+        `F = ${V.str(sv)} + ${n2(tc)} · ${V.str(d)} = ${V.str(Frnd)}`,
+        fOk ? `✓ F korrekt` : `✗ F erwartet: ${V.str(Frnd)}`,
+        ``,
+        `|PF| = |${V.str(PFvec.map(x=>Math.round(x*100)/100))}| = ${n2(dist)} m`,
+        dOk ? `✓ Abstand korrekt` : `✗ Abstand erwartet: ${n2(dist)} m`,
+        ``,
+        rok ? `${n2(dist)} m ≥ 3 m  →  Zulässig` : `${n2(dist)} m < 3 m  →  Nicht zulässig`,
+        uOk ? `✓ Urteil korrekt` : `✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`,
+      ].join('\n')};
+    }
+  },
+
+  G1: {
+    cat:'Lagebeziehung', title:'Lagebeziehung zweier Seile',
+    twoRopes: true,
+    vorschrift:'§8b — Sich kreuzende Seile müssen gemeldet und mit einer Sicherheitsbrücke gesichert werden.',
+    variant:'mc',
+    genScen(rid){
+      const rd=getRd2(rid); if(!rd) return {};
+      const {sv1,sv2,d1,d2}=rd;
+      const cross=V.cross(d1,d2), lc=V.len(cross);
+      const isPar=lc<0.02;
+      let isIntersect=false;
+      if(!isPar){
+        const dv=V.sub(sv2,sv1);
+        outer: for(let i=0;i<3;i++) for(let j=i+1;j<3;j++){
+          const det=d1[i]*(-d2[j])-d1[j]*(-d2[i]);
+          if(Math.abs(det)>0.001){
+            const tv=(dv[i]*(-d2[j])-dv[j]*(-d2[i]))/det;
+            const sval=(d1[i]*dv[j]-d1[j]*dv[i])/det;
+            const P1=V.add(sv1,V.sc(d1,tv)), P2=V.add(sv2,V.sc(d2,sval));
+            if(V.len(V.sub(P1,P2))<0.05){ isIntersect=true; break outer; }
+          }
+        }
+      }
+      const lageStr={par:'Parallel (d⃗₁ × d⃗₂ ≈ 0⃗)',sch:'Schneidend (LGS → eindeutiger Schnittpunkt)',win:'Windschief (nicht parallel, kein Schnittpunkt)'};
+      const lage=isPar?'par':(isIntersect?'sch':'win');
+      return { mcOpts: shuffle([
+        { text:lageStr.par, correct:isPar,
+          expl:isPar?`d⃗₁ × d⃗₂ ≈ 0⃗ → parallel.`:`d⃗₁ × d⃗₂ = ${V.str(cross)} ≠ 0⃗ → nicht parallel.` },
+        { text:lageStr.sch, correct:isIntersect,
+          expl:isIntersect?`LGS liefert Schnittpunkt (Probe erfüllt).`:`LGS-Probe ergibt zwei verschiedene Punkte → kein Schnittpunkt.` },
+        { text:lageStr.win, correct:!isPar&&!isIntersect,
+          expl:!isPar&&!isIntersect?`Nicht parallel (|Kreuzprodukt| ≠ 0) und kein Schnittpunkt.`:`Widerspruch: ${lageStr[lage]} trifft zu.` },
+        { text:'Identisch (beide Seile liegen auf derselben Geraden)', correct:false,
+          expl:`Identisch bedeutet: ein Punkt von g₁ liegt auf g₂ UND gleiche Richtung — hier nicht der Fall.` },
+      ])};
+    },
+    ctx(rid){
+      const rd=getRd2(rid); if(!rd) return '';
+      return `Vorschrift §8b: Schneidende Seile erfordern eine Sicherheitsbrücke.<br>
+        g₁: x⃗ = ${V.str(rd.sv1)} + t · ${V.str(rd.d1)}<br>
+        g₂: x⃗ = ${V.str(rd.sv2)} + s · ${V.str(rd.d2)}<br>
+        Bestimme die Lagebeziehung der beiden Seilgeraden.`;
+    },
+    inputs:[
+      { type:'radio', id:'lage', label:'Lagebeziehung',
+        opts:[{v:'par',l:'Parallel'},{v:'sch',l:'Schneidend'},{v:'win',l:'Windschief'}] },
+    ],
+    check(rid, vals){
+      const rd=getRd2(rid); if(!rd) return errR('Erst beide Seile wählen');
+      const {sv1,sv2,d1,d2}=rd;
+      const cross=V.cross(d1,d2), lenCross=V.len(cross);
+      const isPar=lenCross<0.02;
+      let isIntersect=false, tval=null, sval=null;
+      const steps=[];
+
+      if(isPar){
+        steps.push(`d⃗₁ × d⃗₂ = ${V.str(cross)} ≈ 0⃗  →  parallel`);
+      } else {
+        steps.push(`d⃗₁ × d⃗₂ = ${V.str(cross)},  |…| = ${n2(lenCross)} ≠ 0  →  nicht parallel`);
+        const dv=V.sub(sv2,sv1);
+        let solved=false;
+        for(let i=0;i<3&&!solved;i++){
+          for(let j=i+1;j<3&&!solved;j++){
+            const det=d1[i]*(-d2[j])-d1[j]*(-d2[i]);
+            if(Math.abs(det)>0.001){
+              tval=(dv[i]*(-d2[j])-dv[j]*(-d2[i]))/det;
+              sval=(d1[i]*dv[j]-d1[j]*dv[i])/det;
+              solved=true;
+            }
+          }
+        }
+        if(solved){
+          const P1=V.add(sv1,V.sc(d1,tval));
+          const P2=V.add(sv2,V.sc(d2,sval));
+          const diff=V.len(V.sub(P1,P2));
+          isIntersect=diff<0.05;
+          const P1r=P1.map(x=>Math.round(x*100)/100);
+          const P2r=P2.map(x=>Math.round(x*100)/100);
+          steps.push(`LGS lösen:  t = ${n2(tval)},  s = ${n2(sval)}`);
+          steps.push(`Probe g₁(t): ${V.str(P1r)}`);
+          steps.push(`Probe g₂(s): ${V.str(P2r)}`);
+          steps.push(isIntersect
+            ? `Gleicher Punkt  →  Seile schneiden sich`
+            : `Verschiedene Punkte  →  Seile sind windschief`);
+        }
+      }
+
+      const lage=isPar?'par':(isIntersect?'sch':'win');
+      const lageStr={par:'Parallel',sch:'Schneidend',win:'Windschief'};
+      const ok=vals.lage===lage;
+      steps.push('');
+      steps.push(ok ? `✓ Korrekt: ${lageStr[lage]}` : `✗ Falsch — korrekt: ${lageStr[lage]}`);
+      return { ok, steps:steps.join('\n') };
+    }
+  },
+
+};
+
+/* ══════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════ */
+function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+function init(){
+  STATE.load();
+  initScene();
+  // TÜV button locked state
+  if(STATE.isTuevUnlocked()){
+    document.getElementById('btn-tuev').classList.remove('locked');
+  }
+  updateProgBadge();
+  // Start in missions phase, show list
+  APP.phase='missions'; APP.mView='list';
+  rebuild3();
+  applyMissionHighlight({platforms:[0,1,2,3,4,5,6,7],showRopes:false});
+  renderDrawer();
+  if(!drawerOpen) toggleDrawer();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
