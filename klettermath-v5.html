@@ -252,6 +252,56 @@ input.num-input{width:90px!important}
 .ic-lbl{font-size:9px;color:rgba(176,127,255,.7);letter-spacing:1px;margin-bottom:3px}
 .btn-next-m{width:100%;margin-top:9px;padding:7px;background:var(--rope);color:var(--bg);
   border:none;border-radius:5px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px}
+/* ══ LEHRERBEREICH ══ */
+#lehrer-overlay{position:fixed;inset:0;z-index:100;background:rgba(26,22,20,.97);
+  backdrop-filter:blur(10px);display:none;flex-direction:column;overflow-y:auto}
+#lehrer-overlay.show{display:flex}
+#lehrer-pw{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;gap:14px;padding:40px 20px}
+#lehrer-pw h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;
+  color:var(--rope);text-align:center}
+#lehrer-pw p{font-size:12px;color:var(--text2);text-align:center}
+#lehrer-pw input{background:var(--bg);border:1px solid var(--bg5);border-radius:6px;
+  padding:8px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;
+  font-size:14px;width:200px;text-align:center;letter-spacing:2px}
+#lehrer-pw .pw-err{color:var(--err);font-size:11px;display:none}
+#lehrer-pw .pw-err.show{display:block}
+#lehrer-panel{display:none;flex-direction:column;max-width:520px;width:100%;
+  margin:0 auto;padding:24px 20px}
+#lehrer-panel.show{display:flex;gap:16px}
+.lp-header{display:flex;align-items:center;gap:12px;padding-bottom:14px;
+  border-bottom:1px solid var(--bg4)}
+.lp-header h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;
+  color:var(--rope);flex:1}
+.lp-section{background:var(--bg2);border-radius:10px;padding:16px;border:1px solid var(--bg3)}
+.lp-section-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;
+  color:var(--text2);margin-bottom:12px}
+.lp-mission-row{display:flex;align-items:center;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--bg3)}
+.lp-mission-row:last-child{border-bottom:none}
+.lp-m-num{width:24px;height:24px;border-radius:50%;background:var(--bg4);
+  color:var(--text2);font-family:'Bebas Neue',sans-serif;font-size:13px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lp-m-name{flex:1;font-size:12px}
+.lp-m-concept{font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+/* Toggle Switch */
+.lp-toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.lp-toggle input{opacity:0;width:0;height:0;position:absolute}
+.lp-toggle-track{position:absolute;inset:0;background:var(--bg4);border-radius:11px;
+  cursor:pointer;transition:background .2s}
+.lp-toggle input:checked+.lp-toggle-track{background:var(--ok)}
+.lp-toggle-track:before{content:'';position:absolute;width:16px;height:16px;
+  background:white;border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.lp-toggle input:checked+.lp-toggle-track:before{transform:translateX(18px)}
+.lp-status-badge{font-size:9px;font-family:'JetBrains Mono',monospace;
+  padding:2px 6px;border-radius:8px;flex-shrink:0}
+.lp-status-badge.done{background:rgba(107,203,119,.15);color:var(--ok)}
+.lp-status-badge.locked{background:var(--bg4);color:var(--text2)}
+.lp-status-badge.teacher{background:rgba(91,163,217,.15);color:var(--blue)}
+.lp-danger-zone{border-color:rgba(255,94,91,.25)}
+.lp-danger-zone .lp-section-title{color:var(--err)}
+.lp-info{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px}
+
 /* Print */
 @media print{
   #canvas,#lbl,#hdr,#drawer .sec:not(#result-sec){display:none!important}
@@ -264,6 +314,64 @@ input.num-input{width:90px!important}
 <body>
 <canvas id="canvas"></canvas>
 <div id="lbl"></div>
+
+<!-- Lehrerbereich Overlay -->
+<div id="lehrer-overlay">
+  <div id="lehrer-pw">
+    <div style="font-size:32px">🔑</div>
+    <h2>Lehrerbereich</h2>
+    <p>Bitte Passwort eingeben</p>
+    <input type="password" id="lehrer-pw-input" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')checkLehrerPw()">
+    <div class="pw-err" id="lehrer-pw-err">Falsches Passwort</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" onclick="checkLehrerPw()">Einloggen</button>
+      <button class="btn btn-s" onclick="closeLehrerOverlay()">Abbrechen</button>
+    </div>
+  </div>
+  <div id="lehrer-panel">
+    <div class="lp-header">
+      <div style="font-size:22px">🔑</div>
+      <h2>Lehrerbereich</h2>
+      <button class="btn btn-s" onclick="closeLehrerOverlay()" style="font-size:11px">✕ Schließen</button>
+    </div>
+    <div class="lp-section">
+      <div class="lp-section-title">Missionen freigeben</div>
+      <div class="lp-info">Aktiviere einzelne Missionen direkt — unabhängig vom normalen Freischalt-System. Schüler können diese dann sofort spielen.</div>
+      <div id="lp-missions-list"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-s" style="font-size:11px" onclick="lehrerSetAll(true)">Alle freigeben</button>
+        <button class="btn btn-s" style="font-size:11px" onclick="lehrerSetAll(false)">Alle sperren</button>
+      </div>
+    </div>
+    <div class="lp-section">
+      <div class="lp-section-title">TÜV-Prüfung</div>
+      <div class="lp-info">Die TÜV-Prüfung ist normalerweise nach Mission 7 freigeschaltet.</div>
+      <div class="lp-mission-row">
+        <span style="font-size:18px">🔧</span>
+        <div style="flex:1">
+          <div class="lp-m-name" style="font-size:13px;font-weight:700">TÜV-Prüfung</div>
+          <div class="lp-m-concept">Freie Parkplanung + Regelprüfung</div>
+        </div>
+        <label class="lp-toggle">
+          <input type="checkbox" id="lp-tuev-toggle" onchange="lehrerToggleTuev(this.checked)">
+          <div class="lp-toggle-track"></div>
+        </label>
+      </div>
+    </div>
+    <div class="lp-section lp-danger-zone">
+      <div class="lp-section-title">⚠ Schüler-Daten</div>
+      <div class="lp-info">Löscht den gesamten Lernfortschritt (abgeschlossene Missionen) aus dem Browser-Speicher. Nicht rückgängig zu machen.</div>
+      <button class="btn" style="background:var(--err);color:white;font-size:11px"
+        onclick="lehrerReset()">🗑 Fortschritt zurücksetzen</button>
+    </div>
+    <div style="text-align:center;padding:8px 0">
+      <span style="font-size:10px;color:var(--bg5);font-family:'JetBrains Mono',monospace">
+        Passwort ändern: LEHRER_PW in klettermath-v5.html Zeile ~570
+      </span>
+    </div>
+  </div>
+</div>
 
 <!-- Kompendium Overlay -->
 <div id="comp-overlay">
@@ -281,6 +389,7 @@ input.num-input{width:90px!important}
   <span class="score-badge" id="score-badge">0/10</span>
   <div id="hdr-sp"></div>
   <button class="menu-btn" onclick="openComp()" title="Kompendium">📖</button>
+  <button class="menu-btn" onclick="openLehrerOverlay()" title="Lehrerbereich" style="opacity:.35;font-size:13px">🔑</button>
   <button class="menu-btn" onclick="toggleDrawer()">☰</button>
 </div>
 
@@ -565,22 +674,34 @@ const APP = {
   order: [], ruleRopes: {}, ruleScen: {}, results: {}
 };
 
+const LEHRER_PW = 'Lehrer2025'; // ← Passwort hier ändern
+
 const STATE = {
-  d: { done: [] },
+  d: { done: [], teacherUnlocked: [], tuevForced: false },
   load(){
     try{ const s=localStorage.getItem('km5'); if(s) this.d=JSON.parse(s); }catch(e){}
     if(!this.d) this.d={done:[]};
     if(!this.d.done) this.d.done=[];
+    if(!this.d.teacherUnlocked) this.d.teacherUnlocked=[];
+    if(this.d.tuevForced===undefined) this.d.tuevForced=false;
   },
   save(){ try{ localStorage.setItem('km5',JSON.stringify(this.d)); }catch(e){} },
   isDone(id){ return this.d.done.includes(id); },
+  isTeacherUnlocked(id){ return this.d.teacherUnlocked.includes(id); },
   isAvail(id){
     if(id===1) return true;
+    if(this.isTeacherUnlocked(id)) return true;
     return MISSIONS.some(m=>m.unlocks&&m.unlocks.includes(id)&&this.isDone(m.id));
   },
-  isTuevUnlocked(){ return this.isDone(7); },
+  isTuevUnlocked(){ return this.isDone(7) || this.d.tuevForced; },
   complete(id){ if(!this.isDone(id)) this.d.done.push(id); this.save(); },
-  reset(){ this.d={done:[]}; this.save(); }
+  teacherUnlock(id, on){
+    if(on){ if(!this.d.teacherUnlocked.includes(id)) this.d.teacherUnlocked.push(id); }
+    else { this.d.teacherUnlocked=this.d.teacherUnlocked.filter(x=>x!==id); }
+    this.save();
+  },
+  setTuevForced(on){ this.d.tuevForced=on; this.save(); },
+  reset(){ this.d={done:[],teacherUnlocked:[],tuevForced:false}; this.save(); }
 };
 
 function ropeKey(r){ return `${r.from}→${r.to}`; }
@@ -2649,6 +2770,105 @@ const RDEFS = {
   },
 
 };
+
+/* ══════════════════════════════════════════════════════
+   LEHRERBEREICH
+   ══════════════════════════════════════════════════════ */
+let _lehrerAuth = false;
+
+function openLehrerOverlay(){
+  _lehrerAuth = false;
+  document.getElementById('lehrer-overlay').classList.add('show');
+  document.getElementById('lehrer-pw').style.display='flex';
+  document.getElementById('lehrer-panel').classList.remove('show');
+  document.getElementById('lehrer-pw-input').value='';
+  document.getElementById('lehrer-pw-err').classList.remove('show');
+  setTimeout(()=>document.getElementById('lehrer-pw-input').focus(),100);
+}
+
+function closeLehrerOverlay(){
+  document.getElementById('lehrer-overlay').classList.remove('show');
+  _lehrerAuth = false;
+}
+
+function checkLehrerPw(){
+  const val = document.getElementById('lehrer-pw-input').value;
+  if(val === LEHRER_PW){
+    _lehrerAuth = true;
+    document.getElementById('lehrer-pw').style.display='none';
+    document.getElementById('lehrer-panel').classList.add('show');
+    renderLehrerPanel();
+  } else {
+    const err = document.getElementById('lehrer-pw-err');
+    err.classList.add('show');
+    document.getElementById('lehrer-pw-input').value='';
+    document.getElementById('lehrer-pw-input').focus();
+    setTimeout(()=>err.classList.remove('show'), 2000);
+  }
+}
+
+function renderLehrerPanel(){
+  const list = document.getElementById('lp-missions-list');
+  list.innerHTML = '';
+  MISSIONS.forEach(m => {
+    const isTeacher = STATE.isTeacherUnlocked(m.id);
+    const isDone    = STATE.isDone(m.id);
+    const isNormal  = !isTeacher && STATE.isAvail(m.id);
+    const row = document.createElement('div');
+    row.className = 'lp-mission-row';
+    let badgeClass = isDone ? 'done' : (isTeacher ? 'teacher' : (isNormal ? 'avail' : 'locked'));
+    let badgeText  = isDone ? '✓ fertig' : (isTeacher ? '🔑 Lehrer' : (isNormal ? 'verfügbar' : 'gesperrt'));
+    row.innerHTML = `
+      <div class="lp-m-num">${m.id}</div>
+      <div style="flex:1;min-width:0">
+        <div class="lp-m-name">${m.title}</div>
+        <div class="lp-m-concept">${m.concept}</div>
+      </div>
+      <span class="lp-status-badge ${badgeClass}">${badgeText}</span>
+      <label class="lp-toggle">
+        <input type="checkbox" ${(isTeacher||isDone||isNormal)?'checked':''} ${isDone?'disabled':''}
+          onchange="lehrerToggleMission(${m.id},this.checked)">
+        <div class="lp-toggle-track"></div>
+      </label>`;
+    list.appendChild(row);
+  });
+  // TÜV toggle
+  document.getElementById('lp-tuev-toggle').checked = STATE.isTuevUnlocked();
+}
+
+function lehrerToggleMission(id, on){
+  // Wenn Mission bereits durch normalen Fortschritt verfügbar, Teacher-Unlock nur additiv
+  STATE.teacherUnlock(id, on);
+  renderLehrerPanel();
+  renderDrawer();
+  updateProgBadge();
+  // TÜV-Button aktualisieren
+  if(STATE.isTuevUnlocked()) document.getElementById('btn-tuev').classList.remove('locked');
+  else document.getElementById('btn-tuev').classList.add('locked');
+}
+
+function lehrerSetAll(on){
+  MISSIONS.forEach(m => { if(!STATE.isDone(m.id)) STATE.teacherUnlock(m.id, on); });
+  renderLehrerPanel();
+  renderDrawer();
+  updateProgBadge();
+}
+
+function lehrerToggleTuev(on){
+  STATE.setTuevForced(on);
+  if(on) document.getElementById('btn-tuev').classList.remove('locked');
+  else if(!STATE.isDone(7)) document.getElementById('btn-tuev').classList.add('locked');
+}
+
+function lehrerReset(){
+  if(!confirm('Fortschritt wirklich zurücksetzen? Alle abgeschlossenen Missionen werden gelöscht.')) return;
+  STATE.reset();
+  document.getElementById('btn-tuev').classList.add('locked');
+  renderLehrerPanel();
+  renderDrawer();
+  updateProgBadge();
+  rebuild3();
+}
 
 /* ══════════════════════════════════════════════════════
    INIT
