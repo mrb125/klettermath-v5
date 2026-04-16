@@ -362,7 +362,8 @@ function texVec(v,display=false){
   return tex('\\begin{pmatrix}'+comps.join('\\\\')+'\\end{pmatrix}',display);
 }
 function texPt(lbl,coords){
-  return `<span style="white-space:nowrap">${lbl}${texVec(coords)}</span>`;
+  const comps=coords.map(x=>{const f=parseFloat(x);return Number.isInteger(f)?f:parseFloat(f.toFixed(2));});
+  return tex(lbl+'\\!\\left('+comps.join('\\,|\\,')+`\\right)`);
 }
 
 /* ══════════════════════════════════════════════════════
