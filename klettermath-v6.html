@@ -2059,16 +2059,16 @@ function buildDrawerRegelsetup(){
    DRAWER — PHASE 2: WARMUP (3 Plattformen + Prüfprotokoll)
    ══════════════════════════════════════════════════════ */
 /* ── Warmup-Plattformen (3 Plattformen, je eine Regel fällt durch) ──
-   Start S steht hoch (z=3), alle Werte ≥ 0. Seile gehen nach unten.
-   S→W1 (seil): V1 ✓, C1 ✗ (|d|≈4.58 > 4),  SA1 ✓
-   S→W2 (seil): V1 ✗ (geht hoch), C1 ✓,    SA1 ✓
-   S→W3 (seil): V1 ✓, C1 ✓,     SA1 ✗ (z_W3=1<2, horiz≈2.83<3)
+   S im Ursprung (0,0,0). Seile gehen nach unten (dz<0) oder hoch (V1-Test).
+   S→W1: V1 ✓, C1 ✗ (|d|=√21≈4.58 > 4),  SA1 ✗ (z_S=0<2)
+   S→W2: V1 ✗ (geht hoch, dz=+1),  C1 ✓,    SA1 ✗ (z_S=0<2)
+   S→W3: V1 ✓, C1 ✓,  SA1 ✗ (z_S=0<2 & horiz=√8≈2.83<3)
    ────────────────────────────────────────────────────────────── */
 const WARMUP_PLATS = {
-  S:  {x:0, y:0, z:3, fixed:true},
-  W1: {x:4, y:2, z:2, fixed:true},  // |d|=√(16+4+1)=√21≈4.58 → C1 fail
-  W2: {x:3, y:2, z:4, fixed:true},  // seil geht hoch (dz=+1) → V1 fail
-  W3: {x:2, y:2, z:1, fixed:true},  // z_W3=1<2 & horiz=√8≈2.83<3 → SA1 fail
+  S:  {x:0, y:0, z:0, fixed:true},
+  W1: {x:4, y:2, z:-1, fixed:true},  // dz=-1 runter ✓; |d|=√21≈4.58 → C1 fail
+  W2: {x:3, y:2, z:1,  fixed:true},  // dz=+1 hoch → V1 fail; |d|=√14≈3.74 ✓
+  W3: {x:2, y:2, z:-2, fixed:true},  // dz=-2 runter ✓; |d|=√12≈3.46 ✓; SA1 fail
 };
 const WARMUP_ROPES = [
   {from:'S', to:'W1', type:'seil'},
@@ -2076,9 +2076,9 @@ const WARMUP_ROPES = [
   {from:'S', to:'W3', type:'seil'},
 ];
 const WARMUP_VIOLATIONS = {
-  'S→W1': { V1:'pass', C1:'fail', SA1:'pass' },
-  'S→W2': { V1:'fail', C1:'pass', SA1:'pass' },
-  'S→W3': { V1:'pass', C1:'pass', SA1:'fail' },
+  'S→W1': { V1:'pass', C1:'fail',  SA1:'fail' },
+  'S→W2': { V1:'fail', C1:'pass',  SA1:'fail' },
+  'S→W3': { V1:'pass', C1:'pass',  SA1:'fail' },
 };
 // Rules available in warmup
 const WARMUP_RULES = ['V1','C1','SA1'];
@@ -2116,16 +2116,16 @@ const WARMUP_FEHLER = [
 ];
 
 /* ── Phase D: Grenzfall-Plattformen (3 Plattformen, knapp an Grenzen) ──
-   S→W4 (seil): |d|=√18≈4.24 → C1 fail knapp; SA1 ✓
-   S→W5 (seil): |d|=3 ≤ 4 ✓, z_W5=1<2 → SA1 fail knapp
-   S→W6 (seil): |d|=3 ≤ 4 ✓, horiz=√8≈2.83<3 → SA1 fail knapp
-   Alle z-Werte ≥ 0.
+   S im Ursprung (0,0,0).
+   S→W4: C1 fail knapp (|d|=√18≈4.24, knapp über 4 m)
+   S→W5: SA1 fail knapp (z_S=0<2, horiz=√5≈2.24<3 — beide Kriterien knapp)
+   S→W6: SA1 fail knapp (z_S=0<2, horiz=√8≈2.83<3 — knapp unter 3 m)
    ───────────────────────────────────────────────────────── */
 const WARMUP_GRENZ_PLATS = {
-  S:  {x:0, y:0, z:3, fixed:true},
-  W4: {x:4, y:1, z:2, fixed:true},  // |d|=√(16+1+1)=√18≈4.24 → C1 fail knapp
-  W5: {x:2, y:1, z:1, fixed:true},  // z=1<2 → SA1 fail knapp
-  W6: {x:2, y:2, z:2, fixed:true},  // horiz=√8≈2.83<3 → SA1 fail knapp
+  S:  {x:0, y:0, z:0, fixed:true},
+  W4: {x:4, y:1, z:-1, fixed:true},  // |d|=√18≈4.24 → C1 fail knapp
+  W5: {x:2, y:1, z:-1, fixed:true},  // horiz=√5≈2.24<3 & z_S=0<2 → SA1 fail knapp
+  W6: {x:2, y:2, z:-1, fixed:true},  // horiz=√8≈2.83<3 & z_S=0<2 → SA1 fail knapp
 };
 const WARMUP_GRENZ_ROPES = [
   {from:'S', to:'W4', type:'seil'},
@@ -2133,7 +2133,7 @@ const WARMUP_GRENZ_ROPES = [
   {from:'S', to:'W6', type:'seil'},
 ];
 const WARMUP_GRENZ_VIOLATIONS = {
-  'S→W4': { V1:'pass', C1:'fail', SA1:'pass' },
+  'S→W4': { V1:'pass', C1:'fail', SA1:'fail' },
   'S→W5': { V1:'pass', C1:'pass', SA1:'fail' },
   'S→W6': { V1:'pass', C1:'pass', SA1:'fail' },
 };
