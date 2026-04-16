@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - 'klettermath-v6.html'
+      - 'api/**'
   workflow_dispatch:
 
 jobs:
@@ -12,6 +13,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: config.php aus Secrets generieren
+        run: |
+          cat > api/config.php << 'PHPEOF'
+          <?php
+          define('DB_HOST', 'localhost');
+          define('DB_NAME', '${{ secrets.KM_DB_NAME }}');
+          define('DB_USER', '${{ secrets.KM_DB_USER }}');
+          define('DB_PASS', '${{ secrets.KM_DB_PASS }}');
+          define('TEACHER_KEY', '${{ secrets.KM_TEACHER_KEY }}');
+
+          function getDB(){
+            static $pdo = null;
+            if($pdo) return $pdo;
+            $pdo = new PDO(
+              'mysql:host='.DB_HOST.';dbname='.DB_NAME.';charset=utf8',
+              DB_USER, DB_PASS,
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+               PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+            );
+            return $pdo;
+          }
+
+          function cors(){
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, X-Teacher-Key');
+            if($_SERVER['REQUEST_METHOD']==='OPTIONS'){ http_response_code(204); exit; }
+            header('Content-Type: application/json; charset=utf-8');
+          }
+          PHPEOF
 
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

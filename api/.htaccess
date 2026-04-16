@@ -1,0 +1,9 @@
+# config.php und setup.php von außen sperren
+<Files "config.php">
+  Order allow,deny
+  Deny from all
+</Files>
+<Files "setup.php">
+  Order allow,deny
+  Deny from all
+</Files>

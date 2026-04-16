@@ -294,9 +294,86 @@ input.num-input{width:90px!important}
   .result-wrap,.result-score,.result-park,.result-items,.result-item{color:black!important}
   .result-btns,.close-btn{display:none!important}
 }
+
+/* START SCREENS */
+.hidden{display:none!important}
+.screen{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;overflow:hidden;
+        background:var(--bg)}
+.wlc-bg{position:absolute;inset:0;pointer-events:none}
+.wlc-bg-fallback{position:absolute;inset:0;
+  background:radial-gradient(ellipse 90% 70% at 50% 110%, rgba(200,131,58,.2) 0%, transparent 60%),
+             linear-gradient(170deg, #0e1210 0%, #1a1614 50%, #201410 100%)}
+.wlc-bg-overlay{position:absolute;inset:0;background:rgba(0,0,0,.15)}
+.wlc-rope-line{position:absolute;left:-5%;right:-5%;top:38%;height:4px;
+  background:linear-gradient(90deg,transparent 0%,rgba(200,131,58,.3) 15%,rgba(200,131,58,.75) 45%,rgba(200,131,58,.75) 55%,rgba(200,131,58,.3) 85%,transparent 100%);
+  box-shadow:0 0 18px rgba(200,131,58,.35),0 0 4px rgba(200,131,58,.5);
+  transform:rotate(-2deg)}
+.wlc-content{position:relative;z-index:1;display:flex;flex-direction:column;
+             align-items:center;gap:14px;padding:36px 28px;text-align:center;width:100%;max-width:420px}
+.wlc-badge{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;
+           color:var(--text2);letter-spacing:2px;text-transform:uppercase;
+           background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+           padding:4px 14px;border-radius:20px}
+.wlc-title{font-family:'Bebas Neue',sans-serif;font-size:68px;letter-spacing:5px;
+           color:var(--rope);line-height:1;text-shadow:0 0 50px rgba(200,131,58,.35)}
+.wlc-sub{font-size:15px;font-weight:700;color:var(--text);letter-spacing:.5px;margin-top:-4px}
+.wlc-desc{font-size:13px;color:var(--text2);line-height:1.65;max-width:310px}
+.wlc-code-input{background:var(--bg);border:2px solid var(--bg5);border-radius:8px;
+                padding:13px 20px;color:var(--text);font-family:'JetBrains Mono',monospace;
+                font-size:24px;text-align:center;letter-spacing:8px;text-transform:uppercase;
+                width:220px;transition:border-color .2s;margin-top:4px}
+.wlc-code-input:focus{outline:none;border-color:var(--rope);box-shadow:0 0 0 3px rgba(200,131,58,.15)}
+.wlc-code-err{font-size:12px;min-height:18px;margin-top:-4px}
+.btn-wlc-start{background:var(--rope);color:var(--bg);border:none;padding:14px 40px;
+               border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;
+               cursor:pointer;transition:opacity .2s;box-shadow:0 4px 24px rgba(200,131,58,.28)}
+.btn-wlc-start:hover{opacity:.85}
+.btn-wlc-cont{background:none;border:1px solid var(--bg5);color:var(--text2);padding:10px 28px;
+              border-radius:6px;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;
+              cursor:pointer;transition:all .2s;margin-top:-4px}
+.btn-wlc-cont:hover{border-color:var(--rope);color:var(--rope)}
 </style>
 </head>
 <body>
+
+<!-- ════ Startbildschirm: Code-Eingabe ════ -->
+<div id="s-code" class="screen">
+  <div class="wlc-bg">
+    <div class="wlc-bg-fallback"></div>
+    <div class="wlc-bg-overlay"></div>
+    <div class="wlc-rope-line"></div>
+  </div>
+  <div class="wlc-content">
+    <div class="wlc-title">KletterMath</div>
+    <div class="wlc-sub">Schüler-Code eingeben</div>
+    <div class="wlc-desc">Gib deinen 6-stelligen Code ein, den du von deiner Lehrkraft erhalten hast.</div>
+    <input id="wlc-code-input" class="wlc-code-input" type="text" maxlength="6" placeholder="A7KM3R"
+           autocomplete="off" autocapitalize="characters" spellcheck="false"
+           oninput="this.value=this.value.toUpperCase()"
+           onkeydown="if(event.key==='Enter')submitStartCode()">
+    <div id="wlc-code-err" class="wlc-code-err"></div>
+    <button class="btn-wlc-start" onclick="submitStartCode()">WEITER</button>
+  </div>
+</div>
+
+<!-- ════ Startbildschirm: Willkommen ════ -->
+<div id="s-welcome" class="screen hidden">
+  <div class="wlc-bg">
+    <div class="wlc-bg-fallback"></div>
+    <div class="wlc-bg-overlay"></div>
+    <div class="wlc-rope-line"></div>
+  </div>
+  <div class="wlc-content">
+    <div class="wlc-badge">Q1 · Vektorrechnung · NRW</div>
+    <div class="wlc-title">KletterMath</div>
+    <div class="wlc-sub">Vektoren im Kletterwald</div>
+    <div class="wlc-desc">Überprüfe Seile und Brücken im Kletterpark mit den Regeln der Vektorrechnung.</div>
+    <button class="btn-wlc-start" id="btn-wlc-enter" onclick="enterApp()">PARK BETRETEN</button>
+    <button class="btn-wlc-cont" id="btn-wlc-cont" onclick="enterApp()" style="display:none">WEITER KLETTERN</button>
+  </div>
+</div>
+
 <canvas id="canvas"></canvas>
 <div id="lbl"></div>
 
@@ -314,6 +391,7 @@ input.num-input{width:90px!important}
   <button class="phase-btn active" id="btn-regelsetup" onclick="setPhase('regelsetup')">Regeln</button>
   <button class="phase-btn" id="btn-warmup" onclick="setPhase('warmup')">Warmup</button>
   <button class="phase-btn" id="btn-growth" onclick="setPhase('growth')">Park</button>
+  <button class="phase-btn" id="btn-sandbox" onclick="setPhase('sandbox')">Sandbox</button>
   <button class="phase-btn locked" id="btn-analyse" onclick="setPhase('analyse')">Analyse</button>
   <button class="phase-btn locked" id="btn-abnahme" onclick="setPhase('abnahme')">Abnahme</button>
   <span class="score-badge" id="score-badge"></span>
@@ -341,6 +419,12 @@ input.num-input{width:90px!important}
     <div class="code-btns">
       <button class="code-btn-submit" onclick="submitCode()">✓ Anmelden</button>
       <button class="code-btn-close" onclick="closeCodeModal()">✕ Schließen</button>
+    </div>
+    <div style="border-top:1px solid var(--bg4);margin-top:14px;padding-top:10px">
+      <button onclick="openTeacherPanel()" style="background:none;border:none;color:var(--text2);font-size:11px;cursor:pointer;text-decoration:underline;padding:0">
+        🔐 Lehrerbereich
+      </button>
+      <div id="teacher-panel" style="margin-top:8px"></div>
     </div>
   </div>
 </div>
@@ -523,6 +607,20 @@ const PARK_CONFIG = {
 const RULES = ['V1', 'C1', 'SA1']; // Warmup-Regeln: Richtungsvektor, Seillänge, Sicherheitsabstand
 function getActiveRules(){ return (STATE.cfg.activeRules || RULES).filter(id=>RDEFS[id]); }
 
+/* ── Sandbox (freier 3D-Bereich, kein Level-Einfluss) ── */
+let SANDBOX = { plats: {S:{x:0,y:0,z:2,fixed:true}}, ropes: [] };
+let _sandboxRealState = null;
+function enterSandbox(){
+  _sandboxRealState = { plats: JSON.parse(JSON.stringify(APP.plats)), ropes: JSON.parse(JSON.stringify(APP.ropes)) };
+  APP.plats = JSON.parse(JSON.stringify(SANDBOX.plats));
+  APP.ropes = JSON.parse(JSON.stringify(SANDBOX.ropes));
+}
+function exitSandbox(){
+  SANDBOX.plats = JSON.parse(JSON.stringify(APP.plats));
+  SANDBOX.ropes = JSON.parse(JSON.stringify(APP.ropes));
+  if(_sandboxRealState){ APP.plats=_sandboxRealState.plats; APP.ropes=_sandboxRealState.ropes; _sandboxRealState=null; }
+}
+
 /* ── Plattform-Varianten (pro Buchstabe wählbar) ──────────
    Verfügbare Varianten:
      0 = Start-Bogen       (S)
@@ -681,7 +779,7 @@ const STATE = {
 /* ══════════════════════════════════════════════════════
    SCHÜLERCODES & SYNC
    ══════════════════════════════════════════════════════ */
-const SYNC_API = 'https://mrbl.4lima.de/klettermath-dashboard/api';
+const SYNC_API = 'https://mrbl.4lima.de/klettermath-v6/api';
 
 function getStudentCode() { return localStorage.getItem('km5_code') || null; }
 function setStudentCode(code) { localStorage.setItem('km5_code', code); updateCodeBadge(); }
@@ -702,10 +800,8 @@ function openCodeModal(){
   const m=document.getElementById('code-modal');
   if(m)m.classList.add('open');
   const inp=document.getElementById('code-input');
-  if(inp){
-    inp.value=getStudentCode()||'';
-    inp.focus();
-  }
+  if(inp){ inp.value=getStudentCode()||''; inp.focus(); }
+  if(_teacherKey) refreshTeacherPanel();
 }
 
 function closeCodeModal(){
@@ -761,6 +857,99 @@ async function syncProgress(){
     });
   }catch(e){}
 }
+
+/* ── Lehrer-API ────────────────────────────────────── */
+let _teacherKey = localStorage.getItem('km6-teacher-key') || '';
+
+async function teacherFetch(endpoint, body=null){
+  const opts = { method: body?'POST':'GET', headers: {'Content-Type':'application/json','X-Teacher-Key':_teacherKey} };
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(SYNC_API+'/'+endpoint, opts);
+  return res.json();
+}
+
+async function openTeacherPanel(){
+  const key = prompt('Lehrer-Schlüssel eingeben:','');
+  if(!key) return;
+  _teacherKey = key;
+  localStorage.setItem('km6-teacher-key', key);
+  await refreshTeacherPanel();
+}
+
+async function refreshTeacherPanel(){
+  const panel = document.getElementById('teacher-panel');
+  if(!panel) return;
+  panel.innerHTML = '<div style="color:var(--text2);font-size:11px">Lade…</div>';
+  try {
+    const data = await teacherFetch('dashboard.php');
+    if(!data.ok){ panel.innerHTML=`<span style="color:var(--err)">Fehler: ${data.error}</span>`; return; }
+    const students = data.students;
+    panel.innerHTML = `
+      <div style="font-size:12px;font-weight:700;color:var(--rope);margin-bottom:8px">
+        ${students.length} Schüler aktiv
+        <button onclick="openCreateCodes()" style="float:right;background:var(--rope);color:var(--bg);border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">+ Codes</button>
+      </div>
+      <div style="max-height:220px;overflow-y:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;font-family:'JetBrains Mono',monospace">
+          <tr style="color:var(--text2);border-bottom:1px solid var(--bg4)">
+            <th style="text-align:left;padding:3px 4px">Code</th>
+            <th style="text-align:left;padding:3px 4px">Klasse</th>
+            <th style="padding:3px 4px">Regeln</th>
+            <th style="padding:3px 4px">XP</th>
+            <th style="padding:3px 4px">Aktiv</th>
+          </tr>
+          ${students.map(s=>`
+            <tr style="border-bottom:1px solid var(--bg3)">
+              <td style="padding:3px 4px;color:var(--gold)">${s.code}</td>
+              <td style="padding:3px 4px">${s.class_name||'—'}</td>
+              <td style="padding:3px 4px;text-align:center">${s.progress}</td>
+              <td style="padding:3px 4px;text-align:center">${s.xp}</td>
+              <td style="padding:3px 4px;text-align:center;color:${timeSince(s.last_active)<300?'var(--ok)':'var(--text2)'}">${fmtAge(s.last_active)}</td>
+            </tr>`).join('')}
+        </table>
+      </div>
+      <div id="create-codes-area"></div>`;
+  } catch(e){
+    panel.innerHTML = `<span style="color:var(--err)">Verbindungsfehler</span>`;
+  }
+}
+
+async function openCreateCodes(){
+  const area = document.getElementById('create-codes-area');
+  if(!area) return;
+  area.innerHTML = `
+    <div style="margin-top:10px;padding:8px;background:var(--bg3);border-radius:6px">
+      <div style="font-size:11px;font-weight:700;margin-bottom:6px">Neue Codes erstellen</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input id="cc-class" type="text" placeholder="Klasse (z.B. Q1a)" style="background:var(--bg4);border:1px solid var(--bg5);color:var(--text);border-radius:4px;padding:4px 8px;font-size:11px;width:110px">
+        <input id="cc-count" type="number" min="1" max="35" value="15" style="background:var(--bg4);border:1px solid var(--bg5);color:var(--text);border-radius:4px;padding:4px 8px;font-size:11px;width:55px">
+        <span style="font-size:11px;color:var(--text2)">Codes</span>
+        <button onclick="createCodes()" style="background:var(--ok);color:var(--bg);border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700">Erstellen</button>
+      </div>
+      <div id="cc-result" style="margin-top:8px;font-size:11px"></div>
+    </div>`;
+}
+
+async function createCodes(){
+  const cls = document.getElementById('cc-class').value.trim() || 'Klasse';
+  const cnt = parseInt(document.getElementById('cc-count').value)||15;
+  const res = document.getElementById('cc-result');
+  res.textContent = 'Erstelle…';
+  try {
+    const data = await teacherFetch('codes.php', {action:'create', class:cls, count:cnt});
+    if(data.ok){
+      res.innerHTML = `<div style="color:var(--ok);margin-bottom:4px">✓ ${data.created.length} Codes erstellt:</div>
+        <div style="font-family:'JetBrains Mono',monospace;background:var(--bg);padding:6px;border-radius:4px;line-height:1.8;user-select:all">
+          ${data.created.join('  ')}
+        </div>`;
+    } else {
+      res.innerHTML = `<span style="color:var(--err)">${data.error}</span>`;
+    }
+  } catch(e){ res.innerHTML='<span style="color:var(--err)">Fehler</span>'; }
+}
+
+function timeSince(dt){ return (Date.now()-new Date(dt).getTime())/1000; }
+function fmtAge(dt){ const s=timeSince(dt); if(s<60) return s+'s'; if(s<3600) return Math.floor(s/60)+'m'; return Math.floor(s/3600)+'h'; }
 
 function ropeKey(r){ return `${r.from}→${r.to}`; }
 function ropeVecByKey(key){
@@ -1224,17 +1413,19 @@ function _buildHSeil(grp,pA,pB,col){
 }
 function buildRopeMesh3D(rope){
   const a=APP.plats[rope.from], b=APP.plats[rope.to]; if(!a||!b) return null;
-  return buildRopeMesh3DFromPts(a, b, !!(a.fixed&&b.fixed));
+  return buildRopeMesh3DFromPts(a, b, !!(a.fixed&&b.fixed), rope.type||null);
 }
-function buildRopeMesh3DFromPts(pa, pb, fixed=true){
+function buildRopeMesh3DFromPts(pa, pb, fixed=true, type=null){
   const pA=new THREE.Vector3(pa.x,pa.z,pa.y);
   const pB=new THREE.Vector3(pb.x,pb.z,pb.y);
   const dz=pb.z-pa.z;
   const col=fixed?0xc8833a:0x5ba3d9;
   const grp=new THREE.Group();
-  if(dz<-0.3)     _buildZipline(grp,pA,pB,col);
-  else if(dz>0.3) _buildBridge(grp,pA,pB,col);
-  else            _buildHSeil(grp,pA,pB,col);
+  if(type==='brücke')        _buildBridge(grp,pA,pB,col);
+  else if(type==='seil')     { if(dz<-0.05) _buildZipline(grp,pA,pB,col); else _buildHSeil(grp,pA,pB,col); }
+  else if(dz<-0.3)           _buildZipline(grp,pA,pB,col);
+  else if(dz>0.3)            _buildBridge(grp,pA,pB,col);
+  else                       _buildHSeil(grp,pA,pB,col);
   return grp;
 }
 
@@ -1553,6 +1744,10 @@ function renderDrawer(){
       title.textContent = 'Park erweitern';
       body.appendChild(buildDrawerGrowth());
       break;
+    case 'sandbox':
+      title.textContent = 'Sandbox — freier 3D-Bereich';
+      body.appendChild(buildDrawerSandbox());
+      break;
     case 'analyse':
       title.textContent = 'Schwachstellen-Analyse';
       body.appendChild(buildDrawerAnalyse());
@@ -1704,8 +1899,8 @@ function buildDrawerRegelsetup(){
 
   const intro=document.createElement('div');
   intro.style.cssText='font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px';
-  intro.innerHTML=`Sortiere die TÜV-Regeln in die Reihenfolge, in der du sie prüfen möchtest.<br>
-    <b>Ziehe</b> die Regeln per Drag & Drop in deine gewünschte Reihenfolge.`;
+  intro.innerHTML=`Welche Regel würdest du <b>zuerst</b> prüfen — und warum?<br>
+    Bringe die Regeln in eine sinnvolle Reihenfolge und begründe deine Entscheidung.`;
   frag.appendChild(intro);
 
   const allRules = getAllRules();
@@ -1744,7 +1939,7 @@ function buildDrawerRegelsetup(){
     item.innerHTML=`<span style="color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;min-width:22px">${i+1}.</span>
       <div style="flex:1">
         <div style="font-size:12px;font-weight:700">${def.title}</div>
-        <div style="font-size:10px;color:var(--text2)">${def.cat} — ${rid}</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px;line-height:1.4">${def.vorschrift}</div>
       </div>`;
     item.appendChild(btnWrap);
 
@@ -1784,14 +1979,31 @@ function buildDrawerRegelsetup(){
   });
   frag.appendChild(list);
 
+  // Begründungsfeld
+  const reasonWrap=document.createElement('div');
+  reasonWrap.style.cssText='margin-top:12px';
+  const reasonLbl=document.createElement('div');
+  reasonLbl.style.cssText='font-size:11px;font-weight:700;margin-bottom:4px;color:var(--text)';
+  reasonLbl.textContent='Warum diese Reihenfolge?';
+  const reasonInp=document.createElement('textarea');
+  reasonInp.id='rule-reason';
+  reasonInp.rows=2;
+  reasonInp.placeholder='z.B. „Ich prüfe zuerst die Richtung, weil ich den Richtungsvektor für die anderen Regeln sowieso brauche."';
+  reasonInp.style.cssText='width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--bg5);color:var(--text);border-radius:5px;padding:7px 9px;font-size:11px;font-family:Nunito,sans-serif;resize:vertical;line-height:1.5';
+  reasonInp.value = APP.ruleReason || '';
+  reasonWrap.appendChild(reasonLbl);
+  reasonWrap.appendChild(reasonInp);
+  frag.appendChild(reasonWrap);
+
   // Speichern-Button
   const saveBtn=document.createElement('button');
   saveBtn.className='btn btn-ok';
-  saveBtn.style.cssText='width:100%;padding:10px;font-size:13px;margin-top:12px';
-  saveBtn.textContent=APP.ruleOrder.length>0?'✓ Reihenfolge gespeichert — weiter zum Warmup →':'Reihenfolge bestätigen →';
+  saveBtn.style.cssText='width:100%;padding:10px;font-size:13px;margin-top:10px';
+  saveBtn.textContent=APP.ruleOrder.length>0?'✓ Reihenfolge bestätigt — weiter →':'Reihenfolge bestätigen →';
   saveBtn.onclick=()=>{
     const items=[...document.querySelectorAll('#rule-sort-list .rule-sort-item')];
     APP.ruleOrder=items.map(el=>el.dataset.rid);
+    APP.ruleReason=document.getElementById('rule-reason')?.value||'';
     STATE.saveRuleOrder(APP.ruleOrder);
     updateProgBadge();
     setPhase('warmup');
@@ -1814,22 +2026,29 @@ function buildDrawerRegelsetup(){
    W1: zu nah an S → Seil S→W1 zu kurz (verletzt C1: < 4 m)
    W2: zu hoch     → Seil S→W2 zu steil (verletzt D1: > 60°)
    ───────────────────────────────────────────────────────── */
+// S im Ursprung (0,0,0)
+// S→W1 (seil): runter ✓, |d|=√(9+4+9)=√22≈4.69 m → C1 FAIL (>4m), horiz=√(9+4)≈3.6≥3 & z1=0 → SA1 FAIL (S zu tief)
+// S→W2 (seil): runter ✗ (W2 höher) → V1 FAIL
+// W1→W2 (brücke): hoch ✓, |d|=√(4+9+4)≈4.12 m → C1 FAIL (>4m)
+// Koordinaten: alle verschieden, S im Ursprung
 const WARMUP_PLATS = {
   S:  {x:0, y:0, z:0,  fixed:true},
-  W1: {x:2, y:1, z:1,  fixed:true},  // |d|=√6 ≈ 2.45 m → C1 fail
-  W2: {x:1, y:1, z:5,  fixed:true},  // sin α=5/√27 → α ≈ 74° → D1 fail
+  W1: {x:3, y:2, z:-3, fixed:true},  // seil runter ✓, |d|≈4.69>4 → C1 fail; z_S=0<2 → SA1 fail
+  W2: {x:4, y:1, z:2,  fixed:true},  // seil geht hoch → V1 fail
+  W3: {x:5, y:4, z:-5, fixed:true},  // von W1: brücke hoch ✓, |d|=√(4+4+4)≈3.46>... check below
 };
+// S→W1: seil runter✓, |d|=√(9+4+9)=√22≈4.69 → C1 fail; horiz=√13≈3.6✓ aber zS=0<2 → SA1 fail
+// S→W2: seil geht HOCH (z2>zS) → V1 fail
+// W1→W3: brücke (hoch✓), |d|=√(4+4+4)=√12≈3.46 → C1 pass(≤4); horiz=√(4+4)≈2.83<3 → SA1 fail
 const WARMUP_ROPES = [
-  {from:'S', to:'W1', type:'seil'},
-  {from:'S', to:'W2', type:'seil'},
-  {from:'W1', to:'W2', type:'brücke'},
+  {from:'S',  to:'W1', type:'seil'},
+  {from:'S',  to:'W2', type:'seil'},
+  {from:'W1', to:'W3', type:'brücke'},
 ];
-// Which rules each warmup rope violates (ground truth)
-// Brücken: no D1 (Neigungswinkel gilt nur für Seile)
 const WARMUP_VIOLATIONS = {
-  'S→W1': { V1:'pass', C1:'fail', SA1:'pass' },
-  'S→W2': { V1:'pass', C1:'pass', SA1:'fail' },
-  'W1→W2': { V1:'pass', C1:'pass' },
+  'S→W1':  { V1:'pass', C1:'fail',  SA1:'fail' },
+  'S→W2':  { V1:'fail', C1:'pass',  SA1:'pass' },
+  'W1→W3': { V1:'pass', C1:'pass',  SA1:'fail' },
 };
 // Rules available in warmup
 const WARMUP_RULES = ['V1','C1','SA1'];
@@ -1867,18 +2086,25 @@ const WARMUP_FEHLER = [
 ];
 
 /* ── Phase D: Grenzfall-Plattformen ── */
+// Grenzfall: Werte knapp an der Grenze
+// S→W4: seil runter✓, |d|=√(9+16+9)=√34≈5.83>4 → C1 fail (knapp über Grenze)
+// S→W5: seil runter✓, |d|≈3.74≤4✓; horiz=√(1+4)≈2.24<3 → SA1 fail (knapp)
+// W4→W6: brücke hoch✓, |d|=√(1+1+1)≈1.73≤4✓; horiz=√(1+1)≈1.41<3 → SA1 fail
 const WARMUP_GRENZ_PLATS = {
   S:  {x:0, y:0, z:0,  fixed:true},
-  W4: {x:2, y:2, z:1,  fixed:true},  // |d|=3 m → C1 fail (knapp)
-  W5: {x:2, y:1, z:4,  fixed:true},  // |d|≈4.58, α≈60.8° → D1 fail (knapp)
+  W4: {x:3, y:4, z:-3, fixed:true},
+  W5: {x:1, y:2, z:-3, fixed:true},
+  W6: {x:4, y:5, z:-2, fixed:true},
 };
 const WARMUP_GRENZ_ROPES = [
-  {from:'S', to:'W4', type:'seil'},
-  {from:'S', to:'W5', type:'seil'},
+  {from:'S',  to:'W4', type:'seil'},
+  {from:'S',  to:'W5', type:'seil'},
+  {from:'W4', to:'W6', type:'brücke'},
 ];
 const WARMUP_GRENZ_VIOLATIONS = {
-  'S→W4': { V1:'pass', C1:'fail', SA1:'pass' },
-  'S→W5': { V1:'pass', C1:'pass', SA1:'fail' },
+  'S→W4':  { V1:'pass', C1:'fail', SA1:'pass' },
+  'S→W5':  { V1:'pass', C1:'pass', SA1:'fail' },
+  'W4→W6': { V1:'pass', C1:'pass', SA1:'fail' },
 };
 
 function setupWarmupPark(){
@@ -1900,17 +2126,30 @@ function buildDrawerWarmup(){
   // ── Gesamtes Warmup abgeschlossen ──
   if(STATE.isWarmupDone()){
     const done=document.createElement('div');
-    done.style.cssText='text-align:center;padding:20px 0';
+    done.style.cssText='text-align:center;padding:16px 0 8px';
     done.innerHTML=`<div style="font-size:28px;margin-bottom:8px">✓</div>
       <div style="font-size:14px;font-weight:700;color:var(--ok)">Warmup abgeschlossen!</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:6px">Alle 4 Stufen gemeistert.</div>`;
+      <div style="font-size:11px;color:var(--text2);margin-top:6px;margin-bottom:16px">Was möchtest du als nächstes tun?</div>`;
     frag.appendChild(done);
-    const nextBtn=document.createElement('button');
-    nextBtn.className='btn btn-ok';
-    nextBtn.style.cssText='width:100%;padding:10px;font-size:13px;margin-top:12px';
-    nextBtn.textContent='Weiter zum Park →';
-    nextBtn.onclick=()=>setPhase('growth');
-    frag.appendChild(nextBtn);
+
+    // Option A: weitere Regel prüfen
+    const ruleBtn=document.createElement('button');
+    ruleBtn.className='btn';
+    ruleBtn.style.cssText='width:100%;padding:12px 14px;font-size:13px;margin-bottom:8px;text-align:left;background:var(--bg3);border:1px solid var(--bg5);border-radius:8px;cursor:pointer;color:var(--text)';
+    ruleBtn.innerHTML=`<div style="font-weight:700;margin-bottom:2px">📋 Weitere Regel überprüfen</div>
+      <div style="font-size:11px;color:var(--text2)">Kehre zum Regelsetup zurück und füge eine neue Regel hinzu.</div>`;
+    ruleBtn.onclick=()=>{ APP.warmupDone=false; STATE.d.warmupDone=false; STATE.save(); setPhase('regelsetup'); };
+    frag.appendChild(ruleBtn);
+
+    // Option B: Park erweitern
+    const parkBtn=document.createElement('button');
+    parkBtn.className='btn btn-ok';
+    parkBtn.style.cssText='width:100%;padding:12px 14px;font-size:13px;text-align:left;border-radius:8px;cursor:pointer';
+    parkBtn.innerHTML=`<div style="font-weight:700;margin-bottom:2px">🏔 Plattformen einbauen &amp; prüfen</div>
+      <div style="font-size:11px;opacity:.8">Baue deinen eigenen Park und führe die TÜV-Prüfung durch.</div>`;
+    parkBtn.onclick=()=>setPhase('growth');
+    frag.appendChild(parkBtn);
+
     return frag;
   }
 
@@ -1996,7 +2235,7 @@ function buildRopeCheckCards(ropes, checkedMap, violationsMap){
     const btnRow=document.createElement('div');
     btnRow.style.cssText='display:flex;flex-direction:column;gap:5px';
 
-    const rulesForRope = rope.type==='brücke' ? ['V1','C1'] : WARMUP_RULES;
+    const rulesForRope = WARMUP_RULES;
     rulesForRope.forEach(rid=>{
       const def=RDEFS[rid]; if(!def||def.twoRopes) return;
       const col=CAT_COL[def.cat]||'#888';
@@ -2011,7 +2250,7 @@ function buildRopeCheckCards(ropes, checkedMap, violationsMap){
       const info=document.createElement('div');
       info.style.cssText='flex:1';
       info.innerHTML=`<div style="font-size:12px;font-weight:600">${def.title}</div>
-        <div style="font-size:9px;color:var(--text2)">${rid} — ${def.cat}</div>`;
+        <div style="font-size:10px;color:var(--text2);margin-top:2px;line-height:1.4">${def.vorschrift}</div>`;
       row.appendChild(info);
 
       if(isDone){
@@ -2352,6 +2591,72 @@ function buildWarmupGrenzfall(){
   return frag;
 }
 
+/* ── Warmup: Hilfen (gestuft) ── */
+const WU_HINTS = {
+  V1: [
+    'Schau dir die Koordinaten der Start- und Zielplattform an.',
+    'Der Weg-Vektor zeigt: Wie viel weiter rechts, weiter hinten und weiter oben/unten liegt das Ziel?',
+    'Rechne: Ziel minus Start — für jede der drei Richtungen einzeln.',
+  ],
+  C1: [
+    'Überlege: Wie lang ist der Weg zwischen den beiden Plattformen?',
+    'Tipp: Nutze die drei Abstände (rechts/links, vor/zurück, hoch/runter) und den Satz des Pythagoras — in 3D.',
+    'Formel: Länge = √(Δx₁² + Δx₂² + Δx₃²). Vergleich dann mit der erlaubten Länge (max. 4 m).',
+  ],
+  SA1: [
+    'Überlege: Wie steil ist der Weg zwischen den Plattformen?',
+    'Tipp: Vergleiche den Höhenunterschied mit dem horizontalen Abstand der Plattformen.',
+    'Der horizontale Abstand = √(Δx₁² + Δx₂²). Prüfe: mind. 3 m horizontal und mind. 2 m Höhe für beide Plattformen.',
+  ],
+};
+
+/* ── Alltagssprache-Beschreibungen (ohne Mathebegriffe) ── */
+function wuContext(rid, rope, sv, av){
+  const isBr = rope.type==='brücke';
+  const obj = isBr ? 'diese Brücke' : 'dieses Seil';
+  const from = rope.from, to = rope.to;
+  switch(rid){
+    case 'V1': return `
+      <b>Aufgabe:</b> Bestimme, in welche Richtung ${obj} vom Start bis zum Ziel zeigt.<br>
+      Startpunkt: ${texPt(from,sv)} &nbsp;|&nbsp; Zielpunkt: ${texPt(to,av)}<br>
+      Wie verändert sich die Position in jede Richtung?`;
+    case 'C1': return `
+      <b>Aufgabe:</b> Ist ${obj} lang genug, aber nicht zu lang?<br>
+      Startpunkt: ${texPt(from,sv)} &nbsp;|&nbsp; Zielpunkt: ${texPt(to,av)}<br>
+      Erlaubt: <b>höchstens 4 m</b> (sonst zu riskant).`;
+    case 'SA1': return `
+      <b>Aufgabe:</b> Haben die Plattformen genug Abstand voneinander?<br>
+      Plattform ${from}: ${texPt(from,sv)} &nbsp;|&nbsp; Plattform ${to}: ${texPt(to,av)}<br>
+      Bedingung: mind. <b>2 m Höhe</b> für jede Plattform, mind. <b>3 m horizontaler Abstand</b>.`;
+    default: return '';
+  }
+}
+
+/* ── Korrekte Werte berechnen ── */
+function wuTruth(rid, d, sv, av, rope){
+  const [dx,dy,dz] = d;
+  switch(rid){
+    case 'V1': {
+      const truth = WARMUP_VIOLATIONS[`${rope.from}→${rope.to}`]?.V1 || 'pass';
+      // V1 is always "pass" structurally — the direction just has to point down for Seil, up for Brücke
+      const goesDown = dz < 0;
+      const isBr = rope.type === 'brücke';
+      return { verdict: (isBr ? !goesDown : goesDown) ? 'pass' : 'fail' };
+    }
+    case 'C1': {
+      const len = V.len(d);
+      return { len, verdict: len <= 4 ? 'pass' : 'fail' };
+    }
+    case 'SA1': {
+      const hDist = Math.sqrt(dx*dx + dy*dy);
+      const zA = sv[2], zB = av[2];
+      const heightOk = zA >= 2 && zB >= 2;
+      const hDistOk = hDist >= 3;
+      return { hDist: Math.round(hDist*100)/100, zA, zB, verdict: (heightOk && hDistOk) ? 'pass' : 'fail' };
+    }
+  }
+}
+
 /* ── Warmup: Einzelprüfung öffnen ── */
 function openWarmupCheck(ropeKey, rope, rid){
   const def=RDEFS[rid]; if(!def) return;
@@ -2359,102 +2664,80 @@ function openWarmupCheck(ropeKey, rope, rid){
   const sv=[a.x,a.y,a.z], av=[b.x,b.y,b.z];
   const d=V.sub(av,sv);
 
-  // Build modal-like section in drawer
   const fb=document.getElementById('warmup-fb');
   if(!fb) return;
-
   fb.innerHTML='';
+
   const wrap=document.createElement('div');
   wrap.style.cssText='background:var(--bg3);border:1px solid var(--rope);border-radius:8px;padding:14px;animation:fadeIn .2s';
 
   const ropeName = rope.type==='brücke' ? 'Brücke' : 'Seil';
   const title=document.createElement('div');
-  title.style.cssText='font-weight:700;font-size:13px;color:var(--rope);margin-bottom:8px';
-  title.textContent=`${def.title} — ${ropeName} ${rope.from}→${rope.to}`;
+  title.style.cssText='font-weight:700;font-size:13px;color:var(--rope);margin-bottom:10px';
+  title.textContent=`${def.title} — ${ropeName} ${rope.from} → ${rope.to}`;
   wrap.appendChild(title);
 
-  // Context
-  const ctx=document.createElement('div');
-  ctx.style.cssText='font-size:11px;color:var(--text2);line-height:2;margin-bottom:10px';
+  // Regel-Vorschrift (Alltagssprache)
+  const rule=document.createElement('div');
+  rule.style.cssText='font-size:11px;background:var(--bg);border-radius:5px;padding:8px 10px;margin-bottom:10px;line-height:1.6;color:var(--text2);border-left:3px solid var(--rope)';
+  rule.innerHTML=`<b style="color:var(--text)">Regel:</b> ${def.vorschrift}`;
+  wrap.appendChild(rule);
 
-  if(rid==='V1'){
-    ctx.innerHTML=`Grundlage aller Prüfungen: Berechne den Richtungsvektor vom Start- zur Zielplattform.<br>
-      ${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>
-      Berechne ${tex('\\vec{d}')} = Zielplattform − Startplattform.`;
-  } else if(rid==='C1'){
-    const objName = rope.type==='brücke' ? 'Brücken' : 'Seile';
-    ctx.innerHTML=`${objName} müssen mind. <b>4 m</b> lang sein (sonst kein Fahrspaß) und dürfen höchstens <b>20 m</b> lang sein (sonst bremst die Anlage zu spät).<br>
-      ${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>
-      Berechne die Länge ${tex('|\\vec{d}|')} und entscheide.`;
-  } else if(rid==='SA1'){
-    ctx.innerHTML=`Der Neigungswinkel muss zwischen <b>20° und 60°</b> liegen — zu steil: die Bremse versagt.<br>
-      ${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>
-      Berechne den Neigungswinkel ${tex('\\alpha')} zur Horizontalen und entscheide.`;
-  } else if(rid==='A1'){
-    const objName2 = rope.type==='brücke' ? 'jede Brücke' : 'jedes Seil';
-    ctx.innerHTML=`Vorschrift §2: ${objName2.charAt(0).toUpperCase()+objName2.slice(1)} muss als <b>Gerade</b> im Lageplan eingetragen werden.<br>
-      ${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>
-      Stelle die Geradengleichung auf.`;
-  }
+  // Kontext (Alltagssprache, keine Mathebegriffe)
+  const ctx=document.createElement('div');
+  ctx.style.cssText='font-size:11px;color:var(--text);line-height:2;margin-bottom:12px';
+  ctx.innerHTML=wuContext(rid, rope, sv, av);
   wrap.appendChild(ctx);
 
-  // Input fields based on rule
-  const form=document.createElement('div');
-  form.style.cssText='display:flex;flex-direction:column;gap:8px';
+  // Hilfen (gestuft, aufklappbar)
+  const hints = WU_HINTS[rid] || [];
+  let hintsShown = 0;
+  const hintArea=document.createElement('div');
+  hintArea.style.cssText='margin-bottom:10px';
+  const hintBtn=document.createElement('button');
+  hintBtn.className='btn btn-s';
+  hintBtn.style.cssText='font-size:10px;padding:3px 10px;color:var(--text2)';
+  hintBtn.textContent='Tipp anzeigen';
+  const hintList=document.createElement('div');
+  hintList.style.cssText='margin-top:6px;display:flex;flex-direction:column;gap:4px';
+  hintBtn.onclick=()=>{
+    if(hintsShown<hints.length){
+      const h=document.createElement('div');
+      h.style.cssText='font-size:11px;color:var(--gold);background:rgba(255,209,102,.08);border-radius:4px;padding:5px 8px;border-left:2px solid var(--gold)';
+      h.textContent=`Tipp ${hintsShown+1}: ${hints[hintsShown]}`;
+      hintList.appendChild(h);
+      hintsShown++;
+    }
+    if(hintsShown>=hints.length) hintBtn.style.display='none';
+  };
+  hintArea.appendChild(hintBtn);
+  hintArea.appendChild(hintList);
+  wrap.appendChild(hintArea);
 
-  if(rid==='V1'){
-    form.innerHTML=`
-      <div class="igroup"><label style="font-size:11px;color:var(--text2)">Richtungsvektor ${tex('\\vec{d}')}</label>
-        <div class="vec-wrap">
-          <div class="vec-br vec-br-l"></div>
-          <div class="vec-fields">
-            <input type="number" id="wu-d0" step="1" style="width:70px">
-            <input type="number" id="wu-d1" step="1" style="width:70px">
-            <input type="number" id="wu-d2" step="1" style="width:70px">
-          </div>
-          <div class="vec-br vec-br-r"></div>
-        </div></div>`;
-  } else if(rid==='C1'){
-    form.innerHTML=`
-      <div class="igroup"><label style="font-size:11px;color:var(--text2)">Länge ${tex('|\\vec{d}|')} (in m)</label>
-        <input type="number" id="wu-len" step="0.01" style="width:100px"></div>
-      <div class="igroup"><label style="font-size:11px;color:var(--text2)">TÜV-Urteil</label>
-        <div class="rg">
-          <label><input type="radio" name="wu-urteil" value="pass"> ✓ Zulässig</label>
-          <label><input type="radio" name="wu-urteil" value="fail"> ✗ Nicht zulässig</label>
-        </div></div>`;
-  } else if(rid==='SA1'){
-    form.innerHTML=`
-      <div class="igroup"><label style="font-size:11px;color:var(--text2)">Neigungswinkel ${tex('\\alpha')} (in °)</label>
-        <input type="number" id="wu-angle" step="0.1" style="width:100px"></div>
-      <div class="igroup"><label style="font-size:11px;color:var(--text2)">TÜV-Urteil</label>
-        <div class="rg">
-          <label><input type="radio" name="wu-urteil" value="pass"> ✓ Zulässig</label>
-          <label><input type="radio" name="wu-urteil" value="fail"> ✗ Nicht zulässig</label>
-        </div></div>`;
-  } else if(rid==='A1'){
-    form.innerHTML=`
-      <div class="igroup"><label style="font-size:11px;color:var(--text2)">Stützvektor</label>
-        <div class="vi">
-          <span>(</span><input type="number" id="wu-sv0" step="0.1" style="width:50px">
-          <span>|</span><input type="number" id="wu-sv1" step="0.1" style="width:50px">
-          <span>|</span><input type="number" id="wu-sv2" step="0.1" style="width:50px"><span>)</span>
-        </div></div>
-      <div class="igroup"><label style="font-size:11px;color:var(--text2)">Richtungsvektor</label>
-        <div class="vi">
-          <span>(</span><input type="number" id="wu-rv0" step="0.1" style="width:50px">
-          <span>|</span><input type="number" id="wu-rv1" step="0.1" style="width:50px">
-          <span>|</span><input type="number" id="wu-rv2" step="0.1" style="width:50px"><span>)</span>
-        </div></div>`;
-  }
+  // Nur Urteil: Regel erfüllt oder nicht?
+  const form=document.createElement('div');
+  form.style.cssText='margin-bottom:10px';
+  form.innerHTML=`
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px">Dein Urteil:</div>
+    <div style="display:flex;gap:10px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;background:var(--bg);border-radius:6px;border:2px solid var(--bg5);transition:border-color .15s"
+        id="lbl-pass" onclick="document.getElementById('lbl-fail').style.borderColor='var(--bg5)';this.style.borderColor='var(--ok)'">
+        <input type="radio" name="wu-verdict" value="pass" style="display:none">
+        <span style="color:var(--ok);font-size:16px">✓</span> Regel erfüllt
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;background:var(--bg);border-radius:6px;border:2px solid var(--bg5);transition:border-color .15s"
+        id="lbl-fail" onclick="document.getElementById('lbl-pass').style.borderColor='var(--bg5)';this.style.borderColor='var(--err)'">
+        <input type="radio" name="wu-verdict" value="fail" style="display:none">
+        <span style="color:var(--err);font-size:16px">✗</span> Regel verletzt
+      </label>
+    </div>`;
   wrap.appendChild(form);
 
-  // Buttons
   const brow=document.createElement('div');
-  brow.style.cssText='display:flex;gap:8px;margin-top:10px';
+  brow.style.cssText='display:flex;gap:8px;margin-top:4px';
   const subBtn=document.createElement('button');
   subBtn.className='btn btn-ok';
-  subBtn.textContent='Prüfen →';
+  subBtn.textContent='Urteil abgeben →';
   subBtn.onclick=()=>submitWarmupCheck(ropeKey, rope, rid, d, sv, av);
   brow.appendChild(subBtn);
   const cancelBtn=document.createElement('button');
@@ -2464,127 +2747,89 @@ function openWarmupCheck(ropeKey, rope, rid){
   brow.appendChild(cancelBtn);
   wrap.appendChild(brow);
 
-  // Result area
   const res=document.createElement('div');
   res.id='wu-result';
   res.style.cssText='margin-top:10px';
   wrap.appendChild(res);
 
   fb.appendChild(wrap);
-
-  // Scroll to check area
   const drwBody=document.getElementById('drw-body');
   if(drwBody) setTimeout(()=>drwBody.scrollTop=drwBody.scrollHeight,100);
 }
 
-/* ── Warmup: Einzelprüfung auswerten ── */
+/* ── Warmup: Urteil auswerten ── */
 function submitWarmupCheck(rKey, rope, rid, d, sv, av){
   const res=document.getElementById('wu-result');
   if(!res) return;
 
-  let ok=false, steps='';
-  const truth=WARMUP_VIOLATIONS[rKey]?.[rid]||'pass';
+  const radio=document.querySelector('input[name="wu-verdict"]:checked');
+  if(!radio){ res.innerHTML=`<div style="color:var(--err);font-size:11px">Bitte erst ein Urteil auswählen.</div>`; return; }
 
-  if(rid==='V1'){
-    const ent=[parseFloat(document.getElementById('wu-d0')?.value),
-               parseFloat(document.getElementById('wu-d1')?.value),
-               parseFloat(document.getElementById('wu-d2')?.value)];
-    if(ent.some(isNaN)){ res.innerHTML=`<div style="color:var(--err);font-size:11px">Bitte alle Felder ausfüllen.</div>`; return; }
-    ok=V.eq3(ent,d,0.05);
-    steps=[
-      `d⃗ = ${V.str(av)} − ${V.str(sv)} = ${V.str(d)}`,
-      ok?'✓ Korrekt!':'✗ Erwartet: '+V.str(d),
-    ].join('\n');
-  } else if(rid==='C1'){
-    const [dx,dy,dz]=d, len=V.len(d);
-    const ent=parseFloat(document.getElementById('wu-len')?.value);
-    const radio=document.querySelector('input[name="wu-urteil"]:checked');
-    if(isNaN(ent)||!radio){ res.innerHTML=`<div style="color:var(--err);font-size:11px">Bitte alle Felder ausfüllen.</div>`; return; }
-    const cok=Math.abs(ent-len)<0.06;
-    const rok=len>=4&&len<=20;
-    const urteilOk=(radio.value==='pass')===rok;
-    ok=cok&&urteilOk;
-    steps=[
-      `d⃗ = ${V.str(d)}`,
-      `|d⃗| = √(${n(dx)}² + ${n(dy)}² + ${n(dz)}²)`,
-      `    = √${n2(dx*dx+dy*dy+dz*dz)} ≈ ${n2(len)} m`,
-      cok?(rok?`✓ ${n2(len)} m ∈ [4, 20] → Zulässig`:`✗ ${n2(len)} m ∉ [4, 20] → Nicht zulässig`):`✗ Rechenfehler — erwartet ${n2(len)} m`,
-      !urteilOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
-    ].filter(Boolean).join('\n');
+  const studentVerdict = radio.value; // 'pass' | 'fail'
+  const { verdict: correctVerdict, len, hDist, zA, zB } = wuTruth(rid, d, sv, av, rope);
+  const verdictOk = studentVerdict === correctVerdict;
+
+  // Erklärung je nach Regel
+  let explanation = '';
+  const isGrenz=APP.warmupPhase==='grenzfall';
+  const violRef=isGrenz?WARMUP_GRENZ_VIOLATIONS:WARMUP_VIOLATIONS;
+  const groundTruth = violRef[rKey]?.[rid] || correctVerdict;
+
+  if(rid==='C1'){
+    const [dx,dy,dz]=d;
+    explanation=`Länge = √(${n(dx)}²+${n(dy)}²+${n(dz)}²) = ${n2(len)} m\n`
+      +(len<=4 ? `✓ ${n2(len)} m ≤ 4 m → Regel erfüllt` : `✗ ${n2(len)} m > 4 m → Regel verletzt`);
   } else if(rid==='SA1'){
-    const len=V.len(d), dz=Math.abs(d[2]);
-    const sinA=dz/len, alpha=deg(Math.asin(sinA));
-    const ent=parseFloat(document.getElementById('wu-angle')?.value);
-    const radio=document.querySelector('input[name="wu-urteil"]:checked');
-    if(isNaN(ent)||!radio){ res.innerHTML=`<div style="color:var(--err);font-size:11px">Bitte alle Felder ausfüllen.</div>`; return; }
-    const cok=Math.abs(ent-alpha)<0.6;
-    const rok=alpha>=20&&alpha<=60;
-    const urteilOk=(radio.value==='pass')===rok;
-    ok=cok&&urteilOk;
-    steps=[
-      `sin α = |Δz| ÷ |d⃗| = ${n2(dz)} ÷ ${n2(len)} = ${n2(sinA)}`,
-      `α = arcsin(${n2(sinA)}) ≈ ${n2(alpha)}°`,
-      cok?(rok?`✓ ${n2(alpha)}° ∈ [20°, 60°]`:`✗ ${n2(alpha)}° ∉ [20°, 60°]`):`✗ Rechenfehler — erwartet ${n2(alpha)}°`,
-      !urteilOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
-    ].filter(Boolean).join('\n');
-  } else if(rid==='A1'){
-    const es=[parseFloat(document.getElementById('wu-sv0')?.value),
-              parseFloat(document.getElementById('wu-sv1')?.value),
-              parseFloat(document.getElementById('wu-sv2')?.value)];
-    const er=[parseFloat(document.getElementById('wu-rv0')?.value),
-              parseFloat(document.getElementById('wu-rv1')?.value),
-              parseFloat(document.getElementById('wu-rv2')?.value)];
-    if(es.some(isNaN)||er.some(isNaN)){ res.innerHTML=`<div style="color:var(--err);font-size:11px">Bitte alle Felder ausfüllen.</div>`; return; }
-    const sok=V.eq3(es,sv,0.1)||V.eq3(es,av,0.1);
-    const rok=V.par(er,d)&&V.len(er)>0.01;
-    ok=sok&&rok;
-    steps=[
-      `Korrekte Geradengleichung:`,
-      `g: x⃗ = ${V.str(sv)} + t · ${V.str(d)}`,
-      ``,
-      `Dein Stützvektor ${V.str(es)}: ${sok?'✓':'✗ (muss '+rope.from+V.str(sv)+' oder '+rope.to+V.str(av)+' sein)'}`,
-      `Dein Richtungsvektor ${V.str(er)}: ${rok?'✓ (parallel zu '+V.str(d)+')':'✗ (muss parallel zu '+V.str(d)+' sein)'}`,
-    ].join('\n');
+    const zA2=sv[2], zB2=av[2];
+    const hd=hDist;
+    explanation=`Höhe Plattform ${rope.from}: ${zA2} m ${zA2>=2?'✓':'✗ (< 2 m)'}\n`
+      +`Höhe Plattform ${rope.to}: ${zB2} m ${zB2>=2?'✓':'✗ (< 2 m)'}\n`
+      +`Horizontaler Abstand: ${hd} m ${hd>=3?'✓':'✗ (< 3 m)'}`;
+  } else if(rid==='V1'){
+    const goesDown = d[2] < 0;
+    const isBr = rope.type==='brücke';
+    explanation = isBr
+      ? `Brücke geht ${goesDown?'nach unten ✗ (muss hoch gehen)':'nach oben ✓'}`
+      : `Seil geht ${goesDown?'nach unten ✓':'nach oben ✗ (muss runter gehen)'}`;
   }
 
-  // Record result — use correct state map depending on phase
-  const isGrenz=APP.warmupPhase==='grenzfall';
+  const ok = verdictOk;
+  const isOk = ok;
+  res.innerHTML=`<div style="padding:10px;border-radius:6px;font-size:11px;line-height:1.7;white-space:pre-line;
+    background:${isOk?'rgba(107,203,119,.1)':'rgba(255,94,91,.1)'};
+    border:1px solid ${isOk?'var(--ok)':'var(--err)'}">
+    <div style="font-size:13px;font-weight:700;color:${isOk?'var(--ok)':'var(--err)'};margin-bottom:6px">
+      ${isOk?'✓ Richtig!':'✗ Nicht ganz — hier ist die Auflösung:'}
+    </div>
+    <div style="color:var(--text);font-family:'JetBrains Mono',monospace">${explanation}</div>
+    <div style="margin-top:8px;color:var(--text2);font-style:italic">
+      → Regel ist <b style="color:${correctVerdict==='pass'?'var(--ok)':'var(--err)'}">${correctVerdict==='pass'?'erfüllt':'verletzt'}</b>
+    </div>
+  </div>`;
+
+  // Ergebnis speichern
   const checkedMap=isGrenz?APP.warmupGrenzChecked:APP.warmupChecked;
   if(!checkedMap[rKey]) checkedMap[rKey]={};
   checkedMap[rKey][rid]={correct:ok};
 
-  // Show result
-  const isOk=ok;
-  res.innerHTML=`<div style="padding:10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;
-    line-height:1.65;white-space:pre-line;
-    background:${isOk?'rgba(107,203,119,.1)':'rgba(255,94,91,.1)'};
-    border:1px solid ${isOk?'var(--ok)':'var(--err)'};
-    color:${isOk?'var(--ok)':'var(--err)'}">
-${steps}</div>`;
-
-  // Generate suggestion for next rule
   const ropesRef=isGrenz?WARMUP_GRENZ_ROPES:WARMUP_ROPES;
-  const violRef=isGrenz?WARMUP_GRENZ_VIOLATIONS:WARMUP_VIOLATIONS;
   generateWarmupSuggestion(rKey, rid, ok, ropesRef, checkedMap, violRef);
-
-  // Check if phase is complete
   if(isGrenz) checkGrenzfallComplete();
   else checkWarmupComplete();
 
-  // Re-render after delay to update buttons
   setTimeout(()=>{
     const oldFb=document.getElementById('wu-result')?.parentElement?.outerHTML||'';
     renderDrawer();
     const fb=document.getElementById('warmup-fb');
     if(fb && oldFb) fb.innerHTML=oldFb;
-  },1800);
+  },2000);
 }
 
 function generateWarmupSuggestion(lastRopeKey, lastRid, wasCorrect, ropesRef, checkedMap, violRef){
   const unchecked=[];
   ropesRef.forEach(rope=>{
     const key=ropeKey(rope);
-    const rulesForRope = rope.type==='brücke' ? ['V1','C1'] : WARMUP_RULES;
+    const rulesForRope = WARMUP_RULES;
     rulesForRope.forEach(rid=>{
       if(RDEFS[rid]?.twoRopes) return;
       if(!checkedMap[key]?.[rid]) unchecked.push({key,rid,rope});
@@ -2685,7 +2930,8 @@ function computeRuleTruth(rid, def, ropeKey){
   const rd=getRd1(rid); if(!rd) return 'pass';
   const {d}=rd;
   switch(rid){
-    case 'C1': { const len=V.len(d); return (len>=4&&len<=20)?'pass':'fail'; }
+    case 'C1': { const len=V.len(d); return len<=4?'pass':'fail'; }
+    case 'SA1': { const hd=Math.sqrt(d[0]*d[0]+d[1]*d[1]); const zA=rd.sv[2], zB=rd.av[2]; return (zA>=2&&zB>=2&&hd>=3)?'pass':'fail'; }
     case 'D1': { const angle=Math.asin(Math.abs(d[2])/V.len(d))*180/Math.PI; return (angle>=20&&angle<=60)?'pass':'fail'; }
     case 'A1': return 'pass'; // Seilgerade ist immer aufstellbar
     case 'C3': return 'pass'; // Einheitsvektor existiert immer
@@ -2844,6 +3090,127 @@ function startGrowthProtokoll(){
   APP.phase='warmup'; // Reuse warmup protokoll UI
   APP.warmupDone=false; // Temporär zurücksetzen für neue Prüfung
   renderDrawer();
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAWER — SANDBOX
+   ══════════════════════════════════════════════════════ */
+function buildDrawerSandbox(){
+  const frag = document.createDocumentFragment();
+
+  const info = document.createElement('div');
+  info.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px;padding:8px 10px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--rope)';
+  info.innerHTML = `<b style="color:var(--rope)">Freier 3D-Bereich</b><br>Hier kannst du eigene Plattformen und Seile ausprobieren. Die Änderungen haben keinen Einfluss auf dein Level.`;
+  frag.appendChild(info);
+
+  // Plattform hinzufügen
+  const addSec = document.createElement('div');
+  addSec.className = 'sec';
+  addSec.innerHTML = `<div class="sec-title">Plattform hinzufügen</div>
+    <div class="row">
+      <label>Name</label><input type="text" id="sb-name" class="name-inp" maxlength="2" placeholder="P" style="width:36px">
+      <label>x₁</label><input type="number" id="sb-x" step="1" placeholder="0" style="width:46px">
+      <label>x₂</label><input type="number" id="sb-y" step="1" placeholder="0" style="width:46px">
+      <label>x₃</label><input type="number" id="sb-z" step="1" placeholder="0" style="width:46px">
+    </div>
+    <button class="btn btn-s" style="font-size:11px;margin-top:4px" onclick="sbAddPlat()">+ Plattform</button>`;
+  frag.appendChild(addSec);
+
+  // Seil hinzufügen
+  const ropeSec = document.createElement('div');
+  ropeSec.className = 'sec';
+  const platIds = Object.keys(APP.plats);
+  ropeSec.innerHTML = `<div class="sec-title">Seil/Brücke hinzufügen</div>
+    <div class="row">
+      <label>Von</label>
+      <select id="sb-from" style="background:var(--bg4);color:var(--text);border:1px solid var(--bg5);border-radius:4px;padding:3px 6px;font-size:12px">
+        ${platIds.map(id=>`<option value="${id}">${id}</option>`).join('')}
+      </select>
+      <label>Nach</label>
+      <select id="sb-to" style="background:var(--bg4);color:var(--text);border:1px solid var(--bg5);border-radius:4px;padding:3px 6px;font-size:12px">
+        ${platIds.map(id=>`<option value="${id}">${id}</option>`).join('')}
+      </select>
+    </div>
+    <div class="row" style="margin-top:4px">
+      <label>Typ</label>
+      <select id="sb-type" style="background:var(--bg4);color:var(--text);border:1px solid var(--bg5);border-radius:4px;padding:3px 6px;font-size:12px">
+        <option value="seil">Seil</option>
+        <option value="brücke">Brücke</option>
+      </select>
+    </div>
+    <button class="btn btn-s" style="font-size:11px;margin-top:4px" onclick="sbAddRope()">+ Seil/Brücke</button>`;
+  frag.appendChild(ropeSec);
+
+  // Plattform-Liste
+  if(platIds.length > 0){
+    const listSec = document.createElement('div');
+    listSec.className = 'sec';
+    listSec.innerHTML = '<div class="sec-title">Plattformen</div>' +
+      platIds.map(id=>{
+        const p = APP.plats[id];
+        return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;margin-bottom:2px;background:var(--bg3);border-radius:4px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px">${id}(${p.x}|${p.y}|${p.z})</span>
+          ${p.fixed?'<span style="font-size:10px;color:var(--text2)">[fix]</span>':`<button class="del-btn" onclick="sbDelPlat('${id}')">×</button>`}
+        </div>`;
+      }).join('');
+    frag.appendChild(listSec);
+  }
+
+  // Seil-Liste
+  if(APP.ropes.length > 0){
+    const ropeListSec = document.createElement('div');
+    ropeListSec.className = 'sec';
+    ropeListSec.innerHTML = '<div class="sec-title">Seile</div>' +
+      APP.ropes.map((r,i)=>`
+        <div class="list-item" style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;margin-bottom:2px;background:var(--bg3);border-radius:4px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.from}→${r.to} <span style="color:var(--text2)">(${r.type||'seil'})</span></span>
+          <button class="del-btn" onclick="sbDelRope(${i})">×</button>
+        </div>`).join('');
+    frag.appendChild(ropeListSec);
+  }
+
+  // Reset
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'btn';
+  resetBtn.style.cssText = 'width:100%;margin-top:8px;font-size:11px;color:var(--err);border-color:var(--err)';
+  resetBtn.textContent = 'Sandbox zurücksetzen';
+  resetBtn.onclick = () => {
+    SANDBOX = { plats: {S:{x:0,y:0,z:2,fixed:true}}, ropes: [] };
+    APP.plats = JSON.parse(JSON.stringify(SANDBOX.plats));
+    APP.ropes = [];
+    rebuild3();
+    renderDrawer();
+  };
+  frag.appendChild(resetBtn);
+
+  return frag;
+}
+
+function sbAddPlat(){
+  const name=(document.getElementById('sb-name').value||'P').toUpperCase();
+  const x=parseFloat(document.getElementById('sb-x').value)||0;
+  const y=parseFloat(document.getElementById('sb-y').value)||0;
+  const z=parseFloat(document.getElementById('sb-z').value)||0;
+  if(!name) return;
+  APP.plats[name]={x,y,z,fixed:false};
+  rebuild3(); renderDrawer();
+}
+function sbDelPlat(id){
+  delete APP.plats[id];
+  APP.ropes=APP.ropes.filter(r=>r.from!==id&&r.to!==id);
+  rebuild3(); renderDrawer();
+}
+function sbAddRope(){
+  const from=document.getElementById('sb-from').value;
+  const to=document.getElementById('sb-to').value;
+  const type=document.getElementById('sb-type').value;
+  if(from===to) return;
+  APP.ropes.push({from,to,type});
+  rebuild3(); renderDrawer();
+}
+function sbDelRope(i){
+  APP.ropes.splice(i,1);
+  rebuild3(); renderDrawer();
 }
 
 /* ══════════════════════════════════════════════════════
@@ -3074,7 +3441,7 @@ function delRope(i){
 /* ══════════════════════════════════════════════════════
    PHASE NAVIGATION
    ══════════════════════════════════════════════════════ */
-const PHASES = ['regelsetup','warmup','growth','analyse','peer','abnahme'];
+const PHASES = ['regelsetup','warmup','growth','sandbox','analyse','peer','abnahme'];
 
 function setPhase(phase){
   if(phase==='warmup' && APP.ruleOrder.length===0){ shakeBtn('btn-warmup'); return; }
@@ -3085,7 +3452,9 @@ function setPhase(phase){
     const btn=document.getElementById('btn-'+p);
     if(btn) btn.classList.toggle('active',p===phase);
   });
-  if(phase!=='growth') setClickMode(false);
+  if(APP.phase==='sandbox' && phase!=='sandbox') exitSandbox();
+  if(phase==='sandbox' && APP.phase!=='sandbox') enterSandbox();
+  if(phase!=='growth' && phase!=='sandbox') setClickMode(false);
   if(phase==='warmup' && APP.ropes.length===0) setupWarmupPark();
   rebuild3();
   updateProgBadge();
@@ -3624,7 +3993,7 @@ const RDEFS = {
   C1: {
     cat:'Betrag', title:'Seillänge berechnen',
     twoRopes: false,
-    vorschrift:'Seile müssen mindestens 4 m lang sein (sonst kein Fahrspaß) und dürfen höchstens 20 m lang sein (sonst bremst die Anlage zu spät).',
+    vorschrift:'Die Länge eines Weges (egal ob Leiter oder Seil) darf 4 m nicht überschreiten.',
     variant:'mc',
     genScen(rid){
       const rd=getRd1(rid); if(!rd) return {};
@@ -4077,7 +4446,7 @@ const RDEFS = {
   V1: {
     cat:'Grundrechnung', title:'Richtungsvektor bestimmen',
     twoRopes:false,
-    vorschrift:'Grundlage aller Prüfungen: Der Richtungsvektor d⃗ = Zielplattform − Startplattform zeigt, wohin das Seil führt — er steckt in Länge, Winkel und allen anderen Berechnungen.',
+    vorschrift:'Für eine Leiter muss der Weg nach oben gehen, für ein Seil nach unten.',
     variant:'blind',
     ctx(rid){ const rd=getRd1(rid); if(!rd) return ''; const {sv,av,rope}=rd;
       return `${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>Berechne ${tex('\\vec{d}')} = Zielplattform − Startplattform.`;
@@ -4092,7 +4461,7 @@ const RDEFS = {
   SA1: {
     cat:'Sicherheit', title:'Sicherheitsabstand prüfen',
     twoRopes:false,
-    vorschrift:'Der Neigungswinkel zur Horizontalen muss zwischen 20° und 60° liegen. Zu flach: der Fahrer bleibt stecken. Zu steil: die Bremse versagt und der Aufprall wird zu hart.',
+    vorschrift:'Die Plattformen müssen mindestens zwei Meter hoch sein und einen horizontalen Abstand von 3 m haben.',
     variant:'fehler',
     genScen(rid){
       const rd=getRd1(rid); if(!rd) return {};
@@ -4200,6 +4569,64 @@ function init(){
     setStudentCode(urlCode.toUpperCase());
     syncProgress();
   }
+
+  // Start screens
+  const existingCode=getStudentCode();
+  if(!existingCode){
+    document.getElementById('s-code').classList.remove('hidden');
+    setTimeout(()=>document.getElementById('wlc-code-input')?.focus(),100);
+  } else {
+    _showWelcome();
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   START SCREENS
+   ══════════════════════════════════════════════════════ */
+async function submitStartCode(){
+  const inp=document.getElementById('wlc-code-input');
+  const err=document.getElementById('wlc-code-err');
+  const code=inp.value.trim().toUpperCase();
+  if(code.length!==6){
+    err.style.color='var(--err)';
+    err.textContent='Bitte 6-stelligen Code eingeben';
+    return;
+  }
+  err.style.color='var(--text2)';
+  err.textContent='Validiere…';
+  try{
+    const res=await fetch(SYNC_API+'/validate.php',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code})
+    });
+    const data=await res.json();
+    if(data.valid){
+      setStudentCode(code);
+      err.style.color='var(--ok)';
+      err.textContent='✓ Willkommen, Klasse '+data.class+'!';
+      setTimeout(()=>_showWelcome(),900);
+    }else{
+      err.style.color='var(--err)';
+      err.textContent='✗ Code ungültig';
+    }
+  }catch(e){
+    err.style.color='var(--err)';
+    err.textContent='Fehler beim Verbinden';
+  }
+}
+
+function _showWelcome(){
+  document.getElementById('s-code').classList.add('hidden');
+  document.getElementById('s-welcome').classList.remove('hidden');
+  const hasProg=STATE.d.warmupDone||STATE.d.ruleOrder?.length>0;
+  document.getElementById('btn-wlc-enter').style.display=hasProg?'none':'';
+  document.getElementById('btn-wlc-cont').style.display=hasProg?'':'none';
+}
+
+function enterApp(){
+  document.getElementById('s-welcome').classList.add('hidden');
+  updateCodeBadge();
+  syncProgress();
 }
 
 document.addEventListener('DOMContentLoaded', init);
