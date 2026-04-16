@@ -315,24 +315,50 @@ input.num-input{width:90px!important}
            color:var(--text2);letter-spacing:2px;text-transform:uppercase;
            background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
            padding:4px 14px;border-radius:20px}
-.wlc-title{font-family:'Bebas Neue',sans-serif;font-size:68px;letter-spacing:5px;
-           color:var(--rope);line-height:1;text-shadow:0 0 50px rgba(200,131,58,.35)}
-.wlc-sub{font-size:15px;font-weight:700;color:var(--text);letter-spacing:.5px;margin-top:-4px}
-.wlc-desc{font-size:13px;color:var(--text2);line-height:1.65;max-width:310px}
-.wlc-code-input{background:var(--bg);border:2px solid var(--bg5);border-radius:8px;
-                padding:13px 20px;color:var(--text);font-family:'JetBrains Mono',monospace;
-                font-size:24px;text-align:center;letter-spacing:8px;text-transform:uppercase;
-                width:220px;transition:border-color .2s;margin-top:4px}
-.wlc-code-input:focus{outline:none;border-color:var(--rope);box-shadow:0 0 0 3px rgba(200,131,58,.15)}
-.wlc-code-err{font-size:12px;min-height:18px;margin-top:-4px}
-.btn-wlc-start{background:var(--rope);color:var(--bg);border:none;padding:14px 40px;
-               border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;
-               cursor:pointer;transition:opacity .2s;box-shadow:0 4px 24px rgba(200,131,58,.28)}
+.wlc-title{font-family:'Bebas Neue',sans-serif;font-size:86px;letter-spacing:6px;
+           color:var(--rope);line-height:1;text-shadow:0 0 60px rgba(200,131,58,.4)}
+.wlc-sub{font-size:17px;font-weight:700;color:var(--text);letter-spacing:.5px;margin-top:-4px}
+.wlc-desc{font-size:14px;color:var(--text2);line-height:1.65;max-width:340px}
+.wlc-code-input{background:var(--bg);border:2px solid var(--bg5);border-radius:10px;
+                padding:18px 28px;color:var(--text);font-family:'JetBrains Mono',monospace;
+                font-size:30px;text-align:center;letter-spacing:10px;text-transform:uppercase;
+                width:270px;transition:border-color .2s;margin-top:6px}
+.wlc-code-input:focus{outline:none;border-color:var(--rope);box-shadow:0 0 0 4px rgba(200,131,58,.15)}
+.wlc-code-err{font-size:13px;min-height:20px;margin-top:-4px}
+.btn-wlc-start{background:var(--rope);color:var(--bg);border:none;padding:16px 52px;
+               border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;
+               cursor:pointer;transition:opacity .2s;box-shadow:0 4px 28px rgba(200,131,58,.32)}
 .btn-wlc-start:hover{opacity:.85}
-.btn-wlc-cont{background:none;border:1px solid var(--bg5);color:var(--text2);padding:10px 28px;
-              border-radius:6px;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;
+.btn-wlc-cont{background:none;border:1px solid var(--bg5);color:var(--text2);padding:12px 32px;
+              border-radius:7px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;
               cursor:pointer;transition:all .2s;margin-top:-4px}
 .btn-wlc-cont:hover{border-color:var(--rope);color:var(--rope)}
+.wlc-teacher-link{position:absolute;bottom:22px;right:28px;font-size:11px;color:var(--text2);
+                  opacity:.5;cursor:pointer;text-decoration:none;transition:opacity .2s;
+                  font-family:'Nunito',sans-serif}
+.wlc-teacher-link:hover{opacity:1;color:var(--rope)}
+
+/* LEHRER-LOGIN-OVERLAY auf Startscreen */
+#s-teacher{position:fixed;inset:0;z-index:110;display:flex;align-items:center;justify-content:center;
+           background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
+.teacher-box{background:var(--bg2);border:1px solid var(--bg4);border-radius:14px;
+             padding:32px 28px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
+.teacher-box h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--rope)}
+.teacher-box p{font-size:12px;color:var(--text2);line-height:1.5}
+.teacher-key-input{background:var(--bg);border:2px solid var(--bg5);border-radius:7px;
+                   padding:11px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;
+                   font-size:15px;letter-spacing:2px;width:100%;transition:border-color .2s}
+.teacher-key-input:focus{outline:none;border-color:var(--rope)}
+.teacher-box-btns{display:flex;gap:8px}
+.btn-teacher-login{flex:1;background:var(--rope);color:var(--bg);border:none;padding:11px;
+                   border-radius:7px;font-family:'Bebas Neue',sans-serif;font-size:16px;
+                   letter-spacing:1px;cursor:pointer;transition:opacity .2s}
+.btn-teacher-login:hover{opacity:.85}
+.btn-teacher-back{background:none;border:1px solid var(--bg5);color:var(--text2);padding:11px 18px;
+                  border-radius:7px;font-size:13px;font-family:'Nunito',sans-serif;font-weight:700;
+                  cursor:pointer;transition:all .2s}
+.btn-teacher-back:hover{border-color:var(--bg4);color:var(--text)}
+.teacher-err{font-size:11px;color:var(--err);min-height:16px;text-align:center}
 </style>
 </head>
 <body>
@@ -354,6 +380,21 @@ input.num-input{width:90px!important}
            onkeydown="if(event.key==='Enter')submitStartCode()">
     <div id="wlc-code-err" class="wlc-code-err"></div>
     <button class="btn-wlc-start" onclick="submitStartCode()">WEITER</button>
+  </div>
+</div>
+
+<!-- ════ Lehrer-Login-Overlay ════ -->
+<div id="s-teacher" class="hidden">
+  <div class="teacher-box">
+    <h3>🔐 Lehrerbereich</h3>
+    <p>Gib deinen Lehrer-Schlüssel ein, um das Dashboard zu öffnen.</p>
+    <input id="teacher-key-input" class="teacher-key-input" type="password" placeholder="Lehrer-Schlüssel"
+           onkeydown="if(event.key==='Enter')submitTeacherLogin()">
+    <div id="teacher-login-err" class="teacher-err"></div>
+    <div class="teacher-box-btns">
+      <button class="btn-teacher-back" onclick="closeTeacherLogin()">← Zurück</button>
+      <button class="btn-teacher-login" onclick="submitTeacherLogin()">EINLOGGEN</button>
+    </div>
   </div>
 </div>
 
@@ -420,12 +461,7 @@ input.num-input{width:90px!important}
       <button class="code-btn-submit" onclick="submitCode()">✓ Anmelden</button>
       <button class="code-btn-close" onclick="closeCodeModal()">✕ Schließen</button>
     </div>
-    <div style="border-top:1px solid var(--bg4);margin-top:14px;padding-top:10px">
-      <button onclick="openTeacherPanel()" style="background:none;border:none;color:var(--text2);font-size:11px;cursor:pointer;text-decoration:underline;padding:0">
-        🔐 Lehrerbereich
-      </button>
-      <div id="teacher-panel" style="margin-top:8px"></div>
-    </div>
+    <div id="teacher-panel" style="display:none"></div>
   </div>
 </div>
 
@@ -4641,6 +4677,40 @@ function enterApp(){
   document.getElementById('s-welcome').classList.add('hidden');
   updateCodeBadge();
   syncProgress();
+}
+
+/* ── Lehrer-Login-Overlay (via ?lehrer oder openTeacherLogin()) ── */
+function openTeacherLogin(){
+  document.getElementById('s-teacher').classList.remove('hidden');
+  document.getElementById('teacher-login-err').textContent='';
+  setTimeout(()=>document.getElementById('teacher-key-input')?.focus(),80);
+}
+function closeTeacherLogin(){
+  document.getElementById('s-teacher').classList.add('hidden');
+}
+async function submitTeacherLogin(){
+  const key=document.getElementById('teacher-key-input').value.trim();
+  const err=document.getElementById('teacher-login-err');
+  if(!key){ err.textContent='Bitte Schlüssel eingeben'; return; }
+  err.textContent='Prüfe…';
+  // Test key against dashboard endpoint
+  try{
+    const r=await fetch(SYNC_API+'/dashboard.php',{headers:{'X-Teacher-Key':key}});
+    const d=await r.json();
+    if(d.ok){
+      _teacherKey=key;
+      localStorage.setItem('km6-teacher-key',key);
+      closeTeacherLogin();
+      document.getElementById('s-code').classList.add('hidden');
+      openCodeModal();
+      refreshTeacherPanel();
+      document.getElementById('teacher-panel').style.display='';
+    }else{
+      err.textContent='✗ Schlüssel ungültig';
+    }
+  }catch(e){
+    err.textContent='Verbindungsfehler';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
