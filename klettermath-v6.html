@@ -4570,6 +4570,20 @@ function init(){
     syncProgress();
   }
 
+  // Lehrer-Direktlink: ?lehrer
+  if(params.has('lehrer')){
+    // Startscreen überspringen, direkt in App + Lehrerpanel öffnen
+    document.getElementById('s-code').classList.add('hidden');
+    const savedKey = localStorage.getItem('km6-teacher-key');
+    if(savedKey){ _teacherKey=savedKey; }
+    openCodeModal();
+    setTimeout(()=>{
+      if(!_teacherKey) openTeacherPanel();
+      else refreshTeacherPanel();
+    },300);
+    return;
+  }
+
   // Start screens
   const existingCode=getStudentCode();
   if(!existingCode){
