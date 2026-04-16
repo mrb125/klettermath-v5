@@ -520,7 +520,7 @@ const COMP=[
 const PARK_CONFIG = {
   A: [4, 1, 3]
 };
-const RULES = ['A1', 'C1', 'C3', 'D1', 'E1', 'B1', 'F1', 'G1']; // Fallback — alle verfügbaren Regeln
+const RULES = ['V1', 'C1', 'SA1']; // Warmup-Regeln: Richtungsvektor, Seillänge, Sicherheitsabstand
 function getActiveRules(){ return (STATE.cfg.activeRules || RULES).filter(id=>RDEFS[id]); }
 
 /* ── Plattform-Varianten (pro Buchstabe wählbar) ──────────
