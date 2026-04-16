@@ -3062,6 +3062,7 @@ function setPhase(phase){
     if(btn) btn.classList.toggle('active',p===phase);
   });
   if(phase!=='growth') setClickMode(false);
+  if(phase==='warmup' && APP.ropes.length===0) setupWarmupPark();
   rebuild3();
   updateProgBadge();
   renderDrawer();
