@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KletterMath — Lehrerbereich</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--err:#ff5e5b;--text:#f0ead8;--text2:#a89880;
+  --blue:#5ba3d9;--purple:#b07fff;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;line-height:1.5}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(200,131,58,.18) 0%,transparent 60%),
+             linear-gradient(170deg,#0e1210 0%,#1a1614 50%,#201410 100%)}
+#login-screen.hidden{display:none}
+.login-rope{position:absolute;left:-5%;right:-5%;top:36%;height:4px;
+  background:linear-gradient(90deg,transparent,rgba(200,131,58,.3) 15%,rgba(200,131,58,.7) 50%,rgba(200,131,58,.3) 85%,transparent);
+  box-shadow:0 0 18px rgba(200,131,58,.3);transform:rotate(-2deg);pointer-events:none}
+.login-box{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+  gap:18px;padding:48px 36px;text-align:center;width:100%;max-width:400px}
+.login-title{font-family:'Bebas Neue',sans-serif;font-size:72px;letter-spacing:6px;
+  color:var(--rope);line-height:1;text-shadow:0 0 50px rgba(200,131,58,.35)}
+.login-sub{font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--text2);margin-top:-8px}
+.login-label{font-size:13px;color:var(--text2);margin-top:8px}
+.login-input{background:var(--bg);border:2px solid var(--bg5);border-radius:10px;padding:14px 20px;
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:17px;letter-spacing:3px;
+  width:260px;text-align:center;transition:border-color .2s}
+.login-input:focus{outline:none;border-color:var(--rope);box-shadow:0 0 0 3px rgba(200,131,58,.15)}
+.login-btn{background:var(--rope);color:var(--bg);border:none;padding:15px 48px;border-radius:10px;
+  font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;cursor:pointer;
+  transition:opacity .2s;box-shadow:0 4px 24px rgba(200,131,58,.3);width:260px}
+.login-btn:hover{opacity:.85}
+.login-err{font-size:12px;color:var(--err);min-height:18px}
+
+/* ── LAYOUT ── */
+#app{display:none;flex-direction:column;min-height:100vh}
+#app.visible{display:flex}
+header{background:var(--bg2);border-bottom:1px solid var(--bg3);padding:0 24px;
+  display:flex;align-items:center;gap:16px;height:56px;position:sticky;top:0;z-index:50}
+.hdr-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--rope)}
+.hdr-badge{font-size:11px;background:rgba(200,131,58,.15);color:var(--rope);
+  padding:2px 10px;border-radius:12px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:1px}
+.hdr-sp{flex:1}
+.hdr-btn{background:none;border:1px solid var(--bg5);color:var(--text2);padding:5px 14px;
+  border-radius:6px;cursor:pointer;font-size:13px;font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s}
+.hdr-btn:hover{border-color:var(--bg4);color:var(--text)}
+nav{background:var(--bg2);border-bottom:1px solid var(--bg3);display:flex;gap:0;padding:0 24px}
+.nav-btn{background:none;border:none;color:var(--text2);padding:12px 18px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;border-bottom:2px solid transparent;
+  transition:all .2s;white-space:nowrap}
+.nav-btn:hover{color:var(--text)}
+.nav-btn.active{color:var(--rope);border-bottom-color:var(--rope)}
+main{flex:1;padding:28px 28px;max-width:1200px;width:100%;margin:0 auto}
+.tab-section{display:none}
+.tab-section.active{display:block}
+
+/* ── KACHELN ── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.tile{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:20px;
+  display:flex;flex-direction:column;gap:6px;transition:border-color .2s}
+.tile:hover{border-color:var(--bg5)}
+.tile-icon{font-size:24px}
+.tile-val{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;color:var(--rope);line-height:1}
+.tile-lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.tile.ok .tile-val{color:var(--ok)}
+.tile.blue .tile-val{color:var(--blue)}
+.tile.gold .tile-val{color:var(--gold)}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sec-hdr h2{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--rope);flex:1}
+.sec-hdr p{font-size:12px;color:var(--text2)}
+
+/* ── TABELLE ── */
+.tbl-wrap{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.tbl-search{padding:12px 16px;border-bottom:1px solid var(--bg3);display:flex;gap:10px;align-items:center}
+.tbl-search input{background:var(--bg);border:1px solid var(--bg5);border-radius:6px;padding:7px 12px;
+  color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;flex:1;outline:none}
+.tbl-search input:focus{border-color:var(--rope)}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--bg3);padding:10px 14px;text-align:left;font-size:11px;
+  text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:700;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--bg3);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+td{padding:10px 14px;font-size:13px;vertical-align:middle}
+.code-cell{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;
+  color:var(--gold);letter-spacing:2px;cursor:pointer;user-select:all}
+.code-cell:hover{color:var(--rope)}
+.badge-ok{display:inline-block;background:rgba(107,203,119,.12);color:var(--ok);
+  border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700}
+.badge-off{display:inline-block;background:rgba(255,94,91,.1);color:var(--err);
+  border:1px solid rgba(255,94,91,.3);border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700}
+.badge-grey{display:inline-block;background:var(--bg4);color:var(--text2);
+  border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700}
+.xp-bar-wrap{display:flex;align-items:center;gap:8px}
+.xp-bar{height:6px;border-radius:3px;background:var(--bg4);width:80px;overflow:hidden}
+.xp-bar-fill{height:100%;border-radius:3px;background:var(--rope)}
+.action-btns{display:flex;gap:6px}
+.act-btn{background:none;border:1px solid var(--bg5);color:var(--text2);padding:4px 10px;
+  border-radius:5px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif;font-weight:700;
+  transition:all .15s;white-space:nowrap}
+.act-btn:hover{border-color:var(--rope);color:var(--rope)}
+.act-btn.danger:hover{border-color:var(--err);color:var(--err)}
+.act-btn.warn:hover{border-color:var(--gold);color:var(--gold)}
+.empty-row td{text-align:center;padding:40px;color:var(--text2);font-size:13px}
+
+/* ── CODES ERSTELLEN ── */
+.create-box{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:24px;margin-bottom:24px}
+.form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:700}
+.form-group input,.form-group select{background:var(--bg);border:1px solid var(--bg5);border-radius:7px;
+  padding:9px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;
+  outline:none;transition:border-color .2s;min-width:120px}
+.form-group input:focus,.form-group select:focus{border-color:var(--rope)}
+.btn{padding:9px 22px;border-radius:7px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;
+  font-weight:700;font-size:13px;transition:all .15s;white-space:nowrap}
+.btn-p{background:var(--rope);color:var(--bg)}
+.btn-p:hover{opacity:.85}
+.btn-s{background:var(--bg4);color:var(--text);border:1px solid var(--bg5)}
+.btn-s:hover{background:var(--bg5)}
+.btn-ok{background:var(--ok);color:var(--bg)}
+.btn-ok:hover{opacity:.85}
+.generated-codes{margin-top:16px}
+.generated-codes h4{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);
+  font-weight:700;margin-bottom:10px}
+.code-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.code-chip{background:var(--bg);border:1px solid var(--bg5);border-radius:8px;padding:10px;
+  text-align:center;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;
+  color:var(--gold);letter-spacing:3px;cursor:pointer;transition:all .2s;user-select:all}
+.code-chip:hover{border-color:var(--rope);color:var(--rope)}
+.code-chip.copied{border-color:var(--ok);color:var(--ok)}
+.code-chip-cls{font-size:10px;color:var(--text2);letter-spacing:0;margin-top:2px;font-family:'Nunito',sans-serif}
+.copy-all-row{display:flex;gap:8px;align-items:center;margin-top:12px}
+.copy-hint{font-size:11px;color:var(--text2)}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:10px;padding:10px 20px;
+  font-size:13px;font-weight:700;color:var(--text);z-index:999;transition:transform .3s;
+  box-shadow:0 4px 20px rgba(0,0,0,.4)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── LOADING / EMPTY ── */
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--bg5);
+  border-top-color:var(--rope);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text2)}
+.empty-state .icon{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+
+/* ── FORTSCHRITTSDETAIL ── */
+.detail-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center}
+.detail-overlay.hidden{display:none}
+.detail-box{background:var(--bg2);border:1px solid var(--bg4);border-radius:14px;
+  padding:28px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto}
+.detail-box h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;
+  color:var(--rope);margin-bottom:16px}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bg3);
+  font-size:13px}
+.detail-row:last-child{border-bottom:none}
+.detail-key{color:var(--text2)}
+.detail-val{font-family:'JetBrains Mono',monospace;color:var(--gold)}
+.detail-close{margin-top:16px;width:100%;padding:10px;background:var(--bg4);border:none;border-radius:8px;
+  color:var(--text2);font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:13px}
+.detail-close:hover{background:var(--bg5);color:var(--text)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  main{padding:16px}
+  .form-row{flex-direction:column}
+  table{font-size:12px}
+  td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN ════ -->
+<div id="login-screen">
+  <div class="login-rope"></div>
+  <div class="login-box">
+    <div class="login-title">KletterMath</div>
+    <div class="login-sub">Lehrerbereich</div>
+    <div class="login-label">Lehrer-Schlüssel eingeben</div>
+    <input id="key-input" class="login-input" type="password" placeholder="••••••••••"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="login-err" class="login-err"></div>
+    <button class="login-btn" onclick="doLogin()">EINLOGGEN</button>
+  </div>
+</div>
+
+<!-- ════ APP ════ -->
+<div id="app">
+  <header>
+    <div class="hdr-logo">KletterMath</div>
+    <div class="hdr-badge">LEHRERBEREICH</div>
+    <div class="hdr-sp"></div>
+    <button class="hdr-btn" onclick="doRefresh()" title="Aktualisieren">↻ Aktualisieren</button>
+    <button class="hdr-btn" onclick="doLogout()" style="margin-left:4px">Ausloggen</button>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" onclick="showTab('overview')" id="nav-overview">📊 Übersicht</button>
+    <button class="nav-btn" onclick="showTab('students')" id="nav-students">👥 Schüler</button>
+    <button class="nav-btn" onclick="showTab('codes')" id="nav-codes">🔑 Codes</button>
+    <button class="nav-btn" onclick="showTab('create')" id="nav-create">+ Codes erstellen</button>
+  </nav>
+
+  <main>
+    <!-- ÜBERSICHT -->
+    <div id="tab-overview" class="tab-section active">
+      <div id="tiles" class="tiles">
+        <div class="tile"><div class="tile-icon">👥</div><div class="tile-val" id="t-schueler">—</div><div class="tile-lbl">Schüler aktiv</div></div>
+        <div class="tile blue"><div class="tile-icon">🔑</div><div class="tile-val" id="t-codes">—</div><div class="tile-lbl">Codes gesamt</div></div>
+        <div class="tile gold"><div class="tile-icon">⭐</div><div class="tile-val" id="t-xp">—</div><div class="tile-lbl">Ø XP</div></div>
+        <div class="tile ok"><div class="tile-icon">✅</div><div class="tile-val" id="t-done">—</div><div class="tile-lbl">Ø Regeln fertig</div></div>
+      </div>
+
+      <div class="sec-hdr">
+        <h2>Top Schüler</h2>
+        <p id="last-sync-lbl" style="font-size:11px;color:var(--text2)"></p>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Code</th><th>Klasse</th><th>XP</th><th>Regeln</th><th>Streak</th>
+          </tr></thead>
+          <tbody id="top-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SCHÜLER -->
+    <div id="tab-students" class="tab-section">
+      <div class="sec-hdr">
+        <h2>Alle Schüler</h2>
+        <button class="btn btn-s" onclick="exportCSV()">⬇ CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-search">
+          <input type="text" id="student-search" placeholder="Suche nach Code oder Klasse…" oninput="renderStudents()">
+        </div>
+        <table>
+          <thead><tr>
+            <th>Code</th><th>Klasse</th><th>Status</th><th>XP</th><th>Regeln</th><th>Streak</th><th>Letzter Sync</th><th>Aktionen</th>
+          </tr></thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CODES VERWALTEN -->
+    <div id="tab-codes" class="tab-section">
+      <div class="sec-hdr">
+        <h2>Alle Codes</h2>
+        <p>Klicke auf einen Code zum Kopieren</p>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-search">
+          <input type="text" id="code-search" placeholder="Suche nach Code oder Klasse…" oninput="renderCodes()">
+          <select id="code-filter" onchange="renderCodes()" style="background:var(--bg);border:1px solid var(--bg5);border-radius:6px;padding:7px 12px;color:var(--text);font-size:13px;cursor:pointer">
+            <option value="all">Alle</option>
+            <option value="active">Aktiv</option>
+            <option value="inactive">Inaktiv</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Code</th><th>Klasse</th><th>Status</th><th>Erstellt</th><th>Aktionen</th>
+          </tr></thead>
+          <tbody id="codes-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CODES ERSTELLEN -->
+    <div id="tab-create" class="tab-section">
+      <div class="sec-hdr">
+        <h2>Codes erstellen</h2>
+      </div>
+      <div class="create-box">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Klasse</label>
+            <input type="text" id="cls-input" placeholder="z.B. 10a" maxlength="12" style="width:140px"
+                   onkeydown="if(event.key==='Enter')document.getElementById('count-input').focus()">
+          </div>
+          <div class="form-group">
+            <label>Anzahl</label>
+            <input type="number" id="count-input" value="5" min="1" max="40" style="width:100px"
+                   onkeydown="if(event.key==='Enter')doCreate()">
+          </div>
+          <button class="btn btn-p" onclick="doCreate()" style="margin-bottom:1px">Codes generieren</button>
+        </div>
+        <div id="create-err" style="font-size:12px;color:var(--err);min-height:18px"></div>
+      </div>
+
+      <div id="generated-section" class="generated-codes" style="display:none">
+        <div class="sec-hdr">
+          <h2 id="generated-title">Neue Codes</h2>
+          <div class="copy-all-row">
+            <button class="btn btn-s" onclick="copyAll()">📋 Alle kopieren</button>
+            <span class="copy-hint">oder einzeln anklicken</span>
+          </div>
+        </div>
+        <div id="code-grid" class="code-grid"></div>
+        <div style="margin-top:16px">
+          <button class="btn btn-ok" onclick="showTab('codes')">✓ Fertig — zu Codes →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Detail-Overlay -->
+<div id="detail-overlay" class="detail-overlay hidden">
+  <div class="detail-box">
+    <h3 id="detail-title">Schüler-Detail</h3>
+    <div id="detail-content"></div>
+    <button class="detail-close" onclick="closeDetail()">✕ Schließen</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+const API = 'https://mrbl.4lima.de/klettermath-v6/api';
+let _key = '';
+let _data = { students: [], codes: [] };
+let _lastFetch = null;
+
+/* ── AUTH ── */
+async function doLogin(){
+  const key = document.getElementById('key-input').value.trim();
+  const err = document.getElementById('login-err');
+  if(!key){ err.textContent = 'Bitte Schlüssel eingeben'; return; }
+  err.textContent = 'Prüfe…';
+  try{
+    const r = await fetch(API+'/dashboard.php', { headers:{'X-Teacher-Key':key} });
+    const d = await r.json();
+    if(d.ok){
+      _key = key;
+      localStorage.setItem('km6-teacher-key', key);
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.add('visible');
+      await loadAll();
+    } else {
+      err.textContent = '✗ Schlüssel ungültig';
+    }
+  } catch(e){
+    err.textContent = 'Verbindungsfehler — bitte prüfen';
+  }
+}
+
+function doLogout(){
+  _key = '';
+  localStorage.removeItem('km6-teacher-key');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('key-input').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+/* ── DATA ── */
+async function apiFetch(endpoint, opts={}){
+  const r = await fetch(API+'/'+endpoint, {
+    ...opts,
+    headers:{ 'Content-Type':'application/json', 'X-Teacher-Key':_key, ...(opts.headers||{}) }
+  });
+  return r.json();
+}
+
+async function loadAll(){
+  try{
+    const [dash, codes] = await Promise.all([
+      apiFetch('dashboard.php'),
+      apiFetch('codes.php')
+    ]);
+    _data.students = dash.ok ? dash.students : [];
+    _data.codes    = codes.ok ? codes.codes : [];
+    _lastFetch = new Date();
+    renderOverview();
+    renderStudents();
+    renderCodes();
+    document.getElementById('last-sync-lbl').textContent =
+      'Zuletzt geladen: ' + _lastFetch.toLocaleTimeString('de-DE');
+  } catch(e){
+    toast('Fehler beim Laden der Daten', true);
+  }
+}
+
+async function doRefresh(){ await loadAll(); toast('Aktualisiert'); }
+
+/* ── TABS ── */
+function showTab(id){
+  document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id)?.classList.add('active');
+  document.getElementById('nav-'+id)?.classList.add('active');
+}
+
+/* ── ÜBERSICHT ── */
+function renderOverview(){
+  const s = _data.students;
+  const c = _data.codes;
+  document.getElementById('t-schueler').textContent = s.length;
+  document.getElementById('t-codes').textContent = c.length;
+  const avgXP = s.length ? Math.round(s.reduce((a,x)=>a+(x.xp||0),0)/s.length) : 0;
+  const avgDone = s.length ? (s.reduce((a,x)=>a+(x.missions_done||0),0)/s.length).toFixed(1) : 0;
+  document.getElementById('t-xp').textContent = avgXP;
+  document.getElementById('t-done').textContent = avgDone;
+
+  const sorted = [...s].sort((a,b)=>(b.xp||0)-(a.xp||0)).slice(0,10);
+  const tbody = document.getElementById('top-tbody');
+  if(!sorted.length){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Noch keine Schüler-Daten</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sorted.map((st,i)=>`
+    <tr>
+      <td style="color:var(--text2);font-size:12px">${i+1}</td>
+      <td class="code-cell" onclick="copyCode('${st.code}')">${st.code}</td>
+      <td>${st.class||'—'}</td>
+      <td><div class="xp-bar-wrap">
+        <div class="xp-bar"><div class="xp-bar-fill" style="width:${Math.min(100,(st.xp||0)/3)}%"></div></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">${st.xp||0}</span>
+      </div></td>
+      <td>${st.missions_done||0}</td>
+      <td>${st.streak||0} 🔥</td>
+    </tr>`).join('');
+}
+
+/* ── SCHÜLER ── */
+function renderStudents(){
+  const q = (document.getElementById('student-search')?.value||'').toLowerCase();
+  const list = _data.students.filter(s=>
+    !q || s.code?.toLowerCase().includes(q) || s.class?.toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('students-tbody');
+  if(!list.length){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Keine Schüler gefunden</td></tr>';
+    return;
+  }
+  const sorted = [...list].sort((a,b)=>(b.xp||0)-(a.xp||0));
+  tbody.innerHTML = sorted.map(st=>{
+    const sync = st.last_sync ? new Date(st.last_sync).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const active = _data.codes.find(c=>c.code===st.code)?.active ?? true;
+    return `<tr>
+      <td class="code-cell" onclick="copyCode('${st.code}')">${st.code}</td>
+      <td>${st.class||'—'}</td>
+      <td>${active ? '<span class="badge-ok">aktiv</span>' : '<span class="badge-off">inaktiv</span>'}</td>
+      <td><div class="xp-bar-wrap">
+        <div class="xp-bar"><div class="xp-bar-fill" style="width:${Math.min(100,(st.xp||0)/3)}%"></div></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">${st.xp||0}</span>
+      </div></td>
+      <td>${st.missions_done||0}</td>
+      <td>${st.streak||0} 🔥</td>
+      <td style="font-size:12px;color:var(--text2)">${sync}</td>
+      <td><div class="action-btns">
+        <button class="act-btn" onclick="showDetail('${st.code}')">Detail</button>
+        <button class="act-btn danger" onclick="deleteCode('${st.code}')">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── CODES ── */
+function renderCodes(){
+  const q = (document.getElementById('code-search')?.value||'').toLowerCase();
+  const fil = document.getElementById('code-filter')?.value || 'all';
+  const list = _data.codes.filter(c=>{
+    const matchQ = !q || c.code?.toLowerCase().includes(q) || c.class?.toLowerCase().includes(q);
+    const matchF = fil==='all' || (fil==='active' && c.active) || (fil==='inactive' && !c.active);
+    return matchQ && matchF;
+  });
+  const tbody = document.getElementById('codes-tbody');
+  if(!list.length){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Keine Codes gefunden</td></tr>';
+    return;
+  }
+  const sorted = [...list].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  tbody.innerHTML = sorted.map(c=>{
+    const created = c.created_at ? new Date(c.created_at).toLocaleDateString('de-DE') : '—';
+    const statusBadge = c.active
+      ? '<span class="badge-ok">aktiv</span>'
+      : '<span class="badge-off">inaktiv</span>';
+    return `<tr>
+      <td class="code-cell" onclick="copyCode('${c.code}')">${c.code}</td>
+      <td>${c.class||'—'}</td>
+      <td>${statusBadge}</td>
+      <td style="font-size:12px;color:var(--text2)">${created}</td>
+      <td><div class="action-btns">
+        ${c.active
+          ? `<button class="act-btn warn" onclick="toggleCode('${c.code}',false)">Sperren</button>`
+          : `<button class="act-btn" onclick="toggleCode('${c.code}',true)">Entsperren</button>`}
+        <button class="act-btn danger" onclick="deleteCode('${c.code}')">Löschen</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── CODES ERSTELLEN ── */
+async function doCreate(){
+  const cls = document.getElementById('cls-input').value.trim();
+  const count = parseInt(document.getElementById('count-input').value);
+  const err = document.getElementById('create-err');
+  if(!cls){ err.textContent = 'Bitte Klasse eingeben (z.B. 10a)'; return; }
+  if(!count||count<1||count>40){ err.textContent = 'Anzahl: 1–40'; return; }
+  err.textContent = '';
+  try{
+    const d = await apiFetch('codes.php',{
+      method:'POST', body: JSON.stringify({action:'create',class:cls,count})
+    });
+    if(!d.ok){ err.textContent = d.error||'Fehler'; return; }
+    const newCodes = d.codes;
+    // update local data
+    _data.codes = [...newCodes.map(c=>({...c,active:true})), ..._data.codes];
+    renderCodes();
+    // show generated
+    document.getElementById('generated-section').style.display = '';
+    document.getElementById('generated-title').textContent = `${newCodes.length} Codes für ${cls}`;
+    const grid = document.getElementById('code-grid');
+    grid.innerHTML = newCodes.map(c=>`
+      <div class="code-chip" id="chip-${c.code}" onclick="copyChip('${c.code}')">
+        ${c.code}
+        <div class="code-chip-cls">${c.class||cls}</div>
+      </div>`).join('');
+    toast(`${count} Codes für ${cls} erstellt`);
+  } catch(e){
+    err.textContent = 'Verbindungsfehler';
+  }
+}
+
+function copyChip(code){
+  navigator.clipboard.writeText(code).then(()=>{
+    const chip = document.getElementById('chip-'+code);
+    if(chip){ chip.classList.add('copied'); setTimeout(()=>chip.classList.remove('copied'),1500); }
+    toast('Code kopiert: '+code);
+  });
+}
+
+async function copyAll(){
+  const chips = document.querySelectorAll('.code-chip');
+  const codes = [...chips].map(c=>c.textContent.trim().split('\n')[0].trim()).join('\n');
+  await navigator.clipboard.writeText(codes);
+  toast('Alle Codes kopiert');
+}
+
+function copyCode(code){
+  navigator.clipboard.writeText(code).then(()=>toast('Kopiert: '+code));
+}
+
+/* ── AKTIONEN ── */
+async function toggleCode(code, active){
+  const action = active ? 'activate' : 'deactivate';
+  try{
+    const d = await apiFetch('codes.php',{ method:'POST', body:JSON.stringify({action,code}) });
+    if(d.ok){
+      const c = _data.codes.find(x=>x.code===code);
+      if(c) c.active = active;
+      renderCodes(); renderStudents();
+      toast(active ? 'Code aktiviert' : 'Code gesperrt');
+    } else { toast(d.error||'Fehler',true); }
+  } catch(e){ toast('Verbindungsfehler',true); }
+}
+
+async function deleteCode(code){
+  if(!confirm(`Code ${code} wirklich löschen? Alle Schüler-Daten gehen verloren.`)) return;
+  try{
+    const d = await apiFetch('codes.php',{ method:'POST', body:JSON.stringify({action:'delete',code}) });
+    if(d.ok){
+      _data.codes = _data.codes.filter(c=>c.code!==code);
+      _data.students = _data.students.filter(s=>s.code!==code);
+      renderCodes(); renderStudents(); renderOverview();
+      toast('Code gelöscht');
+    } else { toast(d.error||'Fehler',true); }
+  } catch(e){ toast('Verbindungsfehler',true); }
+}
+
+/* ── DETAIL ── */
+function showDetail(code){
+  const st = _data.students.find(s=>s.code===code);
+  if(!st) return;
+  document.getElementById('detail-title').textContent = `Schüler ${code}`;
+  const sync = st.last_sync ? new Date(st.last_sync).toLocaleString('de-DE') : '—';
+  let mastery = '';
+  try{ const m=JSON.parse(st.mastery||'{}'); mastery=Object.entries(m).map(([k,v])=>`${k}: ${v}`).join(', ')||'—'; }catch{ mastery='—'; }
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-row"><span class="detail-key">Code</span><span class="detail-val">${st.code}</span></div>
+    <div class="detail-row"><span class="detail-key">Klasse</span><span class="detail-val">${st.class||'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">XP</span><span class="detail-val">${st.xp||0}</span></div>
+    <div class="detail-row"><span class="detail-key">Regeln fertig</span><span class="detail-val">${st.missions_done||0}</span></div>
+    <div class="detail-row"><span class="detail-key">Streak</span><span class="detail-val">${st.streak||0} 🔥</span></div>
+    <div class="detail-row"><span class="detail-key">Letzter Sync</span><span class="detail-val">${sync}</span></div>
+    <div class="detail-row"><span class="detail-key">Mastery</span><span class="detail-val" style="font-size:11px">${mastery}</span></div>
+  `;
+  document.getElementById('detail-overlay').classList.remove('hidden');
+}
+function closeDetail(){ document.getElementById('detail-overlay').classList.add('hidden'); }
+
+/* ── EXPORT ── */
+function exportCSV(){
+  const rows = [['Code','Klasse','XP','Regeln','Streak','Letzter Sync']];
+  _data.students.forEach(s=>{
+    const sync = s.last_sync ? new Date(s.last_sync).toLocaleString('de-DE') : '';
+    rows.push([s.code,s.class||'',s.xp||0,s.missions_done||0,s.streak||0,sync]);
+  });
+  const csv = rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'klettermath-schueler.csv';
+  a.click();
+}
+
+/* ── TOAST ── */
+let _toastTimer;
+function toast(msg, err=false){
+  const el = document.getElementById('toast');
+  el.textContent = (err ? '⚠ ' : '✓ ') + msg;
+  el.style.color = err ? 'var(--err)' : 'var(--ok)';
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Gespeicherten Key prüfen
+  const saved = localStorage.getItem('km6-teacher-key');
+  if(saved){
+    document.getElementById('key-input').value = saved;
+    _key = saved;
+    // Auto-Login versuchen
+    fetch(API+'/dashboard.php',{headers:{'X-Teacher-Key':saved}})
+      .then(r=>r.json())
+      .then(d=>{
+        if(d.ok){
+          document.getElementById('login-screen').classList.add('hidden');
+          document.getElementById('app').classList.add('visible');
+          loadAll();
+        }
+      }).catch(()=>{});
+  }
+  // URL-Param ?key=...
+  const urlKey = new URLSearchParams(location.search).get('key');
+  if(urlKey){ document.getElementById('key-input').value = urlKey; }
+});
+</script>
+</body>
+</html>

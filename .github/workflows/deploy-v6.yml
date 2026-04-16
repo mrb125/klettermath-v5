@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - 'klettermath-v6.html'
+      - 'klettermath-lehrer-v6.html'
       - 'api/**'
       - '.htaccess'
   workflow_dispatch:
