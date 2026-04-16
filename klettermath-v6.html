@@ -1399,10 +1399,10 @@ function addTrees(){
   }
 }
 
-/* ── Seil-Geometrien ── */
+/* ── Seil-Geometrien (Seile gerade, kein Durchhang) ── */
 function _sagCurve(pA,pB,sag){
   const mid=pA.clone().lerp(pB,0.5);
-  mid.y-=pA.distanceTo(pB)*sag;
+  // kein Durchhang mehr – alle Seile sind gerade
   return new THREE.CatmullRomCurve3([pA,mid,pB]);
 }
 function _buildZipline(grp,pA,pB,col){
@@ -1428,7 +1428,7 @@ function _buildBridge(grp,pA,pB,col){
   for(const s of [-0.18,0.18]){
     const rA=pA.clone().addScaledVector(right,s);
     const rB=pB.clone().addScaledVector(right,s);
-    const rmid=rA.clone().lerp(rB,0.5); rmid.y-=dist*0.008;
+    const rmid=rA.clone().lerp(rB,0.5);
     const curve=new THREE.CatmullRomCurve3([rA,rmid,rB]);
     grp.add(new THREE.Mesh(new THREE.TubeGeometry(curve,20,0.022,6,false),mat));
   }
@@ -2058,33 +2058,27 @@ function buildDrawerRegelsetup(){
 /* ══════════════════════════════════════════════════════
    DRAWER — PHASE 2: WARMUP (3 Plattformen + Prüfprotokoll)
    ══════════════════════════════════════════════════════ */
-/* ── Warmup-Plattformen mit absichtlichen Regelverstößen ──
-   W1: zu nah an S → Seil S→W1 zu kurz (verletzt C1: < 4 m)
-   W2: zu hoch     → Seil S→W2 zu steil (verletzt D1: > 60°)
-   ───────────────────────────────────────────────────────── */
-// S im Ursprung (0,0,0)
-// S→W1 (seil): runter ✓, |d|=√(9+4+9)=√22≈4.69 m → C1 FAIL (>4m), horiz=√(9+4)≈3.6≥3 & z1=0 → SA1 FAIL (S zu tief)
-// S→W2 (seil): runter ✗ (W2 höher) → V1 FAIL
-// W1→W2 (brücke): hoch ✓, |d|=√(4+9+4)≈4.12 m → C1 FAIL (>4m)
-// Koordinaten: alle verschieden, S im Ursprung
+/* ── Warmup-Plattformen (3 Plattformen, je eine Regel fällt durch) ──
+   Start S steht hoch (z=3), alle Werte ≥ 0. Seile gehen nach unten.
+   S→W1 (seil): V1 ✓, C1 ✗ (|d|≈4.58 > 4),  SA1 ✓
+   S→W2 (seil): V1 ✗ (geht hoch), C1 ✓,    SA1 ✓
+   S→W3 (seil): V1 ✓, C1 ✓,     SA1 ✗ (z_W3=1<2, horiz≈2.83<3)
+   ────────────────────────────────────────────────────────────── */
 const WARMUP_PLATS = {
-  S:  {x:0, y:0, z:0,  fixed:true},
-  W1: {x:3, y:2, z:-3, fixed:true},  // seil runter ✓, |d|≈4.69>4 → C1 fail; z_S=0<2 → SA1 fail
-  W2: {x:4, y:1, z:2,  fixed:true},  // seil geht hoch → V1 fail
-  W3: {x:5, y:4, z:-5, fixed:true},  // von W1: brücke hoch ✓, |d|=√(4+4+4)≈3.46>... check below
+  S:  {x:0, y:0, z:3, fixed:true},
+  W1: {x:4, y:2, z:2, fixed:true},  // |d|=√(16+4+1)=√21≈4.58 → C1 fail
+  W2: {x:3, y:2, z:4, fixed:true},  // seil geht hoch (dz=+1) → V1 fail
+  W3: {x:2, y:2, z:1, fixed:true},  // z_W3=1<2 & horiz=√8≈2.83<3 → SA1 fail
 };
-// S→W1: seil runter✓, |d|=√(9+4+9)=√22≈4.69 → C1 fail; horiz=√13≈3.6✓ aber zS=0<2 → SA1 fail
-// S→W2: seil geht HOCH (z2>zS) → V1 fail
-// W1→W3: brücke (hoch✓), |d|=√(4+4+4)=√12≈3.46 → C1 pass(≤4); horiz=√(4+4)≈2.83<3 → SA1 fail
 const WARMUP_ROPES = [
-  {from:'S',  to:'W1', type:'seil'},
-  {from:'S',  to:'W2', type:'seil'},
-  {from:'W1', to:'W3', type:'brücke'},
+  {from:'S', to:'W1', type:'seil'},
+  {from:'S', to:'W2', type:'seil'},
+  {from:'S', to:'W3', type:'seil'},
 ];
 const WARMUP_VIOLATIONS = {
-  'S→W1':  { V1:'pass', C1:'fail',  SA1:'fail' },
-  'S→W2':  { V1:'fail', C1:'pass',  SA1:'pass' },
-  'W1→W3': { V1:'pass', C1:'pass',  SA1:'fail' },
+  'S→W1': { V1:'pass', C1:'fail', SA1:'pass' },
+  'S→W2': { V1:'fail', C1:'pass', SA1:'pass' },
+  'S→W3': { V1:'pass', C1:'pass', SA1:'fail' },
 };
 // Rules available in warmup
 const WARMUP_RULES = ['V1','C1','SA1'];
@@ -2121,32 +2115,33 @@ const WARMUP_FEHLER = [
   },
 ];
 
-/* ── Phase D: Grenzfall-Plattformen ── */
-// Grenzfall: Werte knapp an der Grenze
-// S→W4: seil runter✓, |d|=√(9+16+9)=√34≈5.83>4 → C1 fail (knapp über Grenze)
-// S→W5: seil runter✓, |d|≈3.74≤4✓; horiz=√(1+4)≈2.24<3 → SA1 fail (knapp)
-// W4→W6: brücke hoch✓, |d|=√(1+1+1)≈1.73≤4✓; horiz=√(1+1)≈1.41<3 → SA1 fail
+/* ── Phase D: Grenzfall-Plattformen (3 Plattformen, knapp an Grenzen) ──
+   S→W4 (seil): |d|=√18≈4.24 → C1 fail knapp; SA1 ✓
+   S→W5 (seil): |d|=3 ≤ 4 ✓, z_W5=1<2 → SA1 fail knapp
+   S→W6 (seil): |d|=3 ≤ 4 ✓, horiz=√8≈2.83<3 → SA1 fail knapp
+   Alle z-Werte ≥ 0.
+   ───────────────────────────────────────────────────────── */
 const WARMUP_GRENZ_PLATS = {
-  S:  {x:0, y:0, z:0,  fixed:true},
-  W4: {x:3, y:4, z:-3, fixed:true},
-  W5: {x:1, y:2, z:-3, fixed:true},
-  W6: {x:4, y:5, z:-2, fixed:true},
+  S:  {x:0, y:0, z:3, fixed:true},
+  W4: {x:4, y:1, z:2, fixed:true},  // |d|=√(16+1+1)=√18≈4.24 → C1 fail knapp
+  W5: {x:2, y:1, z:1, fixed:true},  // z=1<2 → SA1 fail knapp
+  W6: {x:2, y:2, z:2, fixed:true},  // horiz=√8≈2.83<3 → SA1 fail knapp
 };
 const WARMUP_GRENZ_ROPES = [
-  {from:'S',  to:'W4', type:'seil'},
-  {from:'S',  to:'W5', type:'seil'},
-  {from:'W4', to:'W6', type:'brücke'},
+  {from:'S', to:'W4', type:'seil'},
+  {from:'S', to:'W5', type:'seil'},
+  {from:'S', to:'W6', type:'seil'},
 ];
 const WARMUP_GRENZ_VIOLATIONS = {
-  'S→W4':  { V1:'pass', C1:'fail', SA1:'pass' },
-  'S→W5':  { V1:'pass', C1:'pass', SA1:'fail' },
-  'W4→W6': { V1:'pass', C1:'pass', SA1:'fail' },
+  'S→W4': { V1:'pass', C1:'fail', SA1:'pass' },
+  'S→W5': { V1:'pass', C1:'pass', SA1:'fail' },
+  'S→W6': { V1:'pass', C1:'pass', SA1:'fail' },
 };
 
 function setupWarmupPark(){
   APP.plats = JSON.parse(JSON.stringify(WARMUP_PLATS));
   APP.ropes = [...WARMUP_ROPES];
-  APP.warmupPlats = ['W1','W2'];
+  APP.warmupPlats = ['W1','W2','W3'];
   // Init warmup tracking
   if(!APP.warmupChecked) APP.warmupChecked = {}; // { 'S→W1': { C1: true }, ... }
   if(!APP.warmupSuggestion) APP.warmupSuggestion = null;
