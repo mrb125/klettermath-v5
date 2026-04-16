@@ -1,0 +1,38 @@
+name: Deploy klettermath-v6 to lima-city
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'klettermath-v6.html'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./
+          server-dir: /html/klettermath-v6/
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/docs/**
+            **/*.md
+            klettermath.html
+            klettermath-v5.html
+            klettermath-lehrer.html
+            kontrollpark.html
+            koordinatenraster.html
+            *.scad
