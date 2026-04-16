@@ -1827,12 +1827,12 @@ const WARMUP_ROPES = [
 // Which rules each warmup rope violates (ground truth)
 // Brücken: no D1 (Neigungswinkel gilt nur für Seile)
 const WARMUP_VIOLATIONS = {
-  'S→W1': { C1:'fail', D1:'pass', A1:'pass' },
-  'S→W2': { C1:'pass', D1:'fail', A1:'pass' },
-  'W1→W2': { C1:'pass', A1:'pass' },
+  'S→W1': { V1:'pass', C1:'fail', SA1:'pass' },
+  'S→W2': { V1:'pass', C1:'pass', SA1:'fail' },
+  'W1→W2': { V1:'pass', C1:'pass' },
 };
-// Rules available in warmup (easy ones)
-const WARMUP_RULES = ['C1','D1','A1'];
+// Rules available in warmup
+const WARMUP_RULES = ['V1','C1','SA1'];
 
 /* ── Phase B: Fehlerrechnung-Szenarien ── */
 const WARMUP_FEHLER = [
@@ -1873,12 +1873,12 @@ const WARMUP_GRENZ_PLATS = {
   W5: {x:2, y:1, z:4,  fixed:true},  // |d|≈4.58, α≈60.8° → D1 fail (knapp)
 };
 const WARMUP_GRENZ_ROPES = [
-  {from:'S', to:'W4'},
-  {from:'S', to:'W5'},
+  {from:'S', to:'W4', type:'seil'},
+  {from:'S', to:'W5', type:'seil'},
 ];
 const WARMUP_GRENZ_VIOLATIONS = {
-  'S→W4': { C1:'fail', D1:'pass', A1:'pass' },
-  'S→W5': { C1:'pass', D1:'fail', A1:'pass' },
+  'S→W4': { V1:'pass', C1:'fail', SA1:'pass' },
+  'S→W5': { V1:'pass', C1:'pass', SA1:'fail' },
 };
 
 function setupWarmupPark(){
@@ -1996,7 +1996,7 @@ function buildRopeCheckCards(ropes, checkedMap, violationsMap){
     const btnRow=document.createElement('div');
     btnRow.style.cssText='display:flex;flex-direction:column;gap:5px';
 
-    const rulesForRope = rope.type==='brücke' ? ['C1','A1'] : WARMUP_RULES;
+    const rulesForRope = rope.type==='brücke' ? ['V1','C1'] : WARMUP_RULES;
     rulesForRope.forEach(rid=>{
       const def=RDEFS[rid]; if(!def||def.twoRopes) return;
       const col=CAT_COL[def.cat]||'#888';
@@ -2377,15 +2377,19 @@ function openWarmupCheck(ropeKey, rope, rid){
   const ctx=document.createElement('div');
   ctx.style.cssText='font-size:11px;color:var(--text2);line-height:2;margin-bottom:10px';
 
-  if(rid==='C1'){
+  if(rid==='V1'){
+    ctx.innerHTML=`Grundlage aller Prüfungen: Berechne den Richtungsvektor vom Start- zur Zielplattform.<br>
+      ${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>
+      Berechne ${tex('\\vec{d}')} = Zielplattform − Startplattform.`;
+  } else if(rid==='C1'){
     const objName = rope.type==='brücke' ? 'Brücken' : 'Seile';
-    ctx.innerHTML=`Vorschrift §3: ${objName} müssen mind. <b>4 m</b> und höchstens <b>20 m</b> lang sein.<br>
+    ctx.innerHTML=`${objName} müssen mind. <b>4 m</b> lang sein (sonst kein Fahrspaß) und dürfen höchstens <b>20 m</b> lang sein (sonst bremst die Anlage zu spät).<br>
       ${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>
       Berechne die Länge ${tex('|\\vec{d}|')} und entscheide.`;
-  } else if(rid==='D1'){
-    ctx.innerHTML=`Vorschrift §5: Neigungswinkel zur Horizontalen: <b>20° – 60°</b>.<br>
+  } else if(rid==='SA1'){
+    ctx.innerHTML=`Der Neigungswinkel muss zwischen <b>20° und 60°</b> liegen — zu steil: die Bremse versagt.<br>
       ${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>
-      Berechne den Neigungswinkel ${tex('\\alpha')} und entscheide.`;
+      Berechne den Neigungswinkel ${tex('\\alpha')} zur Horizontalen und entscheide.`;
   } else if(rid==='A1'){
     const objName2 = rope.type==='brücke' ? 'jede Brücke' : 'jedes Seil';
     ctx.innerHTML=`Vorschrift §2: ${objName2.charAt(0).toUpperCase()+objName2.slice(1)} muss als <b>Gerade</b> im Lageplan eingetragen werden.<br>
@@ -2398,7 +2402,19 @@ function openWarmupCheck(ropeKey, rope, rid){
   const form=document.createElement('div');
   form.style.cssText='display:flex;flex-direction:column;gap:8px';
 
-  if(rid==='C1'){
+  if(rid==='V1'){
+    form.innerHTML=`
+      <div class="igroup"><label style="font-size:11px;color:var(--text2)">Richtungsvektor ${tex('\\vec{d}')}</label>
+        <div class="vec-wrap">
+          <div class="vec-br vec-br-l"></div>
+          <div class="vec-fields">
+            <input type="number" id="wu-d0" step="1" style="width:70px">
+            <input type="number" id="wu-d1" step="1" style="width:70px">
+            <input type="number" id="wu-d2" step="1" style="width:70px">
+          </div>
+          <div class="vec-br vec-br-r"></div>
+        </div></div>`;
+  } else if(rid==='C1'){
     form.innerHTML=`
       <div class="igroup"><label style="font-size:11px;color:var(--text2)">Länge ${tex('|\\vec{d}|')} (in m)</label>
         <input type="number" id="wu-len" step="0.01" style="width:100px"></div>
@@ -2407,7 +2423,7 @@ function openWarmupCheck(ropeKey, rope, rid){
           <label><input type="radio" name="wu-urteil" value="pass"> ✓ Zulässig</label>
           <label><input type="radio" name="wu-urteil" value="fail"> ✗ Nicht zulässig</label>
         </div></div>`;
-  } else if(rid==='D1'){
+  } else if(rid==='SA1'){
     form.innerHTML=`
       <div class="igroup"><label style="font-size:11px;color:var(--text2)">Neigungswinkel ${tex('\\alpha')} (in °)</label>
         <input type="number" id="wu-angle" step="0.1" style="width:100px"></div>
@@ -2469,7 +2485,17 @@ function submitWarmupCheck(rKey, rope, rid, d, sv, av){
   let ok=false, steps='';
   const truth=WARMUP_VIOLATIONS[rKey]?.[rid]||'pass';
 
-  if(rid==='C1'){
+  if(rid==='V1'){
+    const ent=[parseFloat(document.getElementById('wu-d0')?.value),
+               parseFloat(document.getElementById('wu-d1')?.value),
+               parseFloat(document.getElementById('wu-d2')?.value)];
+    if(ent.some(isNaN)){ res.innerHTML=`<div style="color:var(--err);font-size:11px">Bitte alle Felder ausfüllen.</div>`; return; }
+    ok=V.eq3(ent,d,0.05);
+    steps=[
+      `d⃗ = ${V.str(av)} − ${V.str(sv)} = ${V.str(d)}`,
+      ok?'✓ Korrekt!':'✗ Erwartet: '+V.str(d),
+    ].join('\n');
+  } else if(rid==='C1'){
     const [dx,dy,dz]=d, len=V.len(d);
     const ent=parseFloat(document.getElementById('wu-len')?.value);
     const radio=document.querySelector('input[name="wu-urteil"]:checked');
@@ -2482,12 +2508,10 @@ function submitWarmupCheck(rKey, rope, rid, d, sv, av){
       `d⃗ = ${V.str(d)}`,
       `|d⃗| = √(${n(dx)}² + ${n(dy)}² + ${n(dz)}²)`,
       `    = √${n2(dx*dx+dy*dy+dz*dz)} ≈ ${n2(len)} m`,
-      cok ? (rok ? `✓ ${n2(len)} m ∈ [4, 20] → Zulässig`
-                 : `✗ ${n2(len)} m ∉ [4, 20] → Nicht zulässig`)
-          : `✗ Rechenfehler — erwartet ${n2(len)} m`,
-      !urteilOk ? `✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}` : '',
+      cok?(rok?`✓ ${n2(len)} m ∈ [4, 20] → Zulässig`:`✗ ${n2(len)} m ∉ [4, 20] → Nicht zulässig`):`✗ Rechenfehler — erwartet ${n2(len)} m`,
+      !urteilOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
     ].filter(Boolean).join('\n');
-  } else if(rid==='D1'){
+  } else if(rid==='SA1'){
     const len=V.len(d), dz=Math.abs(d[2]);
     const sinA=dz/len, alpha=deg(Math.asin(sinA));
     const ent=parseFloat(document.getElementById('wu-angle')?.value);
@@ -2500,9 +2524,8 @@ function submitWarmupCheck(rKey, rope, rid, d, sv, av){
     steps=[
       `sin α = |Δz| ÷ |d⃗| = ${n2(dz)} ÷ ${n2(len)} = ${n2(sinA)}`,
       `α = arcsin(${n2(sinA)}) ≈ ${n2(alpha)}°`,
-      cok ? (rok ? `✓ ${n2(alpha)}° ∈ [20°, 60°]` : `✗ ${n2(alpha)}° ∉ [20°, 60°]`)
-          : `✗ Rechenfehler — erwartet ${n2(alpha)}°`,
-      !urteilOk ? `✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}` : '',
+      cok?(rok?`✓ ${n2(alpha)}° ∈ [20°, 60°]`:`✗ ${n2(alpha)}° ∉ [20°, 60°]`):`✗ Rechenfehler — erwartet ${n2(alpha)}°`,
+      !urteilOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
     ].filter(Boolean).join('\n');
   } else if(rid==='A1'){
     const es=[parseFloat(document.getElementById('wu-sv0')?.value),
@@ -2561,7 +2584,7 @@ function generateWarmupSuggestion(lastRopeKey, lastRid, wasCorrect, ropesRef, ch
   const unchecked=[];
   ropesRef.forEach(rope=>{
     const key=ropeKey(rope);
-    const rulesForRope = rope.type==='brücke' ? ['C1','A1'] : WARMUP_RULES;
+    const rulesForRope = rope.type==='brücke' ? ['V1','C1'] : WARMUP_RULES;
     rulesForRope.forEach(rid=>{
       if(RDEFS[rid]?.twoRopes) return;
       if(!checkedMap[key]?.[rid]) unchecked.push({key,rid,rope});
@@ -3125,6 +3148,8 @@ function startTuev(){
    DRAWER — TÜV
    ══════════════════════════════════════════════════════ */
 const CAT_COL = {
+  'Grundrechnung':'#ffd166',
+  'Sicherheit':'#ff8c42',
   'Parameterdarstellung':'#b07fff',
   'Betrag':'#5ba3d9',
   'Winkel':'#ff8c42',
@@ -3599,7 +3624,7 @@ const RDEFS = {
   C1: {
     cat:'Betrag', title:'Seillänge berechnen',
     twoRopes: false,
-    vorschrift:'§3 — Seile müssen mind. 4 m und dürfen höchstens 20 m lang sein.',
+    vorschrift:'Seile müssen mindestens 4 m lang sein (sonst kein Fahrspaß) und dürfen höchstens 20 m lang sein (sonst bremst die Anlage zu spät).',
     variant:'mc',
     genScen(rid){
       const rd=getRd1(rid); if(!rd) return {};
@@ -4045,6 +4070,66 @@ const RDEFS = {
       steps.push('');
       steps.push(ok ? `✓ Korrekt: ${lageStr[lage]}` : `✗ Falsch — korrekt: ${lageStr[lage]}`);
       return { ok, steps:steps.join('\n') };
+    }
+  },
+
+  /* ── Warmup-only Regeln ─────────────────────────────── */
+  V1: {
+    cat:'Grundrechnung', title:'Richtungsvektor bestimmen',
+    twoRopes:false,
+    vorschrift:'Grundlage aller Prüfungen: Der Richtungsvektor d⃗ = Zielplattform − Startplattform zeigt, wohin das Seil führt — er steckt in Länge, Winkel und allen anderen Berechnungen.',
+    variant:'blind',
+    ctx(rid){ const rd=getRd1(rid); if(!rd) return ''; const {sv,av,rope}=rd;
+      return `${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>Berechne ${tex('\\vec{d}')} = Zielplattform − Startplattform.`;
+    },
+    inputs:[{ type:'vec3', id:'d', label:'Richtungsvektor' }],
+    check(rid,vals){ const rd=getRd1(rid); if(!rd) return errR('Seil wählen');
+      const ent=vals.d.map(parseFloat), ok=V.eq3(ent,rd.d,0.05);
+      return {ok,steps:[`d⃗ = ${V.str(rd.av)} − ${V.str(rd.sv)} = ${V.str(rd.d)}`,ok?'✓ Korrekt!':'✗ Erwartet: '+V.str(rd.d)].join('\n')};
+    }
+  },
+
+  SA1: {
+    cat:'Sicherheit', title:'Sicherheitsabstand prüfen',
+    twoRopes:false,
+    vorschrift:'Der Neigungswinkel zur Horizontalen muss zwischen 20° und 60° liegen. Zu flach: der Fahrer bleibt stecken. Zu steil: die Bremse versagt und der Aufprall wird zu hart.',
+    variant:'fehler',
+    genScen(rid){
+      const rd=getRd1(rid); if(!rd) return {};
+      const {d}=rd;
+      const len=V.len(d), dz=Math.abs(d[2]);
+      const sinVal=dz/len, alphaRight=n2(deg(Math.asin(sinVal)));
+      const alphaWrong=n2(deg(Math.acos(sinVal)));
+      return {
+        fehlerLines:[
+          `d⃗ = ${V.str(d)},   |d⃗| = √${n2(len*len)} = ${n2(len)}`,
+          `cos α = |Δx₃| / |d⃗| = ${n2(dz)} / ${n2(len)} = ${n2(sinVal)}`,
+          `α = arccos(${n2(sinVal)}) ≈ ${alphaWrong}°`,
+        ],
+        fehlerIdx:1,
+        fehlerExpl:`Schritt 2: Es gilt sin α = |Δx₃| / |d⃗|, nicht cos α.\nα = arcsin(${n2(sinVal)}) ≈ ${alphaRight}°`,
+      };
+    },
+    ctx(rid){ const rd=getRd1(rid); if(!rd) return '';
+      return `Bedingung: Neigungswinkel zwischen <b>20° und 60°</b> — zu steil: Bremse versagt.<br>
+        ${texPt(rd.rope.from,rd.sv)} &rarr; ${texPt(rd.rope.to,rd.av)}<br>
+        Berechne den Neigungswinkel ${tex('\\alpha')} zur Horizontalen.`;
+    },
+    inputs:[
+      {type:'num',id:'a',label:'Neigungswinkel α',unit:'°',step:0.1},
+      {type:'radio',id:'urteil',label:'TÜV-Urteil',opts:[{v:'pass',l:'✓ Zulässig'},{v:'fail',l:'✗ Nicht zulässig'}]}
+    ],
+    check(rid,vals){ const rd=getRd1(rid); if(!rd) return errR('Seil wählen');
+      const {d}=rd, len=V.len(d), dz=Math.abs(d[2]);
+      const sinA=dz/len, alpha=deg(Math.asin(sinA));
+      const ent=parseFloat(vals.a), cok=Math.abs(ent-alpha)<0.6, rok=alpha>=20&&alpha<=60;
+      const urteilOk=(vals.urteil==='pass')===rok;
+      return {ok:cok&&urteilOk,steps:[
+        `sin α = |Δz| ÷ |d⃗| = ${n2(dz)} ÷ ${n2(len)} = ${n2(sinA)}`,
+        `α = arcsin(${n2(sinA)}) ≈ ${n2(alpha)}°`,
+        cok?(rok?`✓ ${n2(alpha)}° ∈ [20°, 60°]`:`✗ ${n2(alpha)}° ∉ [20°, 60°]`):`✗ Rechenfehler — erwartet ${n2(alpha)}°`,
+        !urteilOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
+      ].filter(Boolean).join('\n')};
     }
   },
 
