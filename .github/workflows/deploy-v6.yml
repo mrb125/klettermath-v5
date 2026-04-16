@@ -6,6 +6,7 @@ on:
     paths:
       - 'klettermath-v6.html'
       - 'api/**'
+      - '.htaccess'
   workflow_dispatch:
 
 jobs:
