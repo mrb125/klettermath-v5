@@ -363,8 +363,8 @@ input.num-input{width:90px!important}
 </head>
 <body>
 
-<!-- ════ Startbildschirm: Code-Eingabe ════ -->
-<div id="s-code" class="screen">
+<!-- ════ Startbildschirm: Code-Eingabe (deaktiviert – Code nur noch via 🔑-Button) ════ -->
+<div id="s-code" class="screen hidden">
   <div class="wlc-bg">
     <div class="wlc-bg-fallback"></div>
     <div class="wlc-bg-overlay"></div>
@@ -4620,14 +4620,8 @@ function init(){
     return;
   }
 
-  // Start screens
-  const existingCode=getStudentCode();
-  if(!existingCode){
-    document.getElementById('s-code').classList.remove('hidden');
-    setTimeout(()=>document.getElementById('wlc-code-input')?.focus(),100);
-  } else {
-    _showWelcome();
-  }
+  // Start screen: direkt Welcome (Code-Eingabe nur noch via 🔑-Button im Header)
+  _showWelcome();
 }
 
 /* ══════════════════════════════════════════════════════
