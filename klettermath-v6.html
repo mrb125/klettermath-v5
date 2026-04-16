@@ -2066,9 +2066,9 @@ function buildDrawerRegelsetup(){
    ────────────────────────────────────────────────────────────── */
 const WARMUP_PLATS = {
   S:  {x:0, y:0, z:0, fixed:true},
-  W1: {x:4, y:2, z:-1, fixed:true},  // dz=-1 runter ✓; |d|=√21≈4.58 → C1 fail
-  W2: {x:3, y:2, z:1,  fixed:true},  // dz=+1 hoch → V1 fail; |d|=√14≈3.74 ✓
-  W3: {x:2, y:2, z:-2, fixed:true},  // dz=-2 runter ✓; |d|=√12≈3.46 ✓; SA1 fail
+  W1: {x:4, y:2, z:0, fixed:true},  // dz=0 flach ✓; |d|=√20≈4.47 → C1 fail
+  W2: {x:2, y:1, z:2, fixed:true},  // dz=+2 hoch → V1 fail; |d|=√(4+1+4)=3 ≤ 4 ✓
+  W3: {x:2, y:2, z:0, fixed:true},  // dz=0 flach ✓; |d|=√8≈2.83 ✓; SA1 fail (z_S=0<2 & horiz<3)
 };
 const WARMUP_ROPES = [
   {from:'S', to:'W1', type:'seil'},
@@ -2123,9 +2123,9 @@ const WARMUP_FEHLER = [
    ───────────────────────────────────────────────────────── */
 const WARMUP_GRENZ_PLATS = {
   S:  {x:0, y:0, z:0, fixed:true},
-  W4: {x:4, y:1, z:-1, fixed:true},  // |d|=√18≈4.24 → C1 fail knapp
-  W5: {x:2, y:1, z:-1, fixed:true},  // horiz=√5≈2.24<3 & z_S=0<2 → SA1 fail knapp
-  W6: {x:2, y:2, z:-1, fixed:true},  // horiz=√8≈2.83<3 & z_S=0<2 → SA1 fail knapp
+  W4: {x:4, y:1, z:0, fixed:true},  // dz=0 ✓; |d|=√17≈4.12 → C1 fail knapp
+  W5: {x:2, y:1, z:0, fixed:true},  // dz=0 ✓; horiz=√5≈2.24<3 → SA1 fail knapp
+  W6: {x:2, y:2, z:0, fixed:true},  // dz=0 ✓; horiz=√8≈2.83<3 → SA1 fail knapp
 };
 const WARMUP_GRENZ_ROPES = [
   {from:'S', to:'W4', type:'seil'},
@@ -2669,8 +2669,8 @@ function wuTruth(rid, d, sv, av, rope){
   switch(rid){
     case 'V1': {
       const truth = WARMUP_VIOLATIONS[`${rope.from}→${rope.to}`]?.V1 || 'pass';
-      // V1 is always "pass" structurally — the direction just has to point down for Seil, up for Brücke
-      const goesDown = dz < 0;
+      // V1: Seil muss waagerecht oder nach unten gehen (dz ≤ 0), Brücke nach oben (dz > 0)
+      const goesDown = dz <= 0;
       const isBr = rope.type === 'brücke';
       return { verdict: (isBr ? !goesDown : goesDown) ? 'pass' : 'fail' };
     }
@@ -2817,11 +2817,12 @@ function submitWarmupCheck(rKey, rope, rid, d, sv, av){
       +`Höhe Plattform ${rope.to}: ${zB2} m ${zB2>=2?'✓':'✗ (< 2 m)'}\n`
       +`Horizontaler Abstand: ${hd} m ${hd>=3?'✓':'✗ (< 3 m)'}`;
   } else if(rid==='V1'){
-    const goesDown = d[2] < 0;
+    const dz2 = d[2];
     const isBr = rope.type==='brücke';
+    const dirOk = isBr ? dz2 > 0 : dz2 <= 0;
     explanation = isBr
-      ? `Brücke geht ${goesDown?'nach unten ✗ (muss hoch gehen)':'nach oben ✓'}`
-      : `Seil geht ${goesDown?'nach unten ✓':'nach oben ✗ (muss runter gehen)'}`;
+      ? `Brücke geht ${dz2>0?'nach oben ✓':'nach unten ✗ (Brücke muss hoch gehen)'}`
+      : `Seil geht ${dz2<0?'nach unten ✓':dz2===0?'waagerecht ✓':'nach oben ✗ (Seil darf nicht aufwärts führen)'}`;
   }
 
   const ok = verdictOk;
