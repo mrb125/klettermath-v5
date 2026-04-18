@@ -175,12 +175,60 @@ td{padding:10px 14px;font-size:13px;vertical-align:middle}
   color:var(--text2);font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:13px}
 .detail-close:hover{background:var(--bg5);color:var(--text)}
 
+/* ── FEHLERMUSTER ── */
+.fm-intro{font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.6}
+.fm-bars{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:18px;margin-bottom:24px}
+.fm-bar-row{display:grid;grid-template-columns:180px 1fr 60px 80px;gap:10px;align-items:center;
+  padding:8px 4px;border-bottom:1px solid var(--bg3);cursor:pointer;transition:background .15s}
+.fm-bar-row:hover{background:rgba(255,255,255,.03)}
+.fm-bar-row:last-child{border-bottom:none}
+.fm-bar-row.clicked{background:rgba(200,131,58,.08)}
+.fm-bar-lbl{font-size:12px;color:var(--text);font-weight:700;line-height:1.3}
+.fm-bar-cat{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-top:1px}
+.fm-bar-track{height:12px;border-radius:6px;background:var(--bg4);overflow:hidden;position:relative}
+.fm-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--ok) 0%,var(--gold) 50%,var(--err) 100%);transition:width .3s}
+.fm-bar-pct{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);font-weight:700;text-align:right}
+.fm-bar-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);text-align:right}
+.fm-insights{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:18px;margin-bottom:24px}
+.fm-ins-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--bg3);font-size:13px}
+.fm-ins-item:last-child{border-bottom:none}
+.fm-ins-icon{flex-shrink:0;font-size:16px;margin-top:1px}
+.fm-ins-body{flex:1;color:var(--text);line-height:1.5}
+.fm-ins-body b{color:var(--rope)}
+.fm-ins-body em{color:var(--text2);font-style:normal;font-size:11px;display:block;margin-top:2px}
+.fm-topic-detail{background:var(--bg3);border-radius:8px;padding:14px;margin-top:12px}
+.fm-topic-detail h4{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);
+  font-weight:700;margin-bottom:10px}
+.fm-stu-row{display:grid;grid-template-columns:90px 100px 1fr 60px;gap:8px;align-items:center;
+  font-size:12px;padding:4px 0}
+.fm-stu-code{font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:700}
+.fm-stu-cls{color:var(--text2)}
+.fm-stu-bar{height:8px;border-radius:4px;background:var(--bg4);overflow:hidden}
+.fm-stu-bar-fill{height:100%;background:var(--err)}
+.fm-stu-num{font-family:'JetBrains Mono',monospace;color:var(--text);text-align:right;font-size:11px}
+.fm-empty{text-align:center;padding:48px 24px;color:var(--text2);font-size:13px}
+.fm-empty .icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.fm-mini{margin-top:14px}
+.fm-mini h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);
+  font-weight:700;margin-bottom:8px}
+.fm-mini-row{display:grid;grid-template-columns:1fr 28px 28px 40px;gap:6px;align-items:center;
+  font-size:11px;padding:3px 0;border-bottom:1px dashed var(--bg3)}
+.fm-mini-row:last-child{border-bottom:none}
+.fm-mini-lbl{color:var(--text)}
+.fm-mini-ok{color:var(--ok);font-family:'JetBrains Mono',monospace;text-align:right}
+.fm-mini-err{color:var(--err);font-family:'JetBrains Mono',monospace;text-align:right}
+.fm-mini-pct{color:var(--gold);font-family:'JetBrains Mono',monospace;text-align:right;font-weight:700}
+
 /* ── RESPONSIVE ── */
 @media(max-width:600px){
   main{padding:16px}
   .form-row{flex-direction:column}
   table{font-size:12px}
   td{padding:8px 10px}
+  .fm-bar-row{grid-template-columns:120px 1fr 48px;gap:6px}
+  .fm-bar-count{display:none}
+  .fm-stu-row{grid-template-columns:80px 1fr 44px;gap:6px}
+  .fm-stu-cls{display:none}
 }
 </style>
 </head>
@@ -212,6 +260,7 @@ td{padding:10px 14px;font-size:13px;vertical-align:middle}
 
   <nav>
     <button class="nav-btn active" onclick="showTab('overview')" id="nav-overview">📊 Übersicht</button>
+    <button class="nav-btn" onclick="showTab('patterns')" id="nav-patterns">🔍 Fehlermuster</button>
     <button class="nav-btn" onclick="showTab('students')" id="nav-students">👥 Schüler</button>
     <button class="nav-btn" onclick="showTab('codes')" id="nav-codes">🔑 Codes</button>
     <button class="nav-btn" onclick="showTab('create')" id="nav-create">+ Codes erstellen</button>
@@ -239,6 +288,21 @@ td{padding:10px 14px;font-size:13px;vertical-align:middle}
           <tbody id="top-tbody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- FEHLERMUSTER -->
+    <div id="tab-patterns" class="tab-section">
+      <div class="sec-hdr">
+        <h2>Fehlermuster-Analyse</h2>
+        <p id="fm-last-sync" style="font-size:11px;color:var(--text2)"></p>
+      </div>
+      <p class="fm-intro">
+        Pro Thema zeigt diese Übersicht die klassenweite <b>Fehlerquote</b> (falsche ÷ gesamte Antworten)
+        sowie die Anzahl betroffener Schüler:innen. Klick auf eine Zeile für Details.
+      </p>
+      <div id="fm-insights-wrap"></div>
+      <div id="fm-bars-wrap"></div>
+      <div id="fm-topic-detail-wrap"></div>
     </div>
 
     <!-- SCHÜLER -->
@@ -340,6 +404,36 @@ const API = 'https://mrbl.4lima.de/klettermath-v6/api';
 let _key = '';
 let _data = { students: [], codes: [] };
 let _lastFetch = null;
+let _fmSelectedTopic = null;
+
+/* ── THEMEN-KATALOG (synchron mit Schüler-App) ── */
+const TOPICS = {
+  // Warmup Phase A — Verstöße finden
+  'wu-find-V1':  { label:'Seilrichtung erkennen',        cat:'Warmup A', phase:'find'  },
+  'wu-find-C1':  { label:'Seillänge prüfen',             cat:'Warmup A', phase:'find'  },
+  'wu-find-SA1': { label:'Sicherheitsabstand prüfen',    cat:'Warmup A', phase:'find'  },
+  // Warmup Phase B — Fehleranalyse
+  'wu-fehler-C1':{ label:'Fehler finden: Seillänge',     cat:'Warmup B', phase:'fehler'},
+  'wu-fehler-D1':{ label:'Fehler finden: Neigungswinkel',cat:'Warmup B', phase:'fehler'},
+  // Warmup Phase D — Grenzfälle
+  'wu-grenz-V1': { label:'Grenzfall: Seilrichtung',      cat:'Warmup D', phase:'grenz' },
+  'wu-grenz-C1': { label:'Grenzfall: Seillänge',         cat:'Warmup D', phase:'grenz' },
+  'wu-grenz-SA1':{ label:'Grenzfall: Sicherheitsabstand',cat:'Warmup D', phase:'grenz' },
+  // Hauptmissionen (m-<rid>)
+  'm-A1':  { label:'Seilgerade aufstellen',        cat:'Parameterdarstellung' },
+  'm-B1':  { label:'Hindernischeck',               cat:'Parameterdarstellung' },
+  'm-C1':  { label:'Seillänge berechnen',          cat:'Betrag'        },
+  'm-C3':  { label:'Fahrtrichtungsvektor',         cat:'Betrag'        },
+  'm-D1':  { label:'Neigungswinkel',               cat:'Winkel'        },
+  'm-E1':  { label:'Parallelität zweier Seile',    cat:'Parallelität'  },
+  'm-F1':  { label:'Sicherheitsabstand',           cat:'Abstand'       },
+  'm-G1':  { label:'Lagebeziehung zweier Seile',   cat:'Lagebeziehung' },
+  'm-H1':  { label:'Richtungsvektor bestimmen',    cat:'Grundrechnung' },
+  'm-SA1': { label:'Sicherheitsabstand prüfen',    cat:'Sicherheit'    },
+  'm-V1':  { label:'Seilrichtung',                 cat:'Sicherheit'    },
+};
+function topicLabel(id){ return TOPICS[id]?.label || id; }
+function topicCat(id){ return TOPICS[id]?.cat   || '—'; }
 
 /* ── AUTH ── */
 async function doLogin(){
@@ -394,8 +488,11 @@ async function loadAll(){
     renderOverview();
     renderStudents();
     renderCodes();
-    document.getElementById('last-sync-lbl').textContent =
-      'Zuletzt geladen: ' + _lastFetch.toLocaleTimeString('de-DE');
+    renderFehlermuster();
+    const lbl = 'Zuletzt geladen: ' + _lastFetch.toLocaleTimeString('de-DE');
+    document.getElementById('last-sync-lbl').textContent = lbl;
+    const fmLbl = document.getElementById('fm-last-sync');
+    if(fmLbl) fmLbl.textContent = lbl;
   } catch(e){
     toast('Fehler beim Laden der Daten', true);
   }
@@ -412,13 +509,19 @@ function showTab(id){
 }
 
 /* ── ÜBERSICHT ── */
+function studentProgress(x){
+  return x.progress ?? (Array.isArray(x.missions) ? x.missions.length : (+x.missions_done||0));
+}
+function studentClass(x){ return x.class || x.class_name || ''; }
+function studentSync(x){ return x.last_sync || x.last_active || null; }
+
 function renderOverview(){
   const s = _data.students;
   const c = _data.codes;
   document.getElementById('t-schueler').textContent = s.length;
   document.getElementById('t-codes').textContent = c.length;
   const avgXP = s.length ? Math.round(s.reduce((a,x)=>a+(x.xp||0),0)/s.length) : 0;
-  const avgDone = s.length ? (s.reduce((a,x)=>a+(x.missions_done||0),0)/s.length).toFixed(1) : 0;
+  const avgDone = s.length ? (s.reduce((a,x)=>a+studentProgress(x),0)/s.length).toFixed(1) : 0;
   document.getElementById('t-xp').textContent = avgXP;
   document.getElementById('t-done').textContent = avgDone;
 
@@ -432,12 +535,12 @@ function renderOverview(){
     <tr>
       <td style="color:var(--text2);font-size:12px">${i+1}</td>
       <td class="code-cell" onclick="copyCode('${st.code}')">${st.code}</td>
-      <td>${st.class||'—'}</td>
+      <td>${escapeHtml(studentClass(st)||'—')}</td>
       <td><div class="xp-bar-wrap">
         <div class="xp-bar"><div class="xp-bar-fill" style="width:${Math.min(100,(st.xp||0)/3)}%"></div></div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">${st.xp||0}</span>
       </div></td>
-      <td>${st.missions_done||0}</td>
+      <td>${studentProgress(st)}</td>
       <td>${st.streak||0} 🔥</td>
     </tr>`).join('');
 }
@@ -446,7 +549,7 @@ function renderOverview(){
 function renderStudents(){
   const q = (document.getElementById('student-search')?.value||'').toLowerCase();
   const list = _data.students.filter(s=>
-    !q || s.code?.toLowerCase().includes(q) || s.class?.toLowerCase().includes(q)
+    !q || s.code?.toLowerCase().includes(q) || (studentClass(s)||'').toLowerCase().includes(q)
   );
   const tbody = document.getElementById('students-tbody');
   if(!list.length){
@@ -455,17 +558,18 @@ function renderStudents(){
   }
   const sorted = [...list].sort((a,b)=>(b.xp||0)-(a.xp||0));
   tbody.innerHTML = sorted.map(st=>{
-    const sync = st.last_sync ? new Date(st.last_sync).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const s = studentSync(st);
+    const sync = s ? new Date(s).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
     const active = _data.codes.find(c=>c.code===st.code)?.active ?? true;
     return `<tr>
       <td class="code-cell" onclick="copyCode('${st.code}')">${st.code}</td>
-      <td>${st.class||'—'}</td>
+      <td>${escapeHtml(studentClass(st)||'—')}</td>
       <td>${active ? '<span class="badge-ok">aktiv</span>' : '<span class="badge-off">inaktiv</span>'}</td>
       <td><div class="xp-bar-wrap">
         <div class="xp-bar"><div class="xp-bar-fill" style="width:${Math.min(100,(st.xp||0)/3)}%"></div></div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">${st.xp||0}</span>
       </div></td>
-      <td>${st.missions_done||0}</td>
+      <td>${studentProgress(st)}</td>
       <td>${st.streak||0} 🔥</td>
       <td style="font-size:12px;color:var(--text2)">${sync}</td>
       <td><div class="action-btns">
@@ -474,6 +578,176 @@ function renderStudents(){
       </div></td>
     </tr>`;
   }).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   FEHLERMUSTER-ANALYSE
+   ══════════════════════════════════════════════════════ */
+
+/* Aggregiert die errors-Felder aller Schüler:innen zu klassenweiten Kennzahlen */
+function fmAggregate(){
+  const agg = {}; // topicId → { right, wrong, affected:Set }
+  for(const s of _data.students){
+    const e = s.errors || {};
+    for(const tid in e){
+      if(!agg[tid]) agg[tid] = { right:0, wrong:0, affected:new Set() };
+      const row = e[tid] || {};
+      agg[tid].right += (+row.right||0);
+      agg[tid].wrong += (+row.wrong||0);
+      if((+row.wrong||0) > 0) agg[tid].affected.add(s.code);
+    }
+  }
+  // In sortierbare Liste konvertieren
+  return Object.entries(agg).map(([tid,v])=>{
+    const total = v.right + v.wrong;
+    return {
+      id: tid,
+      label: topicLabel(tid),
+      cat: topicCat(tid),
+      right: v.right,
+      wrong: v.wrong,
+      total,
+      rate: total>0 ? v.wrong/total : 0,
+      affected: v.affected.size,
+    };
+  });
+}
+
+function renderFehlermuster(){
+  const insWrap = document.getElementById('fm-insights-wrap');
+  const barsWrap = document.getElementById('fm-bars-wrap');
+  const detWrap = document.getElementById('fm-topic-detail-wrap');
+  if(!barsWrap) return;
+
+  const list = fmAggregate().filter(t=>t.total>0);
+  if(!list.length){
+    insWrap.innerHTML = '';
+    barsWrap.innerHTML = `<div class="fm-empty"><div class="icon">📭</div>
+      <p>Noch keine Antwortdaten der Schüler:innen synchronisiert.<br>
+      Sobald Schüler:innen Aufgaben bearbeiten und synchronisieren, erscheinen hier die Fehlermuster.</p></div>`;
+    detWrap.innerHTML = '';
+    return;
+  }
+
+  // Nach Fehlerquote × Anzahl Antworten sortieren (so fallen relevante Themen auf)
+  list.sort((a,b)=> (b.rate*Math.log(1+b.total)) - (a.rate*Math.log(1+a.total)));
+
+  // ── Insights: Top-3 Problemthemen ──
+  const nStudents = _data.students.length || 0;
+  const top = list.filter(t=>t.wrong>=1).slice(0,3);
+  if(top.length){
+    insWrap.innerHTML = '<div class="fm-insights"><div class="sec-hdr" style="margin-bottom:10px">'
+      + '<h2 style="font-size:16px">💡 Automatische Hinweise</h2></div>'
+      + top.map(t=>{
+        const pct = Math.round(t.rate*100);
+        const affTxt = nStudents>0 ? `${t.affected} von ${nStudents} Schüler:innen` : `${t.affected} Schüler:in(nen)`;
+        const sev = t.rate>=0.5 ? '⚠️' : t.rate>=0.3 ? '⚡' : '💬';
+        return `<div class="fm-ins-item">
+          <div class="fm-ins-icon">${sev}</div>
+          <div class="fm-ins-body">
+            <b>${escapeHtml(t.label)}</b> — Fehlerquote <b>${pct}%</b> (${t.wrong} von ${t.total} Antworten)
+            <em>Betroffen: ${affTxt} · Kategorie: ${escapeHtml(t.cat)}</em>
+          </div></div>`;
+      }).join('') + '</div>';
+  } else {
+    insWrap.innerHTML = '<div class="fm-insights" style="font-size:13px;color:var(--ok)">'
+      + '✓ Bisher keine auffälligen Fehlermuster in der Klasse.</div>';
+  }
+
+  // ── Balken-Ranking ──
+  barsWrap.innerHTML = '<div class="fm-bars">'
+    + '<div class="sec-hdr" style="margin-bottom:12px"><h2 style="font-size:16px">Themen nach Fehlerquote</h2></div>'
+    + list.map(t=>{
+      const pct = Math.round(t.rate*100);
+      const affTxt = nStudents>0 ? `${t.affected}/${nStudents}` : `${t.affected}`;
+      return `<div class="fm-bar-row ${_fmSelectedTopic===t.id?'clicked':''}" onclick="fmSelectTopic('${t.id}')">
+        <div>
+          <div class="fm-bar-lbl">${escapeHtml(t.label)}</div>
+          <div class="fm-bar-cat">${escapeHtml(t.cat)}</div>
+        </div>
+        <div class="fm-bar-track"><div class="fm-bar-fill" style="width:${pct}%"></div></div>
+        <div class="fm-bar-pct">${pct}%</div>
+        <div class="fm-bar-count">${t.wrong}/${t.total} · ${affTxt}</div>
+      </div>`;
+    }).join('') + '</div>';
+
+  // ── Topic-Detail (falls ausgewählt) ──
+  if(_fmSelectedTopic){
+    renderTopicDetail(_fmSelectedTopic);
+  } else {
+    detWrap.innerHTML = '';
+  }
+}
+
+function fmSelectTopic(tid){
+  _fmSelectedTopic = (_fmSelectedTopic===tid) ? null : tid;
+  renderFehlermuster();
+  if(_fmSelectedTopic){
+    const el = document.getElementById('fm-topic-detail-wrap');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+}
+
+function renderTopicDetail(tid){
+  const wrap = document.getElementById('fm-topic-detail-wrap');
+  if(!wrap) return;
+
+  const rows = _data.students.map(s=>{
+    const r = (s.errors||{})[tid] || null;
+    if(!r || (!r.right && !r.wrong)) return null;
+    const total = (+r.right||0) + (+r.wrong||0);
+    return {
+      code: s.code,
+      cls:  s.class_name || s.class || '—',
+      right:+r.right||0,
+      wrong:+r.wrong||0,
+      total,
+      rate: total>0 ? (+r.wrong||0)/total : 0,
+      recent: Array.isArray(r.recent) ? r.recent : [],
+    };
+  }).filter(Boolean).sort((a,b)=>b.wrong-a.wrong);
+
+  const label = topicLabel(tid);
+  const cat = topicCat(tid);
+
+  if(!rows.length){
+    wrap.innerHTML = `<div class="fm-topic-detail">
+      <h4>${escapeHtml(label)} — ${escapeHtml(cat)}</h4>
+      <p style="font-size:12px;color:var(--text2)">Keine Antworten erfasst.</p></div>`;
+    return;
+  }
+
+  const maxWrong = Math.max(...rows.map(r=>r.wrong), 1);
+
+  const recentSamples = rows.flatMap(r => r.recent.slice(0,1).map(rc => ({code:r.code, t:rc.t, detail:rc.detail})))
+                             .filter(r=>r.detail)
+                             .slice(0,3);
+
+  wrap.innerHTML = `<div class="fm-topic-detail">
+    <h4>📌 ${escapeHtml(label)} <span style="color:var(--text2);font-weight:400">— ${escapeHtml(cat)}</span></h4>
+    <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px">
+    ${rows.map(r=>{
+      const pct = Math.round(r.rate*100);
+      return `<div class="fm-stu-row">
+        <span class="fm-stu-code" onclick="copyCode('${r.code}')" style="cursor:pointer">${r.code}</span>
+        <span class="fm-stu-cls">${escapeHtml(r.cls)}</span>
+        <span class="fm-stu-bar"><span class="fm-stu-bar-fill" style="width:${(r.wrong/maxWrong)*100}%"></span></span>
+        <span class="fm-stu-num">${r.wrong}/${r.total} (${pct}%)</span>
+      </div>`;
+    }).join('')}
+    </div>
+    ${recentSamples.length ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bg4)">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:700;margin-bottom:6px">Letzte Fehler-Beispiele</div>
+      ${recentSamples.map(s=>`<div style="font-size:11px;color:var(--text2);margin:3px 0">
+        <span style="color:var(--gold);font-family:'JetBrains Mono',monospace">${s.code}</span>
+        — ${escapeHtml(s.detail||'')}
+      </div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 /* ── CODES ── */
@@ -594,17 +868,46 @@ function showDetail(code){
   const st = _data.students.find(s=>s.code===code);
   if(!st) return;
   document.getElementById('detail-title').textContent = `Schüler ${code}`;
-  const sync = st.last_sync ? new Date(st.last_sync).toLocaleString('de-DE') : '—';
-  let mastery = '';
-  try{ const m=JSON.parse(st.mastery||'{}'); mastery=Object.entries(m).map(([k,v])=>`${k}: ${v}`).join(', ')||'—'; }catch{ mastery='—'; }
+  const sync = st.last_sync ? new Date(st.last_sync).toLocaleString('de-DE') : (st.last_active ? new Date(st.last_active).toLocaleString('de-DE') : '—');
+  const clsName = st.class || st.class_name || '—';
+
+  // Fehlermuster dieses Schülers
+  const errs = (st.errors && typeof st.errors==='object') ? st.errors : {};
+  const errRows = Object.entries(errs).map(([tid,v])=>{
+    const r=+v.right||0, w=+v.wrong||0, t=r+w;
+    return { id:tid, label:topicLabel(tid), right:r, wrong:w, total:t, rate:t>0?w/t:0 };
+  }).filter(r=>r.total>0).sort((a,b)=>b.rate-a.rate || b.wrong-a.wrong);
+
+  let fmHtml = '';
+  if(errRows.length){
+    fmHtml = `<div class="fm-mini">
+      <h4>Fehlermuster</h4>
+      ${errRows.map(r=>{
+        const pct=Math.round(r.rate*100);
+        return `<div class="fm-mini-row">
+          <span class="fm-mini-lbl">${escapeHtml(r.label)}</span>
+          <span class="fm-mini-ok">${r.right}</span>
+          <span class="fm-mini-err">${r.wrong}</span>
+          <span class="fm-mini-pct">${pct}%</span>
+        </div>`;
+      }).join('')}
+      <div style="font-size:10px;color:var(--text2);margin-top:6px;text-align:right">
+        ✓ richtig · ✗ falsch · % Fehlerquote
+      </div>
+    </div>`;
+  } else {
+    fmHtml = `<div class="fm-mini"><h4>Fehlermuster</h4>
+      <div style="font-size:11px;color:var(--text2)">Noch keine Antworten erfasst.</div></div>`;
+  }
+
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-row"><span class="detail-key">Code</span><span class="detail-val">${st.code}</span></div>
-    <div class="detail-row"><span class="detail-key">Klasse</span><span class="detail-val">${st.class||'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">Klasse</span><span class="detail-val">${escapeHtml(clsName)}</span></div>
     <div class="detail-row"><span class="detail-key">XP</span><span class="detail-val">${st.xp||0}</span></div>
-    <div class="detail-row"><span class="detail-key">Regeln fertig</span><span class="detail-val">${st.missions_done||0}</span></div>
+    <div class="detail-row"><span class="detail-key">Regeln bearbeitet</span><span class="detail-val">${st.progress ?? (Array.isArray(st.missions)?st.missions.length:0)}</span></div>
     <div class="detail-row"><span class="detail-key">Streak</span><span class="detail-val">${st.streak||0} 🔥</span></div>
     <div class="detail-row"><span class="detail-key">Letzter Sync</span><span class="detail-val">${sync}</span></div>
-    <div class="detail-row"><span class="detail-key">Mastery</span><span class="detail-val" style="font-size:11px">${mastery}</span></div>
+    ${fmHtml}
   `;
   document.getElementById('detail-overlay').classList.remove('hidden');
 }
@@ -614,8 +917,9 @@ function closeDetail(){ document.getElementById('detail-overlay').classList.add(
 function exportCSV(){
   const rows = [['Code','Klasse','XP','Regeln','Streak','Letzter Sync']];
   _data.students.forEach(s=>{
-    const sync = s.last_sync ? new Date(s.last_sync).toLocaleString('de-DE') : '';
-    rows.push([s.code,s.class||'',s.xp||0,s.missions_done||0,s.streak||0,sync]);
+    const t = studentSync(s);
+    const sync = t ? new Date(t).toLocaleString('de-DE') : '';
+    rows.push([s.code,studentClass(s),s.xp||0,studentProgress(s),s.streak||0,sync]);
   });
   const csv = rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});

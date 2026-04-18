@@ -768,6 +768,7 @@ const STATE = {
     ropes: [],           // Gespeicherte Seile
     protokoll: {},       // Prüfprotokoll-Ergebnisse
     schwaechen: {},      // Regel-Mastery { A1: 0.9, D1: 0.4, ... }
+    errors: {},          // Fehlermuster { topicId: {right:n, wrong:n, lastWrong:ISO, recent:[{t,detail}]} }
     abnahme: { bestanden: null },
     done: [],            // Legacy-Compat
   },
@@ -789,6 +790,7 @@ const STATE = {
     if(!this.d.ropes) this.d.ropes=[];
     if(!this.d.protokoll) this.d.protokoll={};
     if(!this.d.schwaechen) this.d.schwaechen={};
+    if(!this.d.errors) this.d.errors={};
     if(!this.d.done) this.d.done=[];
     this._loadCfg();
   },
@@ -809,7 +811,23 @@ const STATE = {
   savePark(plats, ropes){ this.d.platforms=plats; this.d.ropes=ropes; this.save(); },
   saveProtokoll(key, data){ this.d.protokoll[key]=data; this.save(); },
   saveSchwaechen(s){ this.d.schwaechen=s; this.save(); },
-  reset(){ this.d={ruleOrder:[],extraRules:[],warmupDone:false,parkComplete:false,platforms:{},ropes:[],protokoll:{},schwaechen:{},done:[]}; this.save(); }
+  trackAnswer(topicId, isCorrect, detail){
+    if(!topicId) return;
+    if(!this.d.errors) this.d.errors={};
+    const e=this.d.errors[topicId] || (this.d.errors[topicId]={right:0,wrong:0,lastWrong:null,recent:[]});
+    if(isCorrect){ e.right=(e.right||0)+1; }
+    else{
+      e.wrong=(e.wrong||0)+1;
+      e.lastWrong=new Date().toISOString();
+      if(detail){
+        if(!Array.isArray(e.recent)) e.recent=[];
+        e.recent.unshift({t:e.lastWrong, detail:String(detail).slice(0,120)});
+        e.recent=e.recent.slice(0,5);
+      }
+    }
+    this.save();
+  },
+  reset(){ this.d={ruleOrder:[],extraRules:[],warmupDone:false,parkComplete:false,platforms:{},ropes:[],protokoll:{},schwaechen:{},errors:{},done:[]}; this.save(); }
 };
 
 /* ══════════════════════════════════════════════════════
@@ -887,8 +905,8 @@ async function syncProgress(){
         missions,
         xp,
         streak:0,
-        mastery:{},
-        errors:{}
+        mastery:STATE.d.schwaechen||{},
+        errors:STATE.d.errors||{}
       })
     });
   }catch(e){}
@@ -2440,6 +2458,9 @@ function submitFehlerCheck(idx){
     color:${ok?'var(--ok)':'var(--err)'}">
 ${lines.join('\n')}</div>`;
 
+  STATE.trackAnswer('wu-fehler-'+sc.rule, ok,
+    ok?null:`Schritt ${chosenIdx+1} (korrekt: ${sc.fehlerIdx+1}); Wert ${entVal} (korrekt: ${sc.correctValue})`);
+
   if(ok){
     APP.warmupFehlerDone[idx]=true;
     setTimeout(()=>renderDrawer(),1500);
@@ -2848,6 +2869,8 @@ function submitWarmupCheck(rKey, rope, rid, d, sv, av){
   const checkedMap=isGrenz?APP.warmupGrenzChecked:APP.warmupChecked;
   if(!checkedMap[rKey]) checkedMap[rKey]={};
   checkedMap[rKey][rid]={correct:ok};
+  STATE.trackAnswer('wu-'+(isGrenz?'grenz':'find')+'-'+rid, ok,
+    ok?null:`${rKey}: tipp=${studentVerdict} korrekt=${correctVerdict}`);
 
   const ropesRef=isGrenz?WARMUP_GRENZ_ROPES:WARMUP_ROPES;
   generateWarmupSuggestion(rKey, rid, ok, ropesRef, checkedMap, violRef);
@@ -3817,6 +3840,7 @@ function evalRule(rid, def){
     res=def.check(rid,vals);
   }
   APP.results[rid]=res.ok;
+  STATE.trackAnswer('m-'+rid, res.ok, res.ok?null:(def.cat||rid)+' — '+(def.title||''));
   const fb=document.getElementById('fb-'+rid);
   fb.className=`fb show ${res.ok?'ok':'err'}`;
   fb.textContent=res.steps||'';
