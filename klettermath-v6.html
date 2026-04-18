@@ -75,7 +75,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .code-btn-close{background:var(--bg4);color:var(--text)}
 
 /* DRAWER */
-#drawer{position:fixed;top:0;right:0;bottom:0;width:370px;z-index:20;display:flex;
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(370px,92vw);z-index:20;display:flex;
         flex-direction:column;background:var(--bg2);border-left:1px solid var(--bg3);
         transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
 #drawer.open{transform:translateX(0)}
@@ -359,6 +359,30 @@ input.num-input{width:90px!important}
                   cursor:pointer;transition:all .2s}
 .btn-teacher-back:hover{border-color:var(--bg4);color:var(--text)}
 .teacher-err{font-size:11px;color:var(--err);min-height:16px;text-align:center}
+
+/* ── Toast (statt alert) ── */
+#km-toast{position:fixed;left:50%;bottom:32px;transform:translate(-50%,40px);
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:10px;
+  padding:12px 20px;font-size:14px;font-weight:700;color:var(--text);
+  z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.5);opacity:0;
+  transition:opacity .2s,transform .25s;max-width:90vw;text-align:center;
+  pointer-events:none}
+#km-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#km-toast.ok{border-color:var(--ok);color:var(--ok)}
+#km-toast.err{border-color:var(--err);color:var(--err)}
+#km-toast.warn{border-color:var(--gold);color:var(--gold)}
+
+/* ── Bewegungs-Reduktion ── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+
+/* ── Mindest-Touch-Targets & responsive Drawer ── */
+@media (pointer: coarse), (max-width: 900px){
+  button, .btn, .nav-btn, [role="button"]{min-height:44px}
+  input, select{min-height:40px}
+}
 </style>
 </head>
 <body>
@@ -415,14 +439,14 @@ input.num-input{width:90px!important}
   </div>
 </div>
 
-<canvas id="canvas"></canvas>
+<canvas id="canvas" role="img" aria-label="3D-Ansicht des Kletterparks"></canvas>
 <div id="lbl"></div>
 
 <!-- Kompendium Overlay -->
-<div id="comp-overlay">
+<div id="comp-overlay" role="dialog" aria-modal="true" aria-labelledby="comp-title" aria-hidden="true">
   <div id="comp-top">
-    <h2>Kompendium</h2>
-    <button class="close-btn" onclick="closeComp()">✕</button>
+    <h2 id="comp-title">Kompendium</h2>
+    <button class="close-btn" onclick="closeComp()" aria-label="Kompendium schließen">✕</button>
   </div>
   <div id="comp-grid"></div>
 </div>
@@ -437,9 +461,9 @@ input.num-input{width:90px!important}
   <button class="phase-btn locked" id="btn-abnahme" onclick="setPhase('abnahme')">Abnahme</button>
   <span class="score-badge" id="score-badge"></span>
   <div id="hdr-sp"></div>
-  <button class="code-btn" id="code-btn-hdr" onclick="openCodeModal()" title="Schülercodes">🔑</button>
-  <button class="menu-btn" onclick="openComp()" title="Kompendium">📖</button>
-  <button class="menu-btn" onclick="toggleDrawer()">☰</button>
+  <button class="code-btn" id="code-btn-hdr" onclick="openCodeModal()" title="Schülercode" aria-label="Schülercode eingeben oder anzeigen">🔑</button>
+  <button class="menu-btn" onclick="openComp()" title="Kompendium" aria-label="Kompendium öffnen">📖</button>
+  <button class="menu-btn" onclick="toggleDrawer()" aria-label="Seitenleiste umschalten">☰</button>
 </div>
 
 <div id="drawer" class="open">
@@ -727,6 +751,26 @@ const deg = r => r*180/Math.PI;
 const n   = x => (x===Math.round(x)) ? String(+x.toFixed(0)) : String(+x.toFixed(3));
 const n2  = x => (+x.toFixed(2)).toString();
 
+/* Toast statt alert() — nicht-blockierend, UI-konsistent. */
+let _kmToastTimer=null;
+function showToast(msg, kind){
+  const el=document.getElementById('km-toast');
+  if(!el){ /* Fallback bevor DOM geladen ist */ console.warn(msg); return; }
+  el.className=''; el.textContent=msg;
+  if(kind) el.classList.add(kind);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  clearTimeout(_kmToastTimer);
+  _kmToastTimer=setTimeout(()=>el.classList.remove('show'), 2600);
+}
+/* Deutsches Zahlen-Parsing: "3,5" → 3.5. Gibt fallback zurück bei ungültiger Eingabe. */
+function parseNum(v, fallback){
+  if(v===null || v===undefined) return fallback;
+  const s=String(v).trim().replace(',', '.');
+  if(s==='') return fallback;
+  const x=parseFloat(s);
+  return Number.isFinite(x) ? x : fallback;
+}
+
 /* ══════════════════════════════════════════════════════
    APP STATE
    ══════════════════════════════════════════════════════ */
@@ -835,8 +879,19 @@ const STATE = {
    ══════════════════════════════════════════════════════ */
 const SYNC_API = 'https://mrbl.4lima.de/klettermath-v6/api';
 
-function getStudentCode() { return localStorage.getItem('km5_code') || null; }
-function setStudentCode(code) { localStorage.setItem('km5_code', code); updateCodeBadge(); }
+/* Schüler-Code: km6_code ist der aktuelle Key. Einmalige Migration aus
+   Legacy-Key km5_code sorgt für reibungslose Aktualisierung bei Bestandsnutzer:innen. */
+(function migrateStudentCode(){
+  try{
+    const legacy = localStorage.getItem('km5_code');
+    if(legacy && !localStorage.getItem('km6_code')){
+      localStorage.setItem('km6_code', legacy);
+    }
+    if(legacy) localStorage.removeItem('km5_code');
+  }catch(e){}
+})();
+function getStudentCode() { return localStorage.getItem('km6_code') || null; }
+function setStudentCode(code) { localStorage.setItem('km6_code', code); updateCodeBadge(); }
 
 function updateCodeBadge(){
   const code=getStudentCode(), btn=document.getElementById('code-btn-hdr');
@@ -986,7 +1041,7 @@ async function openCreateCodes(){
 
 async function createCodes(){
   const cls = document.getElementById('cc-class').value.trim() || 'Klasse';
-  const cnt = parseInt(document.getElementById('cc-count').value)||15;
+  const cnt = parseInt(document.getElementById('cc-count').value, 10)||15;
   const res = document.getElementById('cc-result');
   res.textContent = 'Erstelle…';
   try {
@@ -2435,7 +2490,7 @@ function submitFehlerCheck(idx){
     return;
   }
 
-  const chosenIdx=parseInt(radio.value);
+  const chosenIdx=parseInt(radio.value, 10);
   const entVal=parseFloat(valInp.value);
   const stepOk=chosenIdx===sc.fehlerIdx;
   const valOk=Math.abs(entVal-sc.correctValue)<sc.tolerance;
@@ -2571,9 +2626,9 @@ function buildRepairCard(platId, ruleId, desc, validateFn){
 
   // Live update on input change
   const updateLive=()=>{
-    const x=parseFloat(document.getElementById(`rep-${platId}-x`)?.value)||0;
-    const y=parseFloat(document.getElementById(`rep-${platId}-y`)?.value)||0;
-    const z=parseFloat(document.getElementById(`rep-${platId}-z`)?.value)||0;
+    const x=parseNum(document.getElementById(`rep-${platId}-x`)?.value, 0);
+    const y=parseNum(document.getElementById(`rep-${platId}-y`)?.value, 0);
+    const z=parseNum(document.getElementById(`rep-${platId}-z`)?.value, 0);
     const pt={x,y,z};
     const r=validateFn(pt);
     const el=document.getElementById(`rep-live-${platId}`);
@@ -2601,9 +2656,9 @@ function buildRepairCard(platId, ruleId, desc, validateFn){
   btn.style.cssText='margin-top:4px;font-size:11px';
   btn.textContent='Reparatur bestätigen →';
   btn.onclick=()=>{
-    const x=parseFloat(document.getElementById(`rep-${platId}-x`)?.value)||0;
-    const y=parseFloat(document.getElementById(`rep-${platId}-y`)?.value)||0;
-    const z=parseFloat(document.getElementById(`rep-${platId}-z`)?.value)||0;
+    const x=parseNum(document.getElementById(`rep-${platId}-x`)?.value, 0);
+    const y=parseNum(document.getElementById(`rep-${platId}-y`)?.value, 0);
+    const z=parseNum(document.getElementById(`rep-${platId}-z`)?.value, 0);
     const r=validateFn({x,y,z});
     if(r.ok){
       APP.plats[platId]={x,y,z,fixed:true};
@@ -3247,9 +3302,9 @@ function buildDrawerSandbox(){
 
 function sbAddPlat(){
   const name=(document.getElementById('sb-name').value||'P').toUpperCase();
-  const x=parseFloat(document.getElementById('sb-x').value)||0;
-  const y=parseFloat(document.getElementById('sb-y').value)||0;
-  const z=parseFloat(document.getElementById('sb-z').value)||0;
+  const x=parseNum(document.getElementById('sb-x').value, 0);
+  const y=parseNum(document.getElementById('sb-y').value, 0);
+  const z=parseNum(document.getElementById('sb-z').value, 0);
   if(!name) return;
   APP.plats[name]={x,y,z,fixed:false};
   rebuild3(); renderDrawer();
@@ -3375,7 +3430,7 @@ function buildDrawerPeer(){
       setPhase('warmup');
       APP.warmupDone=false;
     }catch(e){
-      alert('Ungültiger Code!');
+      showToast('Ungültiger Park-Code', 'err');
     }
   };
   importSec.appendChild(impBtn);
@@ -3430,19 +3485,25 @@ function buildDrawerAbnahme(){
   return frag;
 }
 
+function clearAbnahmeTimer(){
+  if(APP._abnahmeInterval){ clearInterval(APP._abnahmeInterval); APP._abnahmeInterval=null; }
+}
+
 function startAbnahme(){
   APP.abnahmeStarted=true;
   APP.abnahmeTimeLeft=STATE.cfg.abnahmeTimer||300;
   // Start TÜV inspection
   startTuev();
+  // Alten Timer sicherheitshalber beenden
+  clearAbnahmeTimer();
   // Start timer
   APP._abnahmeInterval=setInterval(()=>{
     APP.abnahmeTimeLeft--;
     const el=document.getElementById('abnahme-timer');
     if(el) el.textContent=formatTime(APP.abnahmeTimeLeft);
     if(APP.abnahmeTimeLeft<=0){
-      clearInterval(APP._abnahmeInterval);
-      alert('Zeit abgelaufen!');
+      clearAbnahmeTimer();
+      showToast('⏱ Zeit abgelaufen!', 'warn');
       showResult();
     }
   },1000);
@@ -3462,9 +3523,9 @@ function addPlat(){
   const nameInp = document.getElementById('pk-name');
   const name = (nameInp?.value||'').trim().toUpperCase();
   if(!name || name.length!==1 || !/[A-Z]/.test(name) || APP.plats[name]) return;
-  const x = parseFloat(document.getElementById('pk-x')?.value)||0;
-  const y = parseFloat(document.getElementById('pk-y')?.value)||0;
-  const z = parseFloat(document.getElementById('pk-z')?.value)||0;
+  const x = parseNum(document.getElementById('pk-x')?.value, 0);
+  const y = parseNum(document.getElementById('pk-y')?.value, 0);
+  const z = parseNum(document.getElementById('pk-z')?.value, 0);
   APP.plats[name] = { x, y, z, fixed:false };
   rebuild3();
   renderDrawer();
@@ -3506,6 +3567,11 @@ function setPhase(phase){
   if(phase==='warmup' && APP.ruleOrder.length===0){ shakeBtn('btn-warmup'); return; }
   if(phase==='analyse' && !APP.parkComplete){ shakeBtn('btn-analyse'); return; }
   if(phase==='abnahme' && !STATE.isAbnahmeUnlocked()){ shakeBtn('btn-abnahme'); return; }
+  // Timer immer stoppen, wenn Abnahme verlassen wird (verhindert Memory-Leak + Geister-Toasts)
+  if(APP.phase==='abnahme' && phase!=='abnahme'){
+    clearAbnahmeTimer();
+    APP.abnahmeStarted=false;
+  }
   APP.phase=phase;
   PHASES.forEach(p=>{
     const btn=document.getElementById('btn-'+p);
@@ -3547,8 +3613,15 @@ function updateProgBadge(){
 /* ══════════════════════════════════════════════════════
    KOMPENDIUM
    ══════════════════════════════════════════════════════ */
-function openComp(){ renderComp(); document.getElementById('comp-overlay').classList.add('show'); }
-function closeComp(){ document.getElementById('comp-overlay').classList.remove('show'); }
+function openComp(){
+  renderComp();
+  const el=document.getElementById('comp-overlay');
+  el.classList.add('show'); el.setAttribute('aria-hidden','false');
+}
+function closeComp(){
+  const el=document.getElementById('comp-overlay');
+  el.classList.remove('show'); el.setAttribute('aria-hidden','true');
+}
 function renderComp(){
   const grid=document.getElementById('comp-grid'); grid.innerHTML='';
   COMP.forEach(card=>{
@@ -3565,7 +3638,7 @@ function renderComp(){
    TÜV-PRÜFUNG STARTEN (aus Bau-Phase)
    ══════════════════════════════════════════════════════ */
 function startTuev(){
-  if(APP.ropes.length===0){ alert('Erst mindestens ein Seil spannen.'); return; }
+  if(APP.ropes.length===0){ showToast('Erst mindestens ein Seil spannen.', 'warn'); return; }
   APP.order=APP.ruleOrder.length>0?[...APP.ruleOrder]:shuffle(getAllRules());
   APP.results={}; APP.ruleRopes={}; APP.ruleScen={};
   updateProgBadge();
@@ -3821,7 +3894,7 @@ function evalRule(rid, def){
   if(v==='fehler'){
     const sc=APP.ruleScen[rid];
     const chosen=document.querySelector(`input[name="${rid}_fehler"]:checked`)?.value;
-    const ok=chosen!==undefined && parseInt(chosen)===sc?.fehlerIdx;
+    const ok=chosen!==undefined && parseInt(chosen, 10)===sc?.fehlerIdx;
     res={ok, steps:ok
       ?`✓ Richtig! Fehler war in Schritt ${(sc.fehlerIdx+1)}.\n\n${sc.fehlerExpl||''}`
       :`✗ Falsch — Fehler war in Schritt ${(sc?.fehlerIdx??0)+1}.\n\n${sc?.fehlerExpl||''}`};
@@ -3829,7 +3902,7 @@ function evalRule(rid, def){
     const sc=APP.ruleScen[rid];
     const chosen=document.querySelector(`input[name="${rid}_mc"]:checked`)?.value;
     const opts=sc?.mcOpts||[];
-    const ci=chosen!==undefined?parseInt(chosen):-1;
+    const ci=chosen!==undefined?parseInt(chosen, 10):-1;
     const ok=ci>=0&&opts[ci]?.correct;
     const ri=opts.findIndex(o=>o.correct);
     res={ok, steps:ok
@@ -4733,5 +4806,6 @@ async function submitTeacherLogin(){
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
+<div id="km-toast" role="status" aria-live="polite"></div>
 </body>
 </html>
