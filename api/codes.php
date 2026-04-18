@@ -1,13 +1,14 @@
 <?php
 // Lehrer-Endpunkt: Codes verwalten
-// Authentifizierung via Header: X-Teacher-Key: <key aus GitHub Secrets>
+// Authentifizierung via Header: X-Teacher-Key
 require_once 'config.php';
 cors();
+requireTeacher();
 
-$key = $_SERVER['HTTP_X_TEACHER_KEY'] ?? '';
-if($key !== TEACHER_KEY){
-  http_response_code(403);
-  echo json_encode(['ok'=>false,'error'=>'Unauthorized']);
+// Schutz gegen Missbrauch (auch nach erfolgreicher Auth sinnvoll).
+if(!rateLimit('codes', 120)){
+  http_response_code(429);
+  echo json_encode(['ok'=>false,'error'=>'Zu viele Anfragen — bitte kurz warten.']);
   exit;
 }
 
@@ -18,40 +19,56 @@ $db     = getDB();
 // GET: alle Codes auflisten
 if($method === 'GET'){
   $stmt = $db->query('SELECT code, class_name, created_at, active FROM km_codes ORDER BY created_at DESC');
-  echo json_encode(['ok'=>true,'codes'=>$stmt->fetchAll()]);
+  $rows = $stmt->fetchAll();
+  foreach($rows as &$r){
+    $r['class']  = $r['class_name'];
+    $r['active'] = (bool)(int)$r['active'];
+  }
+  echo json_encode(['ok'=>true,'codes'=>$rows]);
   exit;
 }
 
-// POST: neuen Code erstellen
-if($method === 'POST' && ($body['action'] ?? '') === 'create'){
+$action = $body['action'] ?? '';
+
+// POST: neue Codes erstellen
+if($method === 'POST' && $action === 'create'){
   $class = trim($body['class'] ?? 'Unbekannt');
+  if($class === '' || mb_strlen($class) > 100){
+    http_response_code(400);
+    echo json_encode(['ok'=>false,'error'=>'Ungültige Klasse']); exit;
+  }
   $count = intval($body['count'] ?? 1);
-  $count = min($count, 50); // max 50 auf einmal
+  $count = max(1, min($count, 50));
 
   $created = [];
-  for($i=0; $i<$count; $i++){
-    $code = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 6));
+  $attempts = 0;
+  while(count($created) < $count && $attempts < $count * 4){
+    $attempts++;
+    $code = secureCode(6);
     try {
       $db->prepare('INSERT INTO km_codes (code, class_name) VALUES (?, ?)')->execute([$code, $class]);
-      $created[] = $code;
-    } catch(Exception $e){ /* Code-Kollision, überspringen */ }
+      $created[] = ['code'=>$code, 'class'=>$class, 'active'=>true];
+    } catch(Exception $e){ /* Kollision — neuer Versuch */ }
   }
-  echo json_encode(['ok'=>true,'created'=>$created]);
+  // Liefere sowohl "codes" (Objekt-Array, vom Frontend erwartet) als auch
+  // "created" (Strings, rückwärtskompatibel) zurück.
+  echo json_encode(['ok'=>true, 'codes'=>$created, 'created'=>array_column($created,'code')]);
   exit;
 }
 
-// POST: Code deaktivieren
-if($method === 'POST' && ($body['action'] ?? '') === 'deactivate'){
-  $code = strtoupper(trim($body['code'] ?? ''));
-  $db->prepare('UPDATE km_codes SET active=0 WHERE code=?')->execute([$code]);
-  echo json_encode(['ok'=>true]);
-  exit;
-}
+$codeArg = isset($body['code']) ? strtoupper(trim($body['code'])) : '';
+$validCode = (bool)preg_match('/^[A-Z0-9]{4,20}$/', $codeArg);
 
-// POST: Code löschen
-if($method === 'POST' && ($body['action'] ?? '') === 'delete'){
-  $code = strtoupper(trim($body['code'] ?? ''));
-  $db->prepare('DELETE FROM km_codes WHERE code=?')->execute([$code]);
+// POST: Code aktivieren/deaktivieren/löschen
+if($method === 'POST' && in_array($action, ['activate','deactivate','delete'], true)){
+  if(!$validCode){ http_response_code(400); echo json_encode(['ok'=>false,'error'=>'Ungültiger Code']); exit; }
+  if($action === 'activate'){
+    $db->prepare('UPDATE km_codes SET active=1 WHERE code=?')->execute([$codeArg]);
+  } elseif($action === 'deactivate'){
+    $db->prepare('UPDATE km_codes SET active=0 WHERE code=?')->execute([$codeArg]);
+  } else {
+    $db->prepare('DELETE FROM km_codes WHERE code=?')->execute([$codeArg]);
+  }
   echo json_encode(['ok'=>true]);
   exit;
 }

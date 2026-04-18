@@ -2,11 +2,11 @@
 // Lehrer-Endpunkt: Schülerfortschritt abrufen
 require_once 'config.php';
 cors();
+requireTeacher();
 
-$key = $_SERVER['HTTP_X_TEACHER_KEY'] ?? '';
-if($key !== TEACHER_KEY){
-  http_response_code(403);
-  echo json_encode(['ok'=>false,'error'=>'Unauthorized']);
+if(!rateLimit('dashboard', 120)){
+  http_response_code(429);
+  echo json_encode(['ok'=>false,'error'=>'Zu viele Anfragen']);
   exit;
 }
 
@@ -31,10 +31,13 @@ try {
 
   // JSON-Felder dekodieren
   foreach($rows as &$r){
-    $r['missions'] = json_decode($r['missions'] ?? '[]', true);
-    $r['mastery']  = json_decode($r['mastery']  ?? '{}', true);
-    $r['errors']   = json_decode($r['errors']   ?? '{}', true);
-    $r['progress'] = count($r['missions']);
+    $r['missions'] = json_decode($r['missions'] ?? '[]', true) ?: [];
+    $r['mastery']  = json_decode($r['mastery']  ?? '{}', true) ?: new stdClass();
+    $r['errors']   = json_decode($r['errors']   ?? '{}', true) ?: new stdClass();
+    $r['progress'] = is_array($r['missions']) ? count($r['missions']) : 0;
+    // Convenience-Alias für das Frontend
+    $r['class']    = $r['class_name'];
+    $r['active']   = (bool)(int)$r['active'];
   }
 
   echo json_encode(['ok'=>true,'students'=>$rows]);

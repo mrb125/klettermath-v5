@@ -2,10 +2,19 @@
 require_once 'config.php';
 cors();
 
+// Schutz gegen Code-Brute-Force: 20 Versuche pro Minute pro IP
+if(!rateLimit('validate', 20)){
+  http_response_code(429);
+  echo json_encode(['valid'=>false,'error'=>'Zu viele Versuche — bitte kurz warten.']);
+  exit;
+}
+
 $body = json_decode(file_get_contents('php://input'), true);
 $code = strtoupper(trim($body['code'] ?? ''));
 
-if(!$code){ echo json_encode(['valid'=>false,'error'=>'Kein Code angegeben']); exit; }
+if(!$code || !preg_match('/^[A-Z0-9]{4,20}$/', $code)){
+  echo json_encode(['valid'=>false,'error'=>'Ungültiger Code']); exit;
+}
 
 try {
   $db = getDB();

@@ -1,9 +1,19 @@
-# config.php und setup.php von außen sperren
-<Files "config.php">
-  Order allow,deny
-  Deny from all
-</Files>
-<Files "setup.php">
-  Order allow,deny
-  Deny from all
-</Files>
+# config.php, setup.php und die htaccess selbst von außen sperren
+<FilesMatch "^(config\.php|setup\.php|\.htaccess|\.ht.*)$">
+  # Apache 2.4+
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  # Apache 2.2 (Fallback)
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Sicherheits-Header auf API-Ebene (zusätzlich zu PHP-seitigen Headern)
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "no-referrer"
+</IfModule>
