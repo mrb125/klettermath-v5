@@ -2212,18 +2212,22 @@ function buildDrawerWarmup(){
     return frag;
   }
 
-  // ── Phase-Indikator ──
+  // ── Phase-Indikator (klickbar, jede Phase direkt anwählbar) ──
   const phaseNames={find:'A — Verstöße finden',fehler:'B — Fehleranalyse',repair:'C — Reparatur',grenzfall:'D — Grenzfälle'};
   const phaseBar=document.createElement('div');
   phaseBar.style.cssText='display:flex;gap:4px;margin-bottom:12px';
   ['find','fehler','repair','grenzfall'].forEach(p=>{
-    const pill=document.createElement('div');
+    const pill=document.createElement('button');
     const isCurrent=p===APP.warmupPhase;
     const isDone=(['find','fehler','repair','grenzfall'].indexOf(p)<['find','fehler','repair','grenzfall'].indexOf(APP.warmupPhase));
-    pill.style.cssText=`flex:1;text-align:center;padding:4px 2px;border-radius:4px;font-size:9px;font-weight:700;
+    pill.style.cssText=`flex:1;text-align:center;padding:6px 2px;border-radius:4px;font-size:9px;font-weight:700;
       background:${isCurrent?'var(--rope)':isDone?'var(--ok)':'var(--bg4)'};
-      color:${isCurrent?'var(--bg)':isDone?'var(--bg)':'var(--text2)'}`;
+      color:${isCurrent?'var(--bg)':isDone?'var(--bg)':'var(--text2)'};
+      border:none;cursor:pointer;transition:filter .15s`;
     pill.textContent=phaseNames[p];
+    pill.onmouseenter=()=>{ if(!isCurrent) pill.style.filter='brightness(1.25)'; };
+    pill.onmouseleave=()=>{ pill.style.filter='none'; };
+    pill.onclick=()=>switchWarmupPhase(p);
     phaseBar.appendChild(pill);
   });
   frag.appendChild(phaseBar);
@@ -2936,6 +2940,27 @@ function checkGrenzfallComplete(){
     APP.warmupSuggestion=null;
     advanceWarmupPhase();
   }
+}
+
+function switchWarmupPhase(phase){
+  // Direktes Umschalten zu einer beliebigen Warmup-Phase (A/B/C/D)
+  if(!['find','fehler','repair','grenzfall'].includes(phase)) return;
+  APP.warmupPhase=phase;
+  if(phase==='find'){
+    APP.plats=JSON.parse(JSON.stringify(WARMUP_PLATS));
+    APP.ropes=[...WARMUP_ROPES];
+  } else if(phase==='fehler'){
+    APP.plats=JSON.parse(JSON.stringify(WARMUP_FEHLER_PLATS));
+    APP.ropes=[...WARMUP_FEHLER_ROPES];
+  } else if(phase==='repair'){
+    APP.plats=JSON.parse(JSON.stringify(WARMUP_REPAIR_PLATS));
+    APP.ropes=[...WARMUP_REPAIR_ROPES];
+  } else if(phase==='grenzfall'){
+    APP.plats=JSON.parse(JSON.stringify(WARMUP_GRENZ_PLATS));
+    APP.ropes=[...WARMUP_GRENZ_ROPES];
+  }
+  if(typeof rebuild3==='function') rebuild3();
+  renderDrawer();
 }
 
 function advanceWarmupPhase(){
