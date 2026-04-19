@@ -2086,12 +2086,12 @@ const WARMUP_RULES = ['V1','C1','SA1'];
 /* ── Phase B: Fehlerrechnung-Szenarien ── */
 const WARMUP_FEHLER = [
   { // Fehler 1: Beträge addiert statt Quadratsumme (C1)
-    // W3 = (2|2|1), S = (0|0|0) → d = (2|2|1), |d| = √9 = 3 m ≤ 4 m → eigentlich zulässig
+    // F1 = (2|2|1), S = (0|0|0) → d = (2|2|1), |d| = √9 = 3 m ≤ 4 m → eigentlich zulässig
     // Fehler: Summe der Beträge = 5 m > 4 m → falsches Ergebnis "nicht zulässig"
     rule: 'C1', title: 'Seillänge berechnen',
-    plat: {id:'W3', x:2, y:2, z:1},
+    plat: {id:'F1', x:2, y:2, z:1},
     lines:[
-      'Schritt 1:  d⃗ = W3 − S = (2|2|1) − (0|0|0) = (2|2|1)',
+      'Schritt 1:  d⃗ = F1 − S = (2|2|1) − (0|0|0) = (2|2|1)',
       'Schritt 2:  |d⃗| = |2| + |2| + |1| = 5 m',
       'Schritt 3:  5 m > 4 m  →  ✗ Nicht zulässig',
     ],
@@ -2102,15 +2102,15 @@ const WARMUP_FEHLER = [
     tolerance: 0.06,
   },
   { // Fehler 2: 3D-Abstand statt horizontaler Abstand beim Sicherheitsabstand (SA1)
-    // Zwei Plattformen A=(0|0|2), B=(2|2|3). Beide z≥2 ✓.
+    // F2=(0|0|2), F3=(2|2|3). Beide z≥2 ✓.
     //   Fehler: 3D-Abstand = √(2²+2²+1²) = √9 = 3.00 m ≥ 3 m → ✓ Zulässig (FALSCH)
     //   Richtig: horizontaler Abstand = √(2²+2²) = √8 ≈ 2.83 m < 3 m → ✗ Nicht zulässig
     //   Urteil kippt.
     rule: 'SA1', title: 'Sicherheitsabstand prüfen',
-    plat: {id:'B', x:2, y:2, z:3},
+    plat: {id:'F3', x:2, y:2, z:3},
     lines:[
-      'Plattformen:  A = (0|0|2),  B = (2|2|3)  (beide ≥ 2 m hoch ✓)',
-      'Schritt 1:  d⃗ = B − A = (2|2|1)',
+      'Plattformen:  F2 = (0|0|2),  F3 = (2|2|3)  (beide ≥ 2 m hoch ✓)',
+      'Schritt 1:  d⃗ = F3 − F2 = (2|2|1)',
       'Schritt 2:  Abstand = √(2² + 2² + 1²) = √9 = 3.00 m',
       'Schritt 3:  3.00 m ≥ 3 m  →  ✓ Zulässig',
     ],
@@ -2144,6 +2144,27 @@ const WARMUP_GRENZ_VIOLATIONS = {
   'S→W5': { V1:'fail', C1:'pass', SA1:'fail' },
   'S→W6': { V1:'fail', C1:'pass', SA1:'fail' },
 };
+
+/* ── Phase B: eigene Plattformen (passen zu WARMUP_FEHLER-Szenarien) ── */
+const WARMUP_FEHLER_PLATS = {
+  S:  {x:0, y:0, z:0, fixed:true},
+  F1: {x:2, y:2, z:1, fixed:true},  // C1-Fehler: |d|=3 m ≤ 4 m
+  F2: {x:0, y:0, z:2, fixed:true},  // SA1-Fehler: Startplattform (z=2)
+  F3: {x:2, y:2, z:3, fixed:true},  // SA1-Fehler: Zielplattform (z=3)
+};
+const WARMUP_FEHLER_ROPES = [
+  {from:'S',  to:'F1', type:'seil'},
+  {from:'F2', to:'F3', type:'brücke'},
+];
+
+/* ── Phase C: eigene Reparatur-Plattform (C1-Verstoß) ── */
+const WARMUP_REPAIR_PLATS = {
+  S:  {x:0, y:0, z:0, fixed:true},
+  W1: {x:4, y:2, z:1, fixed:true},  // |d|=√21≈4.58 m > 4 m → C1 fail
+};
+const WARMUP_REPAIR_ROPES = [
+  {from:'S', to:'W1', type:'seil'},
+];
 
 function setupWarmupPark(){
   APP.plats = JSON.parse(JSON.stringify(WARMUP_PLATS));
@@ -2925,23 +2946,26 @@ function advanceWarmupPhase(){
     // Transition message
     const msgs={fehler:'Fehleranalyse',repair:'Reparatur',grenzfall:'Grenzfälle'};
     APP.warmupPhase=next;
-    // Set up scene for new phase
+    // Set up scene for new phase (jede Phase ersetzt die Plattformen komplett)
     if(next==='fehler'){
-      // Add W3 to scene
-      APP.plats.W3={x:4,y:3,z:2,fixed:true};
-      APP.ropes.push({from:'S',to:'W3'});
+      APP.plats=JSON.parse(JSON.stringify(WARMUP_FEHLER_PLATS));
+      APP.ropes=[...WARMUP_FEHLER_ROPES];
       rebuild3();
     } else if(next==='repair'){
-      // Back to W1/W2
+      APP.plats=JSON.parse(JSON.stringify(WARMUP_REPAIR_PLATS));
+      APP.ropes=[...WARMUP_REPAIR_ROPES];
+      rebuild3();
     } else if(next==='grenzfall'){
-      // Replace with grenzfall plats
       APP.plats=JSON.parse(JSON.stringify(WARMUP_GRENZ_PLATS));
       APP.ropes=[...WARMUP_GRENZ_ROPES];
       rebuild3();
     }
     setTimeout(()=>renderDrawer(),1500);
   } else {
-    // All phases done
+    // All phases done — alle Warmup-Plattformen entfernen, zurück auf S
+    APP.plats={ S:{x:0,y:0,z:0,fixed:true} };
+    APP.ropes=[];
+    if(typeof rebuild3==='function') rebuild3();
     APP.warmupDone=true;
     STATE.completeWarmup();
     setTimeout(()=>renderDrawer(),1500);
