@@ -2102,19 +2102,19 @@ const WARMUP_FEHLER = [
     tolerance: 0.06,
   },
   { // Fehler 2: cos statt sin beim Neigungswinkel (D1)
-    // W3 = (2|2|1), d = (2|2|1), |d| = 3 m, Δz = 1
-    // Fehler: cos α statt sin α → arccos(0.33) ≈ 70.5° (falsch)
-    // Richtig: sin α = 1/3 → arcsin(0.33) ≈ 19.5°
+    // Szenario-Plattform P = (4|2|2), d = (4|2|2), |d| = √24 ≈ 4.90 m, Δz = 2
+    // Fehler: cos α statt sin α → arccos(0.41) ≈ 65.9° → ✗ Nicht zulässig (falsches Urteil!)
+    // Richtig: sin α = 2 / √24 ≈ 0.41 → arcsin(0.41) ≈ 24.1° → ✓ Zulässig (Urteil kippt)
     rule: 'D1', title: 'Neigungswinkel berechnen',
-    plat: {id:'W3', x:2, y:2, z:1},
+    plat: {id:'P', x:4, y:2, z:2},
     lines:[
-      'Schritt 1:  d⃗ = (2|2|1),  |d⃗| = √9 = 3.00 m',
-      'Schritt 2:  cos α = |Δz| ÷ |d⃗| = 1 ÷ 3 ≈ 0.33',
-      'Schritt 3:  α = arccos(0.33) ≈ 70.5°  →  ✗ Nicht zulässig',
+      'Schritt 1:  d⃗ = (4|2|2),  |d⃗| = √24 ≈ 4.90 m',
+      'Schritt 2:  cos α = |Δz| ÷ |d⃗| = 2 ÷ 4.90 ≈ 0.41',
+      'Schritt 3:  α = arccos(0.41) ≈ 65.9°  →  ✗ Nicht zulässig',
     ],
     fehlerIdx: 1, // Schritt 2: cos statt sin
-    fehlerExpl: 'Neigungswinkel: sin α, nicht cos α.\nRichtig: sin α = 1 ÷ 3 ≈ 0.33 → α = arcsin(0.33) ≈ 19.5°',
-    correctValue: 19.5,
+    fehlerExpl: 'Neigungswinkel: sin α, nicht cos α.\nRichtig: sin α = 2 ÷ 4.90 ≈ 0.41 → α = arcsin(0.41) ≈ 24.1° → ✓ Zulässig',
+    correctValue: 24.1,
     correctLabel: 'Korrekter Neigungswinkel (in °)',
     tolerance: 0.6,
   },
@@ -2962,10 +2962,16 @@ function advanceWarmupPhase(){
 
 function computeRuleTruth(rid, def, ropeKey){
   // Use RDEFS to determine if rule passes for this rope
-  // For rules with thresholds (C1: 4-20m, D1: 20-60°), compute and check
+  // For rules with thresholds (C1: ≤4m, D1: 20-60°, SA1: z≥2 & horiz≥3), compute and check
   const rd=getRd1(rid); if(!rd) return 'pass';
   const {d}=rd;
   switch(rid){
+    case 'V1': {
+      // Seil muss waagerecht oder nach unten (dz ≤ 0), Brücke nach oben (dz > 0)
+      const goesDown = d[2] <= 0;
+      const isBr = rd.rope.type === 'brücke';
+      return (isBr ? !goesDown : goesDown) ? 'pass' : 'fail';
+    }
     case 'C1': { const len=V.len(d); return len<=4?'pass':'fail'; }
     case 'SA1': { const hd=Math.sqrt(d[0]*d[0]+d[1]*d[1]); const zA=rd.sv[2], zB=rd.av[2]; return (zA>=2&&zB>=2&&hd>=3)?'pass':'fail'; }
     case 'D1': { const angle=Math.asin(Math.abs(d[2])/V.len(d))*180/Math.PI; return (angle>=20&&angle<=60)?'pass':'fail'; }
@@ -4029,29 +4035,29 @@ const RDEFS = {
   C1: {
     cat:'Betrag', title:'Seillänge berechnen',
     twoRopes: false,
-    vorschrift:'Die Länge eines Weges (egal ob Leiter oder Seil) darf 4 m nicht überschreiten.',
+    vorschrift:'Die Länge eines Weges (egal ob Brücke oder Seil) darf 4 m nicht überschreiten.',
     variant:'mc',
     genScen(rid){
       const rd=getRd1(rid); if(!rd) return {};
       const {d}=rd, [dx,dy,dz]=d;
-      const len=V.len(d), rok=len>=4&&len<=20;
+      const len=V.len(d), rok=len<=4;
       const wL1=Math.abs(dx)+Math.abs(dy)+Math.abs(dz);
       const wL2=dx*dx+dy*dy+dz*dz;
-      const fmt=(l,v)=>`${l} → ${v>=4&&v<=20?'✓ Zulässig':'✗ Nicht zulässig'}`;
+      const fmt=(l,v)=>`${l} → ${v<=4?'✓ Zulässig':'✗ Nicht zulässig'}`;
       return { mcOpts: shuffle([
         { text:`|d⃗| = √(${n(dx)}²+${n(dy)}²+${n(dz)}²) = ${n2(len)} m   ${fmt('',len)}`, correct:true,
-          expl:`Formel: Betrag = Wurzel der Quadratsumme. ${n2(len)} m ${rok?'liegt in [4,20]':'liegt außerhalb [4,20]'}.` },
+          expl:`Formel: Betrag = Wurzel der Quadratsumme. ${n2(len)} m ${rok?'≤ 4 m → zulässig':'> 4 m → nicht zulässig'}.` },
         { text:`|d⃗| = |${n(dx)}|+|${n(dy)}|+|${n(dz)}| = ${n2(wL1)} m   ${fmt('',wL1)}`, correct:false,
           expl:`Fehler: Betrag ≠ Summe der Beträge. Richtige Formel: √(d₁²+d₂²+d₃²).` },
         { text:`|d⃗| = ${n(dx)}²+${n(dy)}²+${n(dz)}² = ${n2(wL2)} m   ${fmt('',wL2)}`, correct:false,
           expl:`Fehler: Wurzel fehlt. Richtige Formel: |d⃗| = √(d₁²+d₂²+d₃²).` },
         { text:`|d⃗| = √(${n(dx)}²+${n(dy)}²+${n(dz)}²) = ${n2(len)} m   → ${rok?'✗ Nicht zulässig':'✓ Zulässig'}  (Urteil umgekehrt)`, correct:false,
-          expl:`Fehler: Betrag korrekt (${n2(len)} m), aber Urteil falsch. ${n2(len)} m ${rok?'liegt in [4,20] → Zulässig':'liegt außerhalb [4,20] → Nicht zulässig'}.` },
+          expl:`Fehler: Betrag korrekt (${n2(len)} m), aber Urteil falsch. ${n2(len)} m ${rok?'≤ 4 m → Zulässig':'> 4 m → Nicht zulässig'}.` },
       ])};
     },
     ctx(rid){
       const rd=getRd1(rid); if(!rd) return '';
-      return `Vorschrift §3: Seile dürfen nicht kürzer als <b>4 m</b> oder länger als <b>20 m</b> sein.<br>
+      return `Vorschrift §3: Die Länge eines Weges darf <b>4 m</b> nicht überschreiten.<br>
         Seil ${rd.lbl}: von ${V.str(rd.sv)} nach ${V.str(rd.av)}.`;
     },
     inputs:[
@@ -4063,14 +4069,14 @@ const RDEFS = {
       const rd=getRd1(rid); if(!rd) return errR('Erst Seil wählen');
       const {d}=rd;
       const [dx,dy,dz]=d, len=V.len(d);
-      const ent=parseFloat(vals.L), cok=Math.abs(ent-len)<0.06, rok=len>=4&&len<=20;
+      const ent=parseFloat(vals.L), cok=Math.abs(ent-len)<0.06, rok=len<=4;
       const urteilOk=(vals.urteil==='pass')===rok;
       return { ok:cok&&urteilOk, steps:[
         `d⃗ = ${V.str(d)}`,
         `|d⃗| = √(${n(dx)}² + ${n(dy)}² + ${n(dz)}²)`,
         `    = √${n2(dx*dx+dy*dy+dz*dz)} ≈ ${n2(len)} m`,
-        cok ? (rok ? `✓ ${n2(len)} m ∈ [4, 20] → Zulässig`
-                   : `✗ ${n2(len)} m ∉ [4, 20] → Nicht zulässig`)
+        cok ? (rok ? `✓ ${n2(len)} m ≤ 4 m → Zulässig`
+                   : `✗ ${n2(len)} m > 4 m → Nicht zulässig`)
             : `✗ Rechenfehler — erwartet ${n2(len)} m`,
         !urteilOk ? `✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}` : '',
       ].filter(Boolean).join('\n')};
@@ -4482,7 +4488,7 @@ const RDEFS = {
   V1: {
     cat:'Grundrechnung', title:'Richtungsvektor bestimmen',
     twoRopes:false,
-    vorschrift:'Für eine Leiter muss der Weg nach oben gehen, für ein Seil nach unten.',
+    vorschrift:'Für eine Brücke muss der Weg nach oben gehen, für ein Seil nach unten.',
     variant:'blind',
     ctx(rid){ const rd=getRd1(rid); if(!rd) return ''; const {sv,av,rope}=rd;
       return `${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>Berechne ${tex('\\vec{d}')} = Zielplattform − Startplattform.`;
@@ -4498,41 +4504,52 @@ const RDEFS = {
     cat:'Sicherheit', title:'Sicherheitsabstand prüfen',
     twoRopes:false,
     vorschrift:'Die Plattformen müssen mindestens zwei Meter hoch sein und einen horizontalen Abstand von 3 m haben.',
-    variant:'fehler',
+    variant:'mc',
     genScen(rid){
       const rd=getRd1(rid); if(!rd) return {};
-      const {d}=rd;
-      const len=V.len(d), dz=Math.abs(d[2]);
-      const sinVal=dz/len, alphaRight=n2(deg(Math.asin(sinVal)));
-      const alphaWrong=n2(deg(Math.acos(sinVal)));
-      return {
-        fehlerLines:[
-          `d⃗ = ${V.str(d)},   |d⃗| = √${n2(len*len)} = ${n2(len)}`,
-          `cos α = |Δx₃| / |d⃗| = ${n2(dz)} / ${n2(len)} = ${n2(sinVal)}`,
-          `α = arccos(${n2(sinVal)}) ≈ ${alphaWrong}°`,
-        ],
-        fehlerIdx:1,
-        fehlerExpl:`Schritt 2: Es gilt sin α = |Δx₃| / |d⃗|, nicht cos α.\nα = arcsin(${n2(sinVal)}) ≈ ${alphaRight}°`,
-      };
+      const {d,sv,av}=rd;
+      const hDist=Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+      const zA=sv[2], zB=av[2];
+      const heightOk=zA>=2 && zB>=2;
+      const hDistOk=hDist>=3;
+      const rok=heightOk && hDistOk;
+      const vorschriftStr='✓ Zulässig';
+      const verstossStr='✗ Nicht zulässig';
+      const correctExpl = rok
+        ? `Beide Plattformen ≥ 2 m hoch (z = ${n2(zA)}, ${n2(zB)}) und horizontaler Abstand = ${n2(hDist)} m ≥ 3 m.`
+        : `${!heightOk ? `Plattformhöhe nicht ausreichend (z = ${n2(zA)}, ${n2(zB)}; mind. 2 m).` : ''} ${!hDistOk ? `Horizontaler Abstand zu klein (${n2(hDist)} m < 3 m).` : ''}`.trim();
+      // Gesamtvektor-Betrag (häufiger Fehler: 3D-Abstand statt horizontalem Abstand)
+      const fullLen=V.len(d);
+      return { mcOpts: shuffle([
+        { text:`Horizontaler Abstand = √(${n(d[0])}²+${n(d[1])}²) = ${n2(hDist)} m · Höhen z = ${n2(zA)}, ${n2(zB)}   →   ${rok?vorschriftStr:verstossStr}`, correct:true,
+          expl:correctExpl },
+        { text:`3D-Abstand = √(${n(d[0])}²+${n(d[1])}²+${n(d[2])}²) = ${n2(fullLen)} m   →   ${fullLen>=3?vorschriftStr:verstossStr}`, correct:false,
+          expl:`Fehler: SA1 verlangt den <b>horizontalen</b> Abstand (nur x,y), nicht den 3D-Abstand.` },
+        { text:`Horizontaler Abstand = ${n2(hDist)} m ≥ 3 m · Höhen ignoriert   →   ${hDistOk?vorschriftStr:verstossStr}`, correct:false,
+          expl:`Fehler: SA1 hat zwei Bedingungen — Abstand UND Höhe beider Plattformen ≥ 2 m.` },
+        { text:`Horizontaler Abstand = ${n2(hDist)} m · Höhen z = ${n2(zA)}, ${n2(zB)}   →   ${rok?verstossStr:vorschriftStr}  (Urteil umgekehrt)`, correct:false,
+          expl:`Werte korrekt, aber Urteil vertauscht. Korrekt: ${rok?vorschriftStr:verstossStr}.` },
+      ])};
     },
     ctx(rid){ const rd=getRd1(rid); if(!rd) return '';
-      return `Bedingung: Neigungswinkel zwischen <b>20° und 60°</b> — zu steil: Bremse versagt.<br>
-        ${texPt(rd.rope.from,rd.sv)} &rarr; ${texPt(rd.rope.to,rd.av)}<br>
-        Berechne den Neigungswinkel ${tex('\\alpha')} zur Horizontalen.`;
+      return `Vorschrift §4: Plattformen mindestens <b>2 m hoch</b> und horizontaler Abstand <b>≥ 3 m</b>.<br>
+        ${texPt(rd.rope.from,rd.sv)} &rarr; ${texPt(rd.rope.to,rd.av)}`;
     },
     inputs:[
-      {type:'num',id:'a',label:'Neigungswinkel α',unit:'°',step:0.1},
+      {type:'num',id:'hd',label:'Horizontaler Abstand',unit:'m',step:0.01},
       {type:'radio',id:'urteil',label:'TÜV-Urteil',opts:[{v:'pass',l:'✓ Zulässig'},{v:'fail',l:'✗ Nicht zulässig'}]}
     ],
     check(rid,vals){ const rd=getRd1(rid); if(!rd) return errR('Seil wählen');
-      const {d}=rd, len=V.len(d), dz=Math.abs(d[2]);
-      const sinA=dz/len, alpha=deg(Math.asin(sinA));
-      const ent=parseFloat(vals.a), cok=Math.abs(ent-alpha)<0.6, rok=alpha>=20&&alpha<=60;
+      const {d,sv,av}=rd;
+      const hDist=Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+      const zA=sv[2], zB=av[2];
+      const heightOk=zA>=2 && zB>=2, hDistOk=hDist>=3, rok=heightOk && hDistOk;
+      const ent=parseFloat(vals.hd), cok=Math.abs(ent-hDist)<0.06;
       const urteilOk=(vals.urteil==='pass')===rok;
       return {ok:cok&&urteilOk,steps:[
-        `sin α = |Δz| ÷ |d⃗| = ${n2(dz)} ÷ ${n2(len)} = ${n2(sinA)}`,
-        `α = arcsin(${n2(sinA)}) ≈ ${n2(alpha)}°`,
-        cok?(rok?`✓ ${n2(alpha)}° ∈ [20°, 60°]`:`✗ ${n2(alpha)}° ∉ [20°, 60°]`):`✗ Rechenfehler — erwartet ${n2(alpha)}°`,
+        `Horizontaler Abstand = √(${n(d[0])}² + ${n(d[1])}²) = ${n2(hDist)} m`,
+        `Höhen: z_${rd.rope.from} = ${n2(zA)} m, z_${rd.rope.to} = ${n2(zB)} m`,
+        cok?(rok?`✓ ${n2(hDist)} m ≥ 3 m und beide Höhen ≥ 2 m → Zulässig`:`✗ ${!hDistOk?`Abstand ${n2(hDist)} m < 3 m`:''}${!hDistOk&&!heightOk?' und ':''}${!heightOk?'Höhe < 2 m':''} → Nicht zulässig`):`✗ Rechenfehler — erwartet ${n2(hDist)} m`,
         !urteilOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
       ].filter(Boolean).join('\n')};
     }
