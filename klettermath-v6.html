@@ -2101,22 +2101,24 @@ const WARMUP_FEHLER = [
     correctLabel: 'Korrekte Seillänge (in m)',
     tolerance: 0.06,
   },
-  { // Fehler 2: cos statt sin beim Neigungswinkel (D1)
-    // Szenario-Plattform P = (4|2|2), d = (4|2|2), |d| = √24 ≈ 4.90 m, Δz = 2
-    // Fehler: cos α statt sin α → arccos(0.41) ≈ 65.9° → ✗ Nicht zulässig (falsches Urteil!)
-    // Richtig: sin α = 2 / √24 ≈ 0.41 → arcsin(0.41) ≈ 24.1° → ✓ Zulässig (Urteil kippt)
-    rule: 'D1', title: 'Neigungswinkel berechnen',
-    plat: {id:'P', x:4, y:2, z:2},
+  { // Fehler 2: 3D-Abstand statt horizontaler Abstand beim Sicherheitsabstand (SA1)
+    // Zwei Plattformen A=(0|0|2), B=(2|2|3). Beide z≥2 ✓.
+    //   Fehler: 3D-Abstand = √(2²+2²+1²) = √9 = 3.00 m ≥ 3 m → ✓ Zulässig (FALSCH)
+    //   Richtig: horizontaler Abstand = √(2²+2²) = √8 ≈ 2.83 m < 3 m → ✗ Nicht zulässig
+    //   Urteil kippt.
+    rule: 'SA1', title: 'Sicherheitsabstand prüfen',
+    plat: {id:'B', x:2, y:2, z:3},
     lines:[
-      'Schritt 1:  d⃗ = (4|2|2),  |d⃗| = √24 ≈ 4.90 m',
-      'Schritt 2:  cos α = |Δz| ÷ |d⃗| = 2 ÷ 4.90 ≈ 0.41',
-      'Schritt 3:  α = arccos(0.41) ≈ 65.9°  →  ✗ Nicht zulässig',
+      'Plattformen:  A = (0|0|2),  B = (2|2|3)  (beide ≥ 2 m hoch ✓)',
+      'Schritt 1:  d⃗ = B − A = (2|2|1)',
+      'Schritt 2:  Abstand = √(2² + 2² + 1²) = √9 = 3.00 m',
+      'Schritt 3:  3.00 m ≥ 3 m  →  ✓ Zulässig',
     ],
-    fehlerIdx: 1, // Schritt 2: cos statt sin
-    fehlerExpl: 'Neigungswinkel: sin α, nicht cos α.\nRichtig: sin α = 2 ÷ 4.90 ≈ 0.41 → α = arcsin(0.41) ≈ 24.1° → ✓ Zulässig',
-    correctValue: 24.1,
-    correctLabel: 'Korrekter Neigungswinkel (in °)',
-    tolerance: 0.6,
+    fehlerIdx: 1, // Schritt 2: 3D-Abstand statt horizontaler Abstand
+    fehlerExpl: 'SA1 verlangt den horizontalen Abstand (nur x,y), nicht den 3D-Abstand.\nRichtig: horiz. Abstand = √(2² + 2²) = √8 ≈ 2.83 m < 3 m → ✗ Nicht zulässig',
+    correctValue: 2.83,
+    correctLabel: 'Korrekter horizontaler Abstand (in m)',
+    tolerance: 0.06,
   },
 ];
 
@@ -2453,36 +2455,22 @@ function buildWarmupRepair(){
   const frag=document.createDocumentFragment();
   if(!APP.warmupRepairDone) APP.warmupRepairDone={};
 
-  const allDone=APP.warmupRepairDone.W1&&APP.warmupRepairDone.W2;
+  const allDone=APP.warmupRepairDone.W1;
 
   const intro=document.createElement('div');
   intro.style.cssText='font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px';
-  intro.innerHTML=`Die Plattformen W1 und W2 verletzen jeweils eine Regel.<br>
+  intro.innerHTML=`Die Plattform W1 verletzt die Seillängen-Regel.<br>
     <b>Schlage neue Koordinaten vor</b>, die den Verstoß beheben.`;
   frag.appendChild(intro);
 
-  // Repair card for W1 (C1 violation — too short)
+  // Repair card for W1 (C1 violation — too long)
   frag.appendChild(buildRepairCard('W1', 'C1',
-    'Seillänge S→W1 muss zwischen <b>4 m</b> und <b>20 m</b> liegen.',
+    'Seillänge S→W1 darf <b>4 m</b> nicht überschreiten.',
     (pt)=>{
       const d=V.sub([pt.x,pt.y,pt.z],[0,0,0]);
       const len=V.len(d);
-      return {val:len, unit:'m', ok:len>=4&&len<=20,
-        text:`|d⃗| = √(${n(pt.x)}²+${n(pt.y)}²+${n(pt.z)}²) = ${n2(len)} m  ${len>=4&&len<=20?'✓ [4,20]':'✗ ∉ [4,20]'}`};
-    }
-  ));
-
-  // Repair card for W2 (D1 violation — too steep)
-  frag.appendChild(buildRepairCard('W2', 'D1',
-    'Neigungswinkel S→W2 muss zwischen <b>20°</b> und <b>60°</b> liegen.',
-    (pt)=>{
-      const d=V.sub([pt.x,pt.y,pt.z],[0,0,0]);
-      const len=V.len(d);
-      if(len<0.01) return {val:0, unit:'°', ok:false, text:'Plattform zu nah am Start.'};
-      const sinA=Math.abs(pt.z)/len;
-      const alpha=deg(Math.asin(Math.min(sinA,1)));
-      return {val:alpha, unit:'°', ok:alpha>=20&&alpha<=60,
-        text:`sin α = ${n2(Math.abs(pt.z))}/${n2(len)} → α = ${n2(alpha)}°  ${alpha>=20&&alpha<=60?'✓ [20°,60°]':'✗ ∉ [20°,60°]'}`};
+      return {val:len, unit:'m', ok:len<=4,
+        text:`|d⃗| = √(${n(pt.x)}²+${n(pt.y)}²+${n(pt.z)}²) = ${n2(len)} m  ${len<=4?'✓ ≤ 4 m':'✗ > 4 m'}`};
     }
   ));
 
