@@ -1492,7 +1492,21 @@ function initScene(){
   fill.position.set(-5, 3, -5);
   scene3.add(fill);
   scene3.add(new THREE.GridHelper(30, 30, 0x332e28, 0x2a2520));
-  scene3.add(new THREE.AxesHelper(2));
+  // Bidirektionale Achsen (±10 statt AxesHelper, damit negative Quadranten sichtbar)
+  const axLen = 10;
+  const mkAxis = (dir, color) => {
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-dir[0]*axLen, -dir[1]*axLen, -dir[2]*axLen),
+      new THREE.Vector3( dir[0]*axLen,  dir[1]*axLen,  dir[2]*axLen),
+    ]);
+    const mat = new THREE.LineDashedMaterial({ color, dashSize: 0.4, gapSize: 0.2, transparent:true, opacity:0.7 });
+    const line = new THREE.Line(geo, mat);
+    line.computeLineDistances();
+    return line;
+  };
+  scene3.add(mkAxis([1,0,0], 0xe8923f));  // x₁ orange
+  scene3.add(mkAxis([0,0,1], 0x6bcb77));  // x₂ grün (three y=z world)
+  scene3.add(mkAxis([0,1,0], 0x4a90e2));  // x₃ blau (three z=y world)
 
   const cv = document.getElementById('canvas');
   cv.addEventListener('mousemove', onCanvasMouseMove);
@@ -2123,16 +2137,17 @@ const WARMUP_FEHLER = [
 ];
 
 /* ── Phase D: Grenzfall-Plattformen (3 Plattformen, knapp an Grenzen) ──
+   Zeigt auch, dass NEGATIVE x/y-Koordinaten erlaubt sind (W5 im Quadrant III, W6 im Quadrant IV).
    S im Ursprung (0,0,0). Alle W-Plattformen z≥1.
    S→W4: C1 fail knapp (|d|=√18≈4.24, knapp über 4 m)
-   S→W5: SA1 fail knapp (z_S=0<2, horiz=√5≈2.24<3 — beide Kriterien knapp)
-   S→W6: SA1 fail knapp (z_S=0<2, horiz=√8≈2.83<3 — knapp unter 3 m)
+   S→W5: SA1 fail knapp (z_S=0<2, horiz=√5≈2.24<3 — im NEGATIVEN Quadranten)
+   S→W6: SA1 fail knapp (z_S=0<2, horiz=√8≈2.83<3 — negative y-Koordinate)
    ───────────────────────────────────────────────────────── */
 const WARMUP_GRENZ_PLATS = {
-  S:  {x:0, y:0, z:0, fixed:true},
-  W4: {x:4, y:1, z:1, fixed:true},  // dz=+1 → V1 fail; |d|=√18≈4.24 → C1 fail knapp
-  W5: {x:2, y:1, z:1, fixed:true},  // dz=+1 → V1 fail; horiz=√5≈2.24<3 → SA1 fail knapp
-  W6: {x:2, y:2, z:1, fixed:true},  // dz=+1 → V1 fail; horiz=√8≈2.83<3 → SA1 fail knapp
+  S:  {x:0,  y:0, z:0, fixed:true},
+  W4: {x:4,  y:1, z:1, fixed:true},   // dz=+1 → V1 fail; |d|=√18≈4.24 → C1 fail knapp
+  W5: {x:-2, y:1, z:1, fixed:true},   // NEG x: dz=+1 → V1 fail; horiz=√5≈2.24<3 → SA1 fail
+  W6: {x:2, y:-2, z:1, fixed:true},   // NEG y: dz=+1 → V1 fail; horiz=√8≈2.83<3 → SA1 fail
 };
 const WARMUP_GRENZ_ROPES = [
   {from:'S', to:'W4', type:'seil'},
