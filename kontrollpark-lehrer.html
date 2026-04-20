@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<!-- Kontrollpark Lehrer-Dashboard v1.0 — entkoppelt vom Schüler-Frontend -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kontrollpark — Lehrer-Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--err:#ff5e5b;--text:#f0ead8;--text2:#a89880;
+  --blue:#5ba3d9;--purple:#b07fff;--diamond:#00d4ff;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif}
+
+#hdr{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;
+     padding:10px 16px;background:rgba(26,22,20,.96);backdrop-filter:blur(8px);
+     border-bottom:1px solid var(--bg4);flex-wrap:wrap}
+#hdr h1{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--rope)}
+#hdr h1 span{color:var(--text2);font-size:13px;letter-spacing:1px;margin-left:6px}
+#hdr .spacer{flex:1}
+.btn{padding:6px 14px;border-radius:5px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;
+     font-weight:700;font-size:11px;transition:all .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn-go{background:var(--rope);color:var(--bg)}
+.btn-hint{background:var(--bg4);color:var(--text2)}
+.btn-hint:hover{color:var(--text)}
+.btn-danger{background:rgba(255,94,91,.15);color:var(--err);border:1px solid var(--err)}
+
+.container{max-width:1100px;margin:0 auto;padding:14px}
+
+.card{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:14px;margin-bottom:14px}
+.card h2{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--rope);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card h2 .count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);padding:2px 8px;border-radius:8px;background:var(--bg4);font-weight:normal;letter-spacing:0}
+
+input[type=text],input[type=number],input[type=password]{
+  background:var(--bg);border:1px solid var(--bg5);border-radius:5px;padding:7px 10px;
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px}
+input:focus{outline:none;border-color:var(--rope)}
+select{background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:6px 8px;color:var(--text);font-size:12px}
+
+/* Stat-Kacheln */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--bg3);border-radius:6px;padding:10px;text-align:center}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold)}
+.stat-lbl{font-size:10px;color:var(--text2);margin-top:2px}
+
+/* Tabellen */
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:var(--bg3);color:var(--text2)}
+thead th{padding:7px 6px;text-align:left;font-weight:700}
+tbody td{padding:6px;border-bottom:1px solid var(--bg3)}
+.table-wrap{overflow-x:auto;margin-top:8px}
+.code-cell{font-family:'JetBrains Mono',monospace;color:var(--diamond);font-weight:700}
+
+/* Rules heatmap */
+.rules-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px}
+.rule-cell{text-align:center;padding:6px;background:var(--bg3);border-radius:4px}
+.rule-cell .r-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2)}
+.rule-cell .r-val{font-weight:700;font-size:14px}
+.rule-cell .r-sub{font-size:9px;color:var(--text2)}
+
+.alert{padding:10px;border-radius:6px;font-size:12px;margin-top:8px;line-height:1.5}
+.alert-info{background:rgba(91,163,217,.1);border:1px solid var(--blue);color:var(--text)}
+.alert-warn{background:rgba(232,160,48,.1);border:1px solid var(--gold);color:var(--text)}
+.alert-error{background:rgba(255,94,91,.1);border:1px solid var(--err);color:var(--text)}
+.alert-ok{background:rgba(107,203,119,.08);border:1px solid var(--ok);color:var(--text)}
+
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.row label{font-size:11px;color:var(--text2)}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
+
+/* Code-Liste: Druckfreundlich */
+.codes-print{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-top:10px}
+.code-card{background:var(--bg3);border:1px solid var(--bg4);border-radius:6px;padding:10px;text-align:center}
+.code-card .c{font-family:'JetBrains Mono',monospace;color:var(--diamond);font-size:15px;font-weight:700;letter-spacing:1px}
+.code-card .l{font-size:10px;color:var(--text2);margin-top:4px;min-height:12px}
+
+@media print{
+  body{background:#fff;color:#000}
+  #hdr,.btn,.no-print{display:none!important}
+  .container{max-width:none}
+  .card{background:#fff!important;color:#000!important;border:1px solid #666!important;page-break-inside:avoid}
+  .code-card{background:#f3f3f3!important;color:#000!important}
+  .code-card .c{color:#000!important}
+  table{page-break-inside:auto}
+  thead{display:table-header-group}
+  tr{page-break-inside:avoid}
+  .stat,thead tr,tbody td{background:#f3f3f3!important;color:#000!important;border-color:#ccc!important}
+  h1,h2,.stat-val,.code-cell{color:#000!important}
+}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <h1>Kontrollpark <span>Lehrer-Dashboard</span></h1>
+  <a href="kontrollpark.html" class="btn btn-hint" style="text-decoration:none">→ Schüler-Ansicht</a>
+  <div class="spacer"></div>
+  <span id="status" style="font-size:11px;color:var(--text2)"></span>
+</div>
+
+<div class="container">
+
+<!-- 1. Zugang / Lehrer-Key -->
+<div class="card" id="card-key">
+  <h2>Zugang <span class="count" id="key-status">nicht verbunden</span></h2>
+  <div class="row">
+    <label>Lehrer-Key:</label>
+    <input type="password" id="teacher-key" placeholder="KM_TEACHER_KEY aus GitHub-Secrets" style="flex:1;min-width:200px">
+    <button class="btn btn-go" onclick="saveKey()">Speichern &amp; Verbinden</button>
+  </div>
+  <div id="key-err" class="alert alert-error" style="display:none"></div>
+</div>
+
+<!-- 2. Klassencode -->
+<div class="card" id="card-class">
+  <h2>Klassencode</h2>
+  <div class="row">
+    <label>Aktive Klasse:</label>
+    <input type="text" id="klasse-inp" placeholder="z.B. Q1M-VEKT-26A" style="flex:1;min-width:180px;text-transform:uppercase;font-weight:700">
+    <button class="btn btn-hint" onclick="genKlasse()">Zufällig</button>
+    <button class="btn btn-go" onclick="saveKlasse()">Setzen</button>
+  </div>
+  <div id="share-link" style="margin-top:6px"></div>
+</div>
+
+<!-- 3. Codes anlegen -->
+<div class="card">
+  <h2>Schüler-Codes anlegen <span class="count">KP-XXXX pro Schüler</span></h2>
+  <div class="row">
+    <label>Anzahl Codes:</label>
+    <input type="number" id="code-count" value="15" min="1" max="100" style="width:80px">
+    <label>Klasse:</label>
+    <span id="code-klasse-display" style="font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:700">—</span>
+    <button class="btn btn-go" onclick="createCodes()">Generieren</button>
+  </div>
+  <div class="row">
+    <label>Optional: Namen-Liste (1 pro Zeile, Reihenfolge der Codes):</label>
+  </div>
+  <textarea id="code-labels" placeholder="Anna&#10;Ben&#10;Clara&#10;..." style="width:100%;height:70px;background:var(--bg);border:1px solid var(--bg5);border-radius:5px;padding:8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px"></textarea>
+  <div id="codes-created" style="margin-top:10px"></div>
+</div>
+
+<!-- 4. Registrierte Codes -->
+<div class="card">
+  <h2>Registrierte Codes <span class="count" id="codes-count">—</span></h2>
+  <div class="row">
+    <label>Ansicht:</label>
+    <select id="codes-view" onchange="renderCodesList()">
+      <option value="cards">Druck-Karten</option>
+      <option value="table">Tabelle</option>
+    </select>
+    <button class="btn btn-hint" onclick="loadCodes()">Aktualisieren</button>
+    <button class="btn btn-hint" onclick="window.print()">Als PDF drucken</button>
+    <div class="spacer" style="flex:1"></div>
+    <button class="btn btn-danger" onclick="deleteAllCodes()">Alle Codes dieser Klasse löschen</button>
+  </div>
+  <div id="codes-list">
+    <div class="alert alert-info">Setze oben einen Lehrer-Key und eine Klasse, dann werden Codes hier angezeigt.</div>
+  </div>
+</div>
+
+<!-- 5. Live-Dashboard -->
+<div class="card">
+  <h2>Klassen-Auswertung <span class="count" id="sub-count">—</span></h2>
+  <div id="dashboard-kpis"></div>
+  <div id="dashboard-rules"></div>
+  <div id="dashboard-topfehler"></div>
+</div>
+
+<!-- 6. Submissions -->
+<div class="card">
+  <h2>Einzelergebnisse</h2>
+  <div class="row">
+    <button class="btn btn-hint" onclick="loadSubmissions()">Aktualisieren</button>
+    <button class="btn btn-hint" onclick="exportCsv()">Als CSV exportieren</button>
+    <div class="spacer" style="flex:1"></div>
+    <button class="btn btn-danger" onclick="deleteSubmissions()">Alle Ergebnisse dieser Klasse löschen</button>
+  </div>
+  <div id="sub-table"></div>
+</div>
+
+</div>
+
+<script>
+const API_BASE = 'https://mrbl.4lima.de/klettermath-v6/api';
+let state = {
+  teacherKey: localStorage.getItem('kpl-teacher-key') || '',
+  klasse:     localStorage.getItem('kpl-klasse')      || '',
+  codes:      [],
+  submissions:[],
+  ruleStats:  {},
+  topMissed:  {},
+  topFp:      {}
+};
+
+async function api(path, opts={}){
+  const url = API_BASE + '/' + path;
+  const headers = {'X-Teacher-Key': state.teacherKey};
+  if(opts.body) headers['Content-Type'] = 'application/json';
+  try{
+    const r = await fetch(url, {...opts, headers});
+    const j = await r.json();
+    if(r.status === 403){ return {ok:false, _http:403, error:'Unauthorized'}; }
+    return j;
+  }catch(e){ return {ok:false, error:e.message}; }
+}
+
+function setStatus(txt, color='var(--text2)'){
+  document.getElementById('status').innerHTML = `<span style="color:${color}">${txt}</span>`;
+}
+
+function saveKey(){
+  const v = document.getElementById('teacher-key').value.trim();
+  localStorage.setItem('kpl-teacher-key', v);
+  state.teacherKey = v;
+  document.getElementById('key-err').style.display='none';
+  loadAll();
+}
+
+function saveKlasse(){
+  const v = document.getElementById('klasse-inp').value.trim().toUpperCase();
+  localStorage.setItem('kpl-klasse', v);
+  state.klasse = v;
+  refreshClassDisplay();
+  loadAll();
+}
+
+function genKlasse(){
+  const a='BCDFGHJKLMNPQRSTVWXZ', b='23456789';
+  const rnd=(s,n)=>Array.from({length:n},()=>s[Math.floor(Math.random()*s.length)]).join('');
+  const code = rnd(a,3)+rnd(b,2)+'-'+rnd(a,2)+rnd(b,1);
+  document.getElementById('klasse-inp').value = code;
+}
+
+function refreshClassDisplay(){
+  document.getElementById('klasse-inp').value = state.klasse;
+  document.getElementById('code-klasse-display').textContent = state.klasse || '—';
+  const sl = document.getElementById('share-link');
+  if(state.klasse){
+    const url = location.href.replace('kontrollpark-lehrer.html','kontrollpark.html') + '?klasse=' + encodeURIComponent(state.klasse);
+    sl.innerHTML = `<div class="alert alert-ok" style="margin-top:8px"><b>Verteilungslink für Schüler:</b><br>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;word-break:break-all;cursor:pointer"
+            onclick="navigator.clipboard.writeText(this.textContent).then(()=>this.style.color='var(--ok)')">${url}</span><br>
+      <span style="font-size:10px;color:var(--text2)">Zum Kopieren anklicken</span></div>`;
+  } else { sl.innerHTML=''; }
+}
+
+async function loadAll(){
+  if(!state.teacherKey){
+    setStatus('Kein Lehrer-Key', 'var(--err)');
+    document.getElementById('key-status').textContent = 'nicht verbunden';
+    return;
+  }
+  setStatus('Lade...', 'var(--text2)');
+  await Promise.all([loadCodes(), loadSubmissions()]);
+}
+
+async function loadCodes(){
+  if(!state.teacherKey) return;
+  const q = state.klasse ? '?klasse='+encodeURIComponent(state.klasse) : '';
+  const r = await api('kp_codes_list.php' + q);
+  if(r._http===403){
+    document.getElementById('key-err').style.display='block';
+    document.getElementById('key-err').textContent = 'Lehrer-Key falsch oder unzulässig.';
+    document.getElementById('key-status').textContent = 'Key falsch';
+    setStatus('Key ungültig', 'var(--err)');
+    return;
+  }
+  if(!r.ok){
+    document.getElementById('codes-list').innerHTML = `<div class="alert alert-error">Fehler: ${r.error||'unbekannt'}</div>`;
+    return;
+  }
+  document.getElementById('key-status').textContent = 'verbunden';
+  state.codes = r.codes || [];
+  document.getElementById('codes-count').textContent = state.codes.length + ' Codes';
+  renderCodesList();
+}
+
+function renderCodesList(){
+  const box = document.getElementById('codes-list');
+  if(!state.codes.length){
+    box.innerHTML = `<div class="alert alert-info">Noch keine Codes für ${state.klasse||'<i>keine Klasse gesetzt</i>'}. Oben generieren.</div>`;
+    return;
+  }
+  const mode = document.getElementById('codes-view').value;
+  if(mode==='cards'){
+    box.innerHTML = `<div class="codes-print">` +
+      state.codes.map(c=>`<div class="code-card">
+        <div class="c">${c.student_code}</div>
+        <div class="l">${c.assigned_label||'<span style="opacity:0.4">—</span>'}</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:4px">${c.class_code}</div>
+        ${c.submission_count>0?`<div class="pill" style="background:rgba(107,203,119,.15);color:var(--ok);margin-top:4px">${c.submission_count}&times; ${c.best_pct||0}%</div>`:''}
+      </div>`).join('') + `</div>`;
+  } else {
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>Code</th><th>Zuordnung</th><th>Klasse</th>
+        <th style="text-align:center">Versuche</th><th style="text-align:center">Beste Quote</th>
+        <th>Letzte Einreichung</th><th></th>
+      </tr></thead><tbody>
+      ${state.codes.map(c=>`<tr>
+        <td class="code-cell">${c.student_code}</td>
+        <td>${c.assigned_label||'<span style="color:var(--text2);font-style:italic">—</span>'}</td>
+        <td style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:10px">${c.class_code}</td>
+        <td style="text-align:center">${c.submission_count||0}</td>
+        <td style="text-align:center;color:${(c.best_pct||0)>=70?'var(--ok)':'var(--text2)'};font-weight:700">${c.best_pct||0}%</td>
+        <td style="color:var(--text2);font-size:10px">${c.last_submission||'—'}</td>
+        <td><button class="btn btn-hint" style="padding:2px 8px;font-size:10px" onclick="deleteCode('${c.student_code}')">✕</button></td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+  }
+}
+
+async function createCodes(){
+  if(!state.teacherKey){ alert('Zuerst Lehrer-Key setzen.'); return; }
+  if(!state.klasse){ alert('Zuerst Klassencode setzen.'); return; }
+  const count = parseInt(document.getElementById('code-count').value)||0;
+  const labels = (document.getElementById('code-labels').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  const r = await api('kp_codes_create.php', {method:'POST', body:JSON.stringify({klasse:state.klasse, count, labels})});
+  const box = document.getElementById('codes-created');
+  if(!r.ok){
+    box.innerHTML = `<div class="alert alert-error">Fehler: ${r.error}</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="alert alert-ok"><b>${r.created.length} Codes angelegt:</b><br>
+    ${r.created.map(c=>`<span style="font-family:'JetBrains Mono',monospace;color:var(--diamond);margin-right:10px">${c.code}${c.label?' ('+c.label+')':''}</span>`).join('')}</div>`;
+  loadCodes();
+}
+
+async function deleteCode(code){
+  if(!confirm(`Code ${code} löschen?`)) return;
+  const r = await api('kp_codes_delete.php?code='+encodeURIComponent(code));
+  if(r.ok) loadCodes();
+}
+
+async function deleteAllCodes(){
+  if(!state.klasse){ alert('Keine Klasse gesetzt.'); return; }
+  if(!confirm(`ALLE Codes der Klasse "${state.klasse}" löschen?`)) return;
+  await api('kp_codes_delete.php?klasse='+encodeURIComponent(state.klasse));
+  loadCodes();
+}
+
+async function loadSubmissions(){
+  if(!state.teacherKey) return;
+  const q = state.klasse ? '?klasse='+encodeURIComponent(state.klasse) : '';
+  const r = await api('kp_list.php' + q);
+  if(r._http===403 || !r.ok){
+    document.getElementById('sub-table').innerHTML = `<div class="alert alert-warn">Keine Submissions geladen.</div>`;
+    return;
+  }
+  state.submissions = r.submissions || [];
+  state.ruleStats   = r.ruleStats   || {};
+  state.topMissed   = r.topMissed   || {};
+  state.topFp       = r.topFp       || {};
+  document.getElementById('sub-count').textContent = state.submissions.length + ' Einreichungen';
+  renderDashboard();
+  renderSubmissionsTable();
+  setStatus('Verbunden · ' + state.submissions.length + ' Einreichungen', 'var(--ok)');
+}
+
+function renderDashboard(){
+  const d = state.submissions;
+  const kpis = document.getElementById('dashboard-kpis');
+  if(!d.length){
+    kpis.innerHTML = `<div class="alert alert-info">Noch keine Einreichungen${state.klasse?` für ${state.klasse}`:''}.</div>`;
+    document.getElementById('dashboard-rules').innerHTML='';
+    document.getElementById('dashboard-topfehler').innerHTML='';
+    return;
+  }
+  const n=d.length;
+  const avgPct = Math.round(d.reduce((s,r)=>s+(r.pct||0),0)/n);
+  const passed = d.filter(r=>(r.pct||0)>=70).length;
+  const passRate = Math.round(passed/n*100);
+  const avgDurS = d.filter(r=>r.dur_sec).length ? Math.round(d.reduce((s,r)=>s+(+r.dur_sec||0),0)/d.filter(r=>r.dur_sec).length) : 0;
+  const avgDur = avgDurS?`${Math.floor(avgDurS/60)}:${String(avgDurS%60).padStart(2,'0')}`:'—';
+  const best = [...d].sort((a,b)=>(b.pct||0)-(a.pct||0))[0];
+  const latest = [...d].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+  const sigOk = d.filter(r=>+r.sig_ok===1).length;
+  const sigBad = d.filter(r=>+r.sig_ok===0).length;
+
+  kpis.innerHTML = `<div class="stats-grid">
+    <div class="stat"><div class="stat-val">${n}</div><div class="stat-lbl">Einreichungen</div></div>
+    <div class="stat"><div class="stat-val" style="color:${avgPct>=80?'var(--gold)':avgPct>=65?'var(--rope)':'var(--err)'}">${avgPct}%</div><div class="stat-lbl">Ø Quote</div></div>
+    <div class="stat"><div class="stat-val" style="color:${passRate>=80?'var(--ok)':passRate>=50?'var(--gold)':'var(--err)'}">${passRate}%</div><div class="stat-lbl">Bestehensquote (≥70%)</div></div>
+    <div class="stat"><div class="stat-val">${avgDur}</div><div class="stat-lbl">Ø Dauer</div></div>
+    <div class="stat"><div class="stat-val" style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--diamond)">${latest?.student_code||'?'}<br><span style="font-size:10px;color:var(--text2)">${latest?.pct||0}%</span></div><div class="stat-lbl">Letzte Einreichung</div></div>
+    <div class="stat"><div class="stat-val" style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--gold)">${best?.student_code||'?'}<br><span style="font-size:10px;color:var(--text2)">${best?.pct||0}%</span></div><div class="stat-lbl">Beste Leistung</div></div>
+    <div class="stat" style="${sigBad?'border:1px solid var(--err)':''}"><div class="stat-val" style="font-size:14px;color:${sigBad?'var(--err)':'var(--ok)'}">${sigOk} ✓ / ${sigBad} ✗</div><div class="stat-lbl">Signatur ok/falsch</div></div>
+  </div>`;
+
+  // Heatmap
+  const rs = state.ruleStats;
+  document.getElementById('dashboard-rules').innerHTML = `
+    <div style="font-size:11px;color:var(--rope);font-weight:700;margin:10px 0 4px">Trefferquote pro Regel</div>
+    <div class="rules-grid">${Object.entries(rs).map(([rule,s])=>{
+      const tot=(+s.h||0)+(+s.m||0), q=tot?Math.round((+s.h||0)/tot*100):0;
+      const col=q>=80?'var(--ok)':q>=50?'var(--gold)':'var(--err)';
+      return `<div class="rule-cell">
+        <div class="r-id">${rule}</div>
+        <div class="r-val" style="color:${col}">${tot?q+'%':'—'}</div>
+        <div class="r-sub">${s.h}/${tot}</div></div>`;
+    }).join('')}</div>`;
+
+  // Top-Fehler
+  const tm = Object.entries(state.topMissed).slice(0,5);
+  const tf = Object.entries(state.topFp).slice(0,5);
+  let tfHtml = '';
+  if(tm.length){
+    tfHtml += `<div class="alert alert-error" style="margin-top:10px"><b>Am häufigsten verpasst:</b><br>
+      ${tm.map(([k,v])=>`${v}× · ${k}`).join('<br>')}</div>`;
+  }
+  if(tf.length){
+    tfHtml += `<div class="alert alert-warn"><b>Häufige Falschalarme:</b><br>
+      ${tf.map(([k,v])=>`${v}× · ${k}`).join('<br>')}</div>`;
+  }
+  document.getElementById('dashboard-topfehler').innerHTML = tfHtml;
+}
+
+function renderSubmissionsTable(){
+  const box = document.getElementById('sub-table');
+  if(!state.submissions.length){
+    box.innerHTML = `<div class="alert alert-info">Noch keine Einreichungen.</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Code</th><th>Klasse</th><th>Park</th>
+      <th style="text-align:center">Quote</th>
+      <th style="text-align:center">Gef</th><th style="text-align:center">Verp</th><th style="text-align:center">FP</th>
+      <th style="text-align:center">Dauer</th><th style="text-align:center">Sig</th>
+      <th>Zeitpunkt</th><th></th>
+    </tr></thead><tbody>
+    ${state.submissions.map(r=>{
+      const col=r.pct>=90?'var(--gold)':r.pct>=80?'var(--text)':r.pct>=70?'var(--rope)':'var(--err)';
+      const dauer=r.dur_sec?`${Math.floor(r.dur_sec/60)}:${String(r.dur_sec%60).padStart(2,'0')}`:'—';
+      const sigIco=+r.sig_ok===1?'<span style="color:var(--ok)">✓</span>':+r.sig_ok===0?'<span style="color:var(--err)">✗</span>':'—';
+      return `<tr>
+        <td class="code-cell">${r.student_code||'?'}</td>
+        <td style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:10px">${r.class_code||'—'}</td>
+        <td style="color:var(--text2)">${r.park_name||r.park_id}</td>
+        <td style="text-align:center;color:${col};font-weight:700">${r.pct}%</td>
+        <td style="text-align:center;color:var(--ok)">${r.found_count}</td>
+        <td style="text-align:center;color:var(--err)">${r.missed_count}</td>
+        <td style="text-align:center;color:var(--accent)">${r.fp_count}</td>
+        <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--text2)">${dauer}</td>
+        <td style="text-align:center">${sigIco}</td>
+        <td style="color:var(--text2);font-size:10px">${r.created_at}</td>
+        <td><button class="btn btn-hint" style="padding:2px 8px;font-size:10px" onclick="deleteSingleSub(${r.id})">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+async function deleteSingleSub(id){
+  if(!confirm(`Einreichung #${id} löschen?`)) return;
+  await api('kp_delete.php?id='+id);
+  loadSubmissions();
+}
+
+async function deleteSubmissions(){
+  if(!state.klasse){ alert('Keine Klasse gesetzt.'); return; }
+  if(!confirm(`ALLE Einreichungen der Klasse "${state.klasse}" löschen?`)) return;
+  await api('kp_delete.php?klasse='+encodeURIComponent(state.klasse));
+  loadSubmissions();
+}
+
+function exportCsv(){
+  if(!state.submissions.length){ alert('Keine Daten zum Exportieren.'); return; }
+  const head=['Code','Klasse','Park','Datum','Dauer(s)','Quote%','Gefunden','Verpasst','Falsch','SigOk','Hits','Missed','FP'];
+  const rows = [head];
+  state.submissions.forEach(e=>rows.push([
+    e.student_code,e.class_code,e.park_name||e.park_id,
+    e.created_at,e.dur_sec||'',e.pct,
+    e.found_count,e.missed_count,e.fp_count,
+    +e.sig_ok===1?'ok':+e.sig_ok===0?'INVALID':'-',
+    (e.hits||[]).join(';'),(e.missed||[]).join(';'),(e.fp||[]).join(';')
+  ]));
+  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kontrollpark-${state.klasse||'alle'}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// Init
+document.getElementById('teacher-key').value = state.teacherKey;
+document.getElementById('klasse-inp').value  = state.klasse;
+refreshClassDisplay();
+if(state.teacherKey) loadAll();
+</script>
+</body>
+</html>

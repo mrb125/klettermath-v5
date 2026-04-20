@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<!-- Kontrollpark v2.5 — 2026-04-20 — v2.4 + 2D-Draufsicht (statt isometrisch), neutrale Farben (Verstoesse nicht mehr angezeigt), Schuelerergebnis ohne Diagnose (nur an Lehrer), Backend-DB (km_kp_submissions) mit kp_submit.php/kp_list.php, Lehrer-Key gated Mentor-Einsicht, Live-Diagnose-Tabelle -->
+<!-- Kontrollpark v3.0 — 2026-04-20 — entkoppelt: Schueler-Seite ohne Mentor-Tab; echte 3D-Szene (THREE.js + OrbitControls, Pfosten/Plattformen/Seile/Objekte); URL-Param ?code=KP-XXXX fuer zugewiesene Schuelercodes; Lehrer-Backend ist jetzt kontrollpark-lehrer.html -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KletterMath — Kontrollpark</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -211,7 +213,6 @@ input:focus{outline:none;border-color:var(--rope)}
   <button class="tab-btn" data-tab="architekt">Fehler-Architekt</button>
   <button class="tab-btn" data-tab="meta">Challenges</button>
   <button class="tab-btn" data-tab="transfer">Transfer</button>
-  <button class="tab-btn" data-tab="mentor">Mentor</button>
   <span id="hdr-sp"></span>
   <span id="score-badge"></span>
 </div>
@@ -222,7 +223,6 @@ input:focus{outline:none;border-color:var(--rope)}
   <div id="tab-architekt" class="tab-panel"></div>
   <div id="tab-meta" class="tab-panel"></div>
   <div id="tab-transfer" class="tab-panel"></div>
-  <div id="tab-mentor" class="tab-panel"></div>
 </div>
 
 <button id="formel-toggle" onclick="toggleFormel()" title="Formelsammlung (f)">&fnof;</button>
@@ -310,88 +310,201 @@ async function kpFetchList(klasse){
 }
 
 /* ══════════════════════════════════════════════════════
-   PARK-VISUALISIERUNG — isometrische SVG-Darstellung
+   PARK-VISUALISIERUNG — echte 3D-Szene mit THREE.js
+   Plattformen als Turmsäulen, Seile als dünne Zylinder,
+   Objekte als einfache Körper. OrbitControls zum Drehen.
    ══════════════════════════════════════════════════════ */
-function renderParkSVG(park, opts={}){
-  // Reine 2D-Draufsicht auf die xy-Ebene. z wird als Label pro Plattform/Objekt
-  // angezeigt — kein 3D, kein isometrischer Schraegblick.
-  const W=720, H=360, pad=34;
-  const proj=([x,y,z])=>[x, -y]; // y nach oben -> negativ invertieren beim Zeichnen
-  const pts=Object.values(park.plats).map(proj);
-  if(park.objects) park.objects.forEach(o=>pts.push(proj(o.pos)));
-  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
-  const minX=Math.min(...xs), maxX=Math.max(...xs);
-  const minY=Math.min(...ys), maxY=Math.max(...ys);
-  const sx=(W-2*pad)/Math.max(1,maxX-minX);
-  const sy=(H-2*pad)/Math.max(1,maxY-minY);
-  const s=Math.min(sx,sy);
-  const tr=([x,y])=>[pad+(x-minX)*s, pad+(y-minY)*s];
+function render3DPark(park, container){
+  container.innerHTML = '';
+  const W = container.clientWidth || 860;
+  const H = 380;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1614);
+  scene.fog = new THREE.Fog(0x1a1614, 30, 80);
 
-  const rp=computeRopeProps(park);
-  const objR=park.objects?computeObjProps(park,rp):[];
+  // Bounding box der Plattformen + Objekte
+  const pts = [...Object.values(park.plats), ...(park.objects||[]).map(o=>o.pos)];
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]), zs=pts.map(p=>p[2]);
+  const cx=(Math.min(...xs)+Math.max(...xs))/2;
+  const cy=(Math.min(...ys)+Math.max(...ys))/2;
+  const cz=(Math.min(...zs)+Math.max(...zs))/2;
+  const r=Math.max(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys), 8);
 
-  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:360px;background:#1a1614;border-radius:8px;border:1px solid #332e28">`;
+  // Kamera + Renderer
+  const camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 500);
+  camera.position.set(cx + r*1.2, cz + r*0.9, cy + r*1.2);
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
 
-  // Raster: vertikal/horizontal in Metern
-  svg+=`<g opacity="0.12" stroke="#a89880" stroke-width="0.4" fill="none">`;
-  const origMinX=Math.min(...Object.values(park.plats).map(p=>p[0]),...(park.objects||[]).map(o=>o.pos[0]));
-  const origMaxX=Math.max(...Object.values(park.plats).map(p=>p[0]),...(park.objects||[]).map(o=>o.pos[0]));
-  const origMinY=Math.min(...Object.values(park.plats).map(p=>p[1]),...(park.objects||[]).map(o=>o.pos[1]));
-  const origMaxY=Math.max(...Object.values(park.plats).map(p=>p[1]),...(park.objects||[]).map(o=>o.pos[1]));
-  for(let gx=Math.floor(origMinX-1);gx<=Math.ceil(origMaxX+1);gx++){
-    const a=tr(proj([gx,origMinY-0.5,0])), b=tr(proj([gx,origMaxY+0.5,0]));
-    svg+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;
-  }
-  for(let gy=Math.floor(origMinY-1);gy<=Math.ceil(origMaxY+1);gy++){
-    const a=tr(proj([origMinX-0.5,gy,0])), b=tr(proj([origMaxX+0.5,gy,0]));
-    svg+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;
-  }
-  svg+=`</g>`;
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(cx, cz*0.5, cy);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.update();
 
-  // Seile — neutrale Farbe (Schueler sollen Verstoesse selbst finden)
-  rp.forEach((r,ri)=>{
-    const [a,b]=[tr(proj(r.sv)), tr(proj(r.av))];
-    svg+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c8833a" stroke-width="1.8" stroke-linecap="round"/>`;
-    // Seil-Nummer klein an einem Ende (hilft beim Melden)
-    const mx=0.65*a[0]+0.35*b[0], my=0.65*a[1]+0.35*b[1]-4;
-    svg+=`<text x="${mx}" y="${my}" font-family="JetBrains Mono,monospace" font-size="9" fill="#a89880" text-anchor="middle" opacity="0.8">${ri+1}</text>`;
+  // Licht
+  scene.add(new THREE.AmbientLight(0xf0ead8, 0.55));
+  const sun = new THREE.DirectionalLight(0xfff0d8, 0.9);
+  sun.position.set(10, 20, 10);
+  scene.add(sun);
+  const fillLight = new THREE.DirectionalLight(0x8fbde8, 0.3);
+  fillLight.position.set(-10, 10, -5);
+  scene.add(fillLight);
+
+  // Boden + Gitter
+  const gridSize = Math.ceil(r*1.5);
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(gridSize*2, gridSize*2),
+    new THREE.MeshStandardMaterial({color:0x211e1b, roughness:0.9})
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.position.set(cx, 0, cy);
+  scene.add(ground);
+
+  const grid = new THREE.GridHelper(gridSize*2, gridSize*2, 0x4a3a30, 0x2a2520);
+  grid.position.set(cx, 0.01, cy);
+  scene.add(grid);
+
+  // Achsenkreuz im Ursprung (rot=x, grün=y horizontal in Welt = z des Benutzers, blau=y-Welt vertikal=z Welt)
+  // WICHTIG: Im Park sind Koords (x,y,z) mit z=Höhe. THREE nutzt y=Höhe.
+  // Mapping: park(x,y,z) -> three(x, z, y)
+  const toThree = ([x,y,z]) => new THREE.Vector3(x, z, y);
+
+  const axesHelper = new THREE.AxesHelper(Math.min(r*0.5, 3));
+  axesHelper.position.set(Math.min(...xs)-0.5, 0.1, Math.min(...ys)-0.5);
+  scene.add(axesHelper);
+
+  // Materialien (neutral — keine Verstoß-Einfärbung)
+  const matPlat = new THREE.MeshStandardMaterial({color:0x2a2520, roughness:0.85});
+  const matPlatRing = new THREE.MeshStandardMaterial({color:0xe8a030, roughness:0.6, emissive:0xe8a030, emissiveIntensity:0.15});
+  const matPost = new THREE.MeshStandardMaterial({color:0x5a4a3a, roughness:0.95});
+  const matRope = new THREE.MeshStandardMaterial({color:0xc8833a, roughness:0.9});
+  const matObj = new THREE.MeshStandardMaterial({color:0xb07fff, roughness:0.7});
+
+  // Plattformen: Pfosten + Scheibe oben + Label
+  const platformMeshes = {};
+  Object.entries(park.plats).forEach(([id, pos])=>{
+    const [x,y,z] = pos;
+    const group = new THREE.Group();
+    // Pfosten
+    if(z > 0.1){
+      const post = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.1, z, 8),
+        matPost
+      );
+      post.position.set(x, z/2, y);
+      scene.add(post);
+    }
+    // Plattform
+    const disc = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.42, 0.42, 0.08, 16),
+      matPlat
+    );
+    disc.position.set(x, z, y);
+    scene.add(disc);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.42, 0.04, 8, 24),
+      matPlatRing
+    );
+    ring.position.set(x, z+0.04, y);
+    ring.rotation.x = Math.PI/2;
+    scene.add(ring);
+    // Label als Sprite (TextCanvas)
+    const label = makeLabelSprite(id, '#e8a030');
+    label.position.set(x, z+0.7, y);
+    scene.add(label);
+    platformMeshes[id] = {pos:[x,y,z]};
   });
 
-  // Objekte (Draufsicht) — neutrale Farbe
-  if(park.objects){
-    park.objects.forEach(o=>{
-      const p=tr(proj(o.pos));
-      svg+=`<polygon points="${p[0]-5},${p[1]+5} ${p[0]+5},${p[1]+5} ${p[0]},${p[1]-6}" fill="#b07fff" stroke="#1a1614" stroke-width="0.5"/>`;
-      svg+=`<text x="${p[0]+8}" y="${p[1]+3}" font-family="JetBrains Mono,monospace" font-size="9" fill="#b07fff">${o.id}<tspan fill="#a89880" font-size="8"> (z=${o.pos[2]})</tspan></text>`;
-    });
-  }
-
-  // Plattformen (Draufsicht)
-  Object.entries(park.plats).forEach(([id,pos])=>{
-    const p=tr(proj(pos));
-    svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="10" fill="#2a2520" stroke="#e8a030" stroke-width="2"/>`;
-    svg+=`<text x="${p[0]}" y="${p[1]+4}" font-family="Bebas Neue,sans-serif" font-size="13" fill="#e8a030" text-anchor="middle" letter-spacing="1">${id}</text>`;
-    svg+=`<text x="${p[0]+13}" y="${p[1]-7}" font-family="JetBrains Mono,monospace" font-size="8" fill="#a89880">z=${pos[2]}</text>`;
+  // Seile als dünne Zylinder zwischen Plattformen
+  park.ropes.forEach((r,ri) => {
+    const a = park.plats[r.from], b = park.plats[r.to];
+    if(!a || !b) return;
+    const va = toThree(a), vb = toThree(b);
+    const dir = new THREE.Vector3().subVectors(vb, va);
+    const len = dir.length();
+    const mid = new THREE.Vector3().addVectors(va, vb).multiplyScalar(0.5);
+    const rope = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, len, 6),
+      matRope
+    );
+    rope.position.copy(mid);
+    // Zylinder am Richtungsvektor ausrichten
+    rope.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+    scene.add(rope);
+    // Seil-Nummer als kleines Label in der Mitte
+    const numLabel = makeLabelSprite(String(ri+1), '#a89880', 0.4);
+    numLabel.position.copy(mid).add(new THREE.Vector3(0, 0.3, 0));
+    scene.add(numLabel);
   });
 
-  // Achsen-Pfeile (xy) unten links
-  const a0=tr(proj([origMinX,origMinY,0]));
-  const ax=tr(proj([origMinX+2,origMinY,0]));
-  const ay=tr(proj([origMinX,origMinY+2,0]));
-  svg+=`<g opacity="0.8">
-    <line x1="${a0[0]}" y1="${a0[1]}" x2="${ax[0]}" y2="${ax[1]}" stroke="#5ba3d9" stroke-width="1.4"/>
-    <text x="${ax[0]+3}" y="${ax[1]+4}" font-size="10" fill="#5ba3d9">x</text>
-    <line x1="${a0[0]}" y1="${a0[1]}" x2="${ay[0]}" y2="${ay[1]}" stroke="#6bcb77" stroke-width="1.4"/>
-    <text x="${ay[0]-8}" y="${ay[1]}" font-size="10" fill="#6bcb77">y</text>
-  </g>`;
+  // Objekte als einfache Formen
+  (park.objects||[]).forEach(o=>{
+    const [x,y,z] = o.pos;
+    let mesh;
+    const label = (o.label||'').toLowerCase();
+    if(label.includes('baum') || label.includes('busch')){
+      // Baum: Stamm + Kegel
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.1,Math.max(z,0.5),6), matPost);
+      trunk.position.set(x, Math.max(z,0.5)/2, y); scene.add(trunk);
+      mesh = new THREE.Mesh(new THREE.ConeGeometry(0.3,0.8,8), new THREE.MeshStandardMaterial({color:0x3a7a2a, roughness:0.7}));
+      mesh.position.set(x, z+0.4, y);
+    } else if(label.includes('kamera') || label.includes('laterne')){
+      // Kamera: kleine Box auf Mast
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.05,Math.max(z,0.5),6), matPost);
+      mast.position.set(x, Math.max(z,0.5)/2, y); scene.add(mast);
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.15,0.4), new THREE.MeshStandardMaterial({color:0x7a7a8a, roughness:0.4, metalness:0.6}));
+      mesh.position.set(x, z+0.08, y);
+    } else if(label.includes('felsen')){
+      // Felsen: raue Kugel
+      mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4,0), new THREE.MeshStandardMaterial({color:0x6a6a6a, roughness:0.95}));
+      mesh.position.set(x, Math.max(z,0.4), y);
+    } else {
+      mesh = new THREE.Mesh(new THREE.ConeGeometry(0.3,0.5,6), matObj);
+      mesh.position.set(x, z+0.25, y);
+    }
+    scene.add(mesh);
+    // ID-Label
+    const idLabel = makeLabelSprite(o.id, '#b07fff', 0.5);
+    idLabel.position.set(x, z+1.1, y);
+    scene.add(idLabel);
+  });
 
-  // Legende oben rechts
-  svg+=`<g font-family="JetBrains Mono,monospace" font-size="9" opacity="0.8">
-    <text x="${W-pad-160}" y="${pad-6}" fill="#a89880">Draufsicht xy-Ebene &middot; z als Label &middot; Seil-Nr an der Mitte</text>
-  </g>`;
+  function makeLabelSprite(text, color, scale=0.8){
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,c.width,c.height);
+    ctx.fillStyle = 'rgba(26,22,20,0.75)';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.font = 'bold 48px "Bebas Neue", sans-serif';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, c.width/2, c.height/2);
+    const tex = new THREE.CanvasTexture(c);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true}));
+    sprite.scale.set(scale*2, scale*0.5, 1);
+    return sprite;
+  }
 
-  svg+=`</svg>`;
-  return svg;
+  function resize(){
+    const w = container.clientWidth || W;
+    renderer.setSize(w, H);
+    camera.aspect = w/H;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+
+  let rafId = null;
+  function animate(){
+    rafId = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  return {stop:()=>{ if(rafId) cancelAnimationFrame(rafId); renderer.dispose(); }};
 }
 
 /* ══════════════════════════════════════════════════════
@@ -558,7 +671,7 @@ function setTab(t){
   currentTab=t;
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+t));
   document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-    const tabs=['park','diamond','architekt','meta','transfer','mentor'];
+    const tabs=['park','diamond','architekt','meta','transfer'];
     b.classList.toggle('active',tabs[i]===t);
   });
 }
@@ -592,12 +705,18 @@ function loadPark(parkId, container){
   const pairs=computePairProps(rp);
   const objResults=computeObjProps(park,rp);
 
-  // Park-Visualisierung (SVG, isometrisch)
+  // Park-Visualisierung (echte 3D-Szene mit THREE.js)
   const viz=document.createElement('div');
-  viz.style.cssText='margin-bottom:12px;position:relative';
-  viz.innerHTML=renderParkSVG(park)+
-    `<div style="position:absolute;top:8px;right:10px;font-size:9px;color:var(--text2);background:rgba(26,22,20,0.8);padding:3px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace">isometrisch &middot; rot = Verstoss</div>`;
+  viz.style.cssText='margin-bottom:12px;position:relative;border-radius:8px;overflow:hidden;border:1px solid #332e28';
+  const vizInner=document.createElement('div');
+  viz.appendChild(vizInner);
+  const vizHint=document.createElement('div');
+  vizHint.style.cssText="position:absolute;top:8px;right:10px;font-size:9px;color:var(--text2);background:rgba(26,22,20,0.8);padding:3px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;pointer-events:none;z-index:1";
+  vizHint.textContent='3D · Drag: drehen · Scroll: zoomen';
+  viz.appendChild(vizHint);
   container.appendChild(viz);
+  // Render nach DOM-Insert, damit clientWidth stimmt
+  setTimeout(()=>render3DPark(park, vizInner), 0);
 
   // Park Info
   const info=document.createElement('div'); info.className='park-info';
@@ -2092,10 +2211,16 @@ function installDelegator(){
 
 function init(){
   installDelegator();
-  // Klassencode via URL-Parameter uebernehmen (?klasse=XXX)
+  // Klassencode + Schueler-Code via URL-Parameter uebernehmen
+  // ?klasse=XXX           setzt Klassencode
+  // ?code=KP-XXXX         setzt zugewiesenen Schuelercode (vom Lehrer praegeneriert)
   const params=new URLSearchParams(location.search);
   const urlKlasse=params.get('klasse');
   if(urlKlasse){localStorage.setItem('km-klassencode',urlKlasse.trim().toUpperCase());}
+  const urlCode=params.get('code');
+  if(urlCode && /^KP-[A-Z2-9]{4,}$/i.test(urlCode.trim())){
+    localStorage.setItem('km-student-name',urlCode.trim().toUpperCase());
+  }
   // Check URL for imported park
   const hash=location.hash;
   if(hash.includes('#park=')){
@@ -2105,7 +2230,7 @@ function init(){
         const tempId='shared-'+Date.now();
         PARKS[tempId]={name:'Geteilter Park',desc:'Ein Mentor hat dir dieses Szenario geschickt.',plats:park.plats,ropes:park.ropes,objects:park.objects||[]};
         loadPark(tempId,document.getElementById('tab-park'));
-        initDiamond();initMeta();initTransfer();initMentor();initArchitekt();
+        initDiamond();initMeta();initTransfer();initArchitekt();
         return;
       }
     }catch(e){}
@@ -2114,11 +2239,10 @@ function init(){
   initDiamond();
   initMeta();
   initTransfer();
-  initMentor();
   initArchitekt();
-  // Deep-Link via Hash: #mentor, #transfer, #architekt, #diamond, #meta
+  // Deep-Link via Hash
   const h=location.hash.replace('#','');
-  if(['mentor','transfer','architekt','diamond','meta','park'].includes(h)) setTab(h);
+  if(['transfer','architekt','diamond','meta','park'].includes(h)) setTab(h);
 }
 
 document.addEventListener('DOMContentLoaded',init);
