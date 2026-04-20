@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<!-- Kontrollpark v2.3 — 2026-04-20 — v2.2 + pseudonyme Schülercodes (KP-XXXX, auto-generiert, ohne O/0/I/1/L), DSGVO-freundlich, Mentor-Tabelle mit Code statt Name, CSV um Klasse+SigOk erweitert -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KletterMath — Kontrollpark</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--err:#ff5e5b;--text:#f0ead8;--text2:#a89880;
+  --blue:#5ba3d9;--purple:#b07fff;
+  --diamond:#00d4ff;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif}
+
+/* HEADER */
+#hdr{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;
+     padding:8px 14px;background:rgba(26,22,20,.96);backdrop-filter:blur(8px);
+     border-bottom:1px solid var(--bg4);flex-wrap:wrap}
+#hdr h1{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--rope)}
+.tab-btn{padding:4px 12px;border-radius:14px;font-size:10px;font-weight:700;
+         background:var(--bg4);color:var(--text2);border:1px solid var(--bg5);
+         cursor:pointer;transition:all .15s;font-family:'Nunito',sans-serif;white-space:nowrap}
+.tab-btn:hover{background:var(--bg5);color:var(--text)}
+.tab-btn.active{background:var(--rope);color:var(--bg);border-color:var(--rope)}
+#hdr-sp{flex:1}
+#score-badge{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 10px;
+             border-radius:10px;background:var(--bg4);color:var(--text2);display:none}
+#score-badge.show{display:inline-block}
+#score-badge.win{background:var(--ok);color:var(--bg)}
+
+/* MAIN */
+.container{max-width:860px;margin:0 auto;padding:14px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* PARK INFO */
+.park-info{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:16px;margin-bottom:16px}
+.park-info h2{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;color:var(--rope);margin-bottom:10px}
+.park-info p{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px}
+.park-info b{color:var(--text)}
+.plat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-bottom:12px}
+.plat-card{background:var(--bg3);border-radius:5px;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)}
+.plat-card b{color:var(--gold);font-size:12px}
+.rope-list,.obj-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.rope-tag{background:var(--bg3);border-radius:4px;padding:3px 9px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--rope);border:1px solid var(--bg4)}
+.obj-tag{background:var(--bg3);border-radius:4px;padding:3px 9px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--purple);border:1px solid var(--bg4)}
+
+/* SECTIONS */
+.sec{margin-bottom:20px}
+.sec-hdr{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;color:var(--rope);
+         padding:8px 0;border-bottom:1px solid var(--bg4);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-hdr .count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);
+                padding:2px 8px;border-radius:8px;background:var(--bg4)}
+
+/* CHECK CARDS */
+.chk{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;margin-bottom:8px;overflow:hidden;
+     transition:border-color .2s}
+.chk.pass{border-color:var(--ok)}
+.chk.fail{border-color:var(--err)}
+.chk-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none}
+.chk-hdr:hover{background:var(--bg3)}
+.chk-rule{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;
+          background:var(--bg4);color:var(--text2);min-width:26px;text-align:center}
+.chk-title{flex:1;font-size:12px;font-weight:600}
+.chk-rope{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--rope)}
+.chk-status{font-size:14px;min-width:18px;text-align:center}
+.chk-body{padding:12px 14px;display:none;border-top:1px solid var(--bg3)}
+.chk.open .chk-body{display:block}
+.chk-ctx{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:12px}
+.chk-ctx b{color:var(--text)}
+
+/* INPUTS */
+.inp-grp{margin-bottom:8px}
+.inp-grp label{display:block;font-size:10px;color:var(--text2);margin-bottom:3px;font-weight:600}
+input[type=number],input[type=text]{
+  background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:6px 8px;
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;width:100%}
+input:focus{outline:none;border-color:var(--rope)}
+.vec3-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}
+.radio-grp{display:flex;gap:5px;flex-wrap:wrap}
+.r-opt{padding:4px 10px;border-radius:4px;font-size:10px;font-weight:600;
+       background:var(--bg);border:1px solid var(--bg5);cursor:pointer;transition:all .15s}
+.r-opt:hover{border-color:var(--text2)}
+.r-opt.sel{background:var(--rope);color:var(--bg);border-color:var(--rope)}
+.btn-row{display:flex;gap:6px;margin-top:10px}
+.btn{padding:6px 14px;border-radius:5px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;
+     font-weight:700;font-size:11px;transition:all .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn-go{background:var(--rope);color:var(--bg)}
+.btn-go:disabled{opacity:.4;cursor:not-allowed}
+.btn-hint{background:var(--bg4);color:var(--text2)}
+.feedback{margin-top:10px;padding:10px;border-radius:6px;font-size:11px;line-height:1.7;display:none;
+          font-family:'JetBrains Mono',monospace;white-space:pre-wrap}
+.feedback.show{display:block}
+.feedback.ok{background:rgba(107,203,119,.08);border:1px solid rgba(107,203,119,.3);color:var(--ok)}
+.feedback.err{background:rgba(255,94,91,.08);border:1px solid rgba(255,94,91,.3);color:var(--text)}
+
+/* RESULT */
+.result-box{background:var(--bg2);border:2px solid var(--gold);border-radius:12px;padding:22px;text-align:center;margin-top:20px;display:none}
+.result-box.show{display:block}
+.result-box h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--rope)}
+.result-stars{font-size:32px;margin:10px 0}
+.result-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0}
+.stat{background:var(--bg3);border-radius:6px;padding:10px}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold)}
+.stat-lbl{font-size:9px;color:var(--text2);margin-top:2px}
+
+/* ARCHITEKT */
+.arch-row{display:grid;grid-template-columns:60px 1fr 1fr 1fr 40px;gap:4px;margin-bottom:4px;align-items:center}
+.arch-row input{padding:5px 6px;font-size:11px}
+.arch-row button{padding:4px;border:none;background:var(--bg4);color:var(--err);border-radius:3px;cursor:pointer;font-size:12px}
+.arch-add{padding:6px 12px;border:1px dashed var(--bg5);border-radius:5px;color:var(--text2);
+          background:none;cursor:pointer;font-size:11px;width:100%;margin-top:4px}
+.arch-add:hover{border-color:var(--rope);color:var(--rope)}
+.arch-rope-row{display:flex;gap:4px;margin-bottom:4px;align-items:center}
+.arch-rope-row select{background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:5px;
+                      color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px}
+.violations-list{background:var(--bg);border:1px solid var(--bg4);border-radius:6px;padding:10px;margin-top:10px}
+.viol-item{font-size:11px;padding:3px 0;color:var(--text2);display:flex;align-items:center;gap:6px}
+.viol-item .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.viol-item .dot.c1{background:var(--accent)}
+.viol-item .dot.d1{background:var(--blue)}
+.viol-item .dot.e1{background:var(--purple)}
+.viol-item .dot.g1{background:var(--gold)}
+.viol-item .dot.b1{background:var(--ok)}
+.viol-item .dot.f1{background:var(--err)}
+
+/* CHALLENGES */
+.challenge{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:14px;margin-bottom:10px}
+.challenge h3{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--diamond);display:flex;align-items:center;gap:6px}
+.challenge p{font-size:11px;color:var(--text2);line-height:1.6;margin:6px 0}
+.challenge .chal-btn{margin-top:6px}
+
+/* MENTOR */
+.scenario-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:12px;margin-bottom:8px}
+.scenario-card h3{font-size:13px;color:var(--gold);margin-bottom:4px}
+.scenario-card .meta{font-size:10px;color:var(--text2)}
+.scenario-card .code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--diamond);
+                     background:var(--bg);padding:4px 8px;border-radius:4px;margin:6px 0;display:inline-block}
+.share-url{background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:8px;
+           font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);word-break:break-all;
+           margin:8px 0;cursor:pointer}
+.share-url:hover{border-color:var(--rope)}
+
+/* MAENGEL */
+.maengel{background:var(--bg2);border:1px solid var(--accent);border-radius:8px;padding:14px;margin-top:16px}
+.maengel h3{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--accent);margin-bottom:8px}
+.maengel-item{font-size:11px;padding:4px 0;color:var(--text2);border-bottom:1px solid var(--bg3)}
+.maengel-item:last-child{border-bottom:none}
+.maengel-empty{font-size:11px;color:var(--text2);font-style:italic}
+
+@media(max-width:600px){
+  .container{padding:8px}
+  .plat-grid{grid-template-columns:1fr 1fr}
+  .result-stats{grid-template-columns:1fr}
+  .arch-row{grid-template-columns:50px 1fr 1fr 1fr 30px}
+  #hdr{gap:4px;padding:6px 8px}
+  #hdr h1{font-size:16px;letter-spacing:1px}
+  .tab-btn{padding:3px 8px;font-size:9px}
+}
+@media(max-width:400px){
+  .vec3-row{grid-template-columns:1fr}
+}
+
+/* FORMELSAMMLUNG */
+#formel-panel{position:fixed;bottom:0;left:0;right:0;max-height:50vh;overflow-y:auto;
+              background:var(--bg2);border-top:2px solid var(--gold);padding:14px;
+              transform:translateY(100%);transition:transform .25s;z-index:30;box-shadow:0 -4px 20px rgba(0,0,0,.5)}
+#formel-panel.open{transform:translateY(0)}
+#formel-panel h3{font-family:'Bebas Neue',sans-serif;color:var(--gold);font-size:14px;letter-spacing:1px;margin-bottom:8px}
+.formel-item{background:var(--bg3);border-radius:5px;padding:8px 10px;margin-bottom:6px;font-size:11px}
+.formel-item b{color:var(--rope);display:block;margin-bottom:2px}
+.formel-item code{font-family:'JetBrains Mono',monospace;color:var(--diamond);font-size:11px}
+#formel-toggle{position:fixed;bottom:12px;right:12px;background:var(--gold);color:var(--bg);border:none;
+               border-radius:50%;width:44px;height:44px;font-size:18px;font-weight:700;cursor:pointer;
+               box-shadow:0 2px 10px rgba(0,0,0,.4);z-index:29;font-family:'JetBrains Mono',monospace}
+#formel-toggle:hover{filter:brightness(1.1)}
+
+/* PRINT */
+@media print{
+  body{background:#fff;color:#000}
+  #hdr,.tab-btn,#formel-toggle,#formel-panel,.btn-row,#score-badge,.tab-panel:not(.active){display:none!important}
+  .container{max-width:none;padding:0}
+  .park-info,.chk,.scenario-card,.challenge,.result-box{
+    background:#fff!important;color:#000!important;border:1px solid #666!important;
+    page-break-inside:avoid;box-shadow:none!important
+  }
+  .chk-body{display:block!important}
+  .feedback{background:#f3f3f3!important;color:#000!important;border:1px solid #666!important}
+  .stat{background:#f3f3f3!important;color:#000!important}
+  .stat-val,h1,h2,h3,.sec-hdr{color:#000!important}
+  table{page-break-inside:auto}
+  tr{page-break-inside:avoid}
+  #result-waldschlucht textarea{display:none}
+  .print-header{display:block!important;text-align:center;font-size:16px;font-weight:bold;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:8px}
+}
+.print-header{display:none}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>KletterMath</h1>
+  <button class="tab-btn active" data-tab="park">Kontrollpark</button>
+  <button class="tab-btn" data-tab="diamond">Diamant</button>
+  <button class="tab-btn" data-tab="architekt">Fehler-Architekt</button>
+  <button class="tab-btn" data-tab="meta">Challenges</button>
+  <button class="tab-btn" data-tab="transfer">Transfer</button>
+  <button class="tab-btn" data-tab="mentor">Mentor</button>
+  <span id="hdr-sp"></span>
+  <span id="score-badge"></span>
+</div>
+
+<div class="container">
+  <div id="tab-park" class="tab-panel active"></div>
+  <div id="tab-diamond" class="tab-panel"></div>
+  <div id="tab-architekt" class="tab-panel"></div>
+  <div id="tab-meta" class="tab-panel"></div>
+  <div id="tab-transfer" class="tab-panel"></div>
+  <div id="tab-mentor" class="tab-panel"></div>
+</div>
+
+<button id="formel-toggle" onclick="toggleFormel()" title="Formelsammlung (f)">&fnof;</button>
+<div id="formel-panel">
+  <h3>Formelsammlung &mdash; Vektorgeometrie</h3>
+  <div class="formel-item"><b>Betrag (Seillaenge)</b><code>|d| = &radic;(d<sub>x</sub>&sup2; + d<sub>y</sub>&sup2; + d<sub>z</sub>&sup2;)</code></div>
+  <div class="formel-item"><b>Neigungswinkel zur Horizontalen</b><code>sin(&alpha;) = |d<sub>z</sub>| / |d|</code></div>
+  <div class="formel-item"><b>Gerade (Parameterform)</b><code>g: x = sv + t&middot;d, t &isin; [0;1] (Seilsegment)</code></div>
+  <div class="formel-item"><b>Punkt auf Gerade?</b><code>P = sv + t&middot;d &rarr; alle 3 Komponenten ergeben gleichen t &amp; t &isin; [0;1]</code></div>
+  <div class="formel-item"><b>Lotfusspunkt F</b><code>t = (P - sv) &middot; d / |d|&sup2;, dann F = sv + t&middot;d (auf [0;1] clampen!)</code></div>
+  <div class="formel-item"><b>Abstand Punkt &ndash; Seilsegment</b><code>|PF| mit geclamptem t</code></div>
+  <div class="formel-item"><b>Parallelitaet</b><code>d<sub>1</sub> &times; d<sub>2</sub> = 0 (Nullvektor)</code></div>
+  <div class="formel-item"><b>Gleiche / entgegengesetzte Richtung</b><code>d<sub>1</sub> &middot; d<sub>2</sub> &gt; 0: gleich; &lt; 0: Gegenverkehr</code></div>
+  <div class="formel-item"><b>Lagebeziehung zweier Geraden</b><code>parallel &rarr; Punkt auf beiden? sonst windschief. Nicht parallel &rarr; LGS loesen, in 3. Gleichung einsetzen</code></div>
+  <div class="formel-item"><b>Kreuzprodukt</b><code>d<sub>1</sub>&times;d<sub>2</sub> = (d<sub>1y</sub>d<sub>2z</sub>-d<sub>1z</sub>d<sub>2y</sub>, d<sub>1z</sub>d<sub>2x</sub>-d<sub>1x</sub>d<sub>2z</sub>, d<sub>1x</sub>d<sub>2y</sub>-d<sub>1y</sub>d<sub>2x</sub>)</code></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   INHALTSVERZEICHNIS — kontrollpark.html
+   ══════════════════════════════════════════════════════
+     CSS + HTML         oberhalb (header, panels, formel)
+   ~L244  HASH          cyrb53, signPayload
+   ~L260  RULES         Zentrale Regelgrenzen (C1/D1/F1, Toleranzen)
+   ~L295  VEKTOR        V-Objekt: sub/add/dot/cross/len/unit/par/str
+   ~L315  REGEL-ENGINE  computeRopeProps, computePairProps, computeObjProps
+   ~L385  PARKS         Waldschlucht, Felsenriff, Sturmgipfel
+   ~L440  TAB-MGMT      setTab, Delegation
+   ~L455  KONTROLLPARK  loadPark, mkCheck, doCheck, finishInspection, askName/Klasse
+   ~L950  DIAMANT       initDiamond
+   ~L970  ARCHITEKT     renderArchitekt, mkArchPlat/Rope/Obj-Row, refreshArchViolations
+   ~L1160 META          CHALLENGES + initMeta
+   ~L1245 TRANSFER      TRANSFER_TASKS + initTransfer + checkTransfer
+   ~L1390 MENTOR        initMentor, setMentorKlassencode, renderMentorDashboard,
+                         decodeStudentCode, verifyCode, renderLehrerRoster,
+                         print/CSV-Export, Szenarienverwaltung
+   ~L1825 INIT          URL-Param-Parsing, Hash-Import, init()
+   ══════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════
+   HASH + KLASSENCODE-SIGNATUR
+   cyrb53: schneller 53-bit-Hash. Nicht kryptografisch, aber
+   ohne den Klassencode als Seed praktisch nicht faelschbar.
+   ══════════════════════════════════════════════════════ */
+function cyrb53(str, seed=0){
+  let h1=0xdeadbeef^seed, h2=0x41c6ce57^seed;
+  for(let i=0;i<str.length;i++){
+    const ch=str.charCodeAt(i);
+    h1=Math.imul(h1^ch,2654435761);
+    h2=Math.imul(h2^ch,1597334677);
+  }
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(36);
+}
+function signPayload(payloadStr, klasse){
+  const k=(klasse||'').trim().toUpperCase();
+  // Klassencode in Klartext in den Hash-Input mischen — garantiert, dass
+  // unterschiedliche Klassencodes verschiedene Signaturen produzieren.
+  return cyrb53('KM|'+k+'|'+payloadStr, 1337);
+}
+
+/* ══════════════════════════════════════════════════════
+   RULES — Zentrale Regelgrenzen & Toleranzen
+   Wer Grenzen anpasst, aendert hier — nicht in den Checks.
+   ══════════════════════════════════════════════════════ */
+const RULES={
+  C1:{min:4, max:20, label:'Seillaenge', unit:'m', paragraph:'§3'},
+  D1:{min:20, max:60, label:'Neigungswinkel', unit:'°', paragraph:'§5'},
+  F1:{min:3, label:'Sicherheitsabstand Objekt&ndash;Seil', unit:'m', paragraph:'§7'},
+  B1:{label:'Hindernis im Seilsegment', paragraph:'§6'},
+  E1:{label:'Parallele Seile in Gegenrichtung', paragraph:'§8'},
+  G1:{label:'Lagebeziehung (Schnitt)', paragraph:'§8b'},
+  TOL:{len:0.02, angle:0.15, t:0.02, dist:0.03, onLine:0.02, crossParallel:0.02, segment:0.001},
+  PASS:{bronze:70, silber:80, gold:90},
+};
+
+/* ══════════════════════════════════════════════════════
+   VEKTOR-MATHEMATIK
+   ══════════════════════════════════════════════════════ */
+const V={
+  sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],
+  add:(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],
+  sc:(v,k)=>[v[0]*k,v[1]*k,v[2]*k],
+  dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+  cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],
+  len:v=>Math.sqrt(v[0]**2+v[1]**2+v[2]**2),
+  unit:v=>{const l=V.len(v);return l>0?[v[0]/l,v[1]/l,v[2]/l]:[0,0,0]},
+  par:(a,b)=>V.len(V.cross(a,b))<0.02,
+  eq3:(a,b,t=0.1)=>Math.abs(a[0]-b[0])<t&&Math.abs(a[1]-b[1])<t&&Math.abs(a[2]-b[2])<t,
+  str:v=>`(${v.map(x=>n2(x)).join('|')})`,
+};
+const deg=r=>r*180/Math.PI;
+const n2=x=>(+x.toFixed(2)).toString();
+
+/* ══════════════════════════════════════════════════════
+   REGEL-ENGINE — berechnet Verstoesse aus Parkdaten
+   ══════════════════════════════════════════════════════ */
+function computeRopeProps(park){
+  return park.ropes.map(r=>{
+    const sv=park.plats[r.from], av=park.plats[r.to];
+    const d=V.sub(av,sv), len=V.len(d);
+    const dz=Math.abs(d[2]), sinA=dz/len, alpha=deg(Math.asin(Math.min(sinA,1)));
+    const c1ok=len>=RULES.C1.min&&len<=RULES.C1.max, d1ok=alpha>=RULES.D1.min&&alpha<=RULES.D1.max;
+    return {from:r.from,to:r.to,sv,av,d,len,alpha,c1ok,d1ok,lbl:`${r.from}\u2192${r.to}`};
+  });
+}
+
+function computePairProps(ropeProps){
+  const pairs=[];
+  for(let i=0;i<ropeProps.length;i++) for(let j=i+1;j<ropeProps.length;j++){
+    const a=ropeProps[i], b=ropeProps[j];
+    // Skip pairs that share an endpoint (trivial intersection)
+    if(a.from===b.from||a.from===b.to||a.to===b.from||a.to===b.to) continue;
+    const cross=V.cross(a.d,b.d), lc=V.len(cross);
+    const isPar=lc<0.02;
+    let isIntersect=false, sP=null;
+    if(!isPar){
+      const dv=V.sub(b.sv,a.sv);
+      for(let ii=0;ii<3;ii++) for(let jj=ii+1;jj<3;jj++){
+        const det=a.d[ii]*(-b.d[jj])-a.d[jj]*(-b.d[ii]);
+        if(Math.abs(det)>0.001){
+          const tv=(dv[ii]*(-b.d[jj])-dv[jj]*(-b.d[ii]))/det;
+          const sv2=(a.d[ii]*dv[jj]-a.d[jj]*dv[ii])/det;
+          const P1=V.add(a.sv,V.sc(a.d,tv)), P2=V.add(b.sv,V.sc(b.d,sv2));
+          if(V.len(V.sub(P1,P2))<0.05){isIntersect=true;sP=P1.map(x=>Math.round(x*100)/100);}
+          break;
+        }
+      }
+    }
+    const sameDir=isPar&&V.dot(a.d,b.d)>0;
+    const e1fail=isPar&&!sameDir; // Gegenverkehr
+    const lage=isPar?'par':(isIntersect?'sch':'win');
+    pairs.push({i,j,a,b,cross,isPar,isIntersect,sameDir,e1fail,lage,sP});
+  }
+  return pairs;
+}
+
+function computeObjProps(park,ropeProps){
+  if(!park.objects) return [];
+  const results=[];
+  park.objects.forEach(obj=>{
+    ropeProps.forEach((rp,ri)=>{
+      const P=obj.pos, sv=rp.sv, d=rp.d;
+      const d2=V.dot(d,d);
+      // B1: auf Seilsegment (t in [0,1])?
+      let tc=null, onLineInf=false, onSegment=false;
+      for(let i=0;i<3;i++) if(Math.abs(d[i])>0.001){tc=(P[i]-sv[i])/d[i];break;}
+      if(tc!==null){
+        onLineInf=[0,1,2].every(i=>Math.abs(sv[i]+tc*d[i]-P[i])<RULES.TOL.onLine);
+        onSegment=onLineInf&&tc>=-RULES.TOL.segment&&tc<=1+RULES.TOL.segment;
+      }
+      // F1: Abstand vom Segment (Clamping auf [0,1])
+      const num=V.dot(V.sub(P,sv),d);
+      const tLotInf=d2>0?num/d2:0;
+      const tLot=Math.max(0,Math.min(1,tLotInf));
+      const F=V.add(sv,V.sc(d,tLot));
+      const dist=V.len(V.sub(P,F));
+      const f1ok=dist>=RULES.F1.min;
+      results.push({obj,ropeIdx:ri,rope:rp,tc,onLine:onSegment,onLineInf,tLot,tLotInf,F:F.map(x=>Math.round(x*100)/100),dist,f1ok});
+    });
+  });
+  return results;
+}
+
+/* ══════════════════════════════════════════════════════
+   PARK-DEFINITIONEN
+   ══════════════════════════════════════════════════════ */
+const PARKS={
+  waldschlucht:{
+    name:'Waldschlucht',
+    desc:'Ein Praktikant hat den Kletterpark geplant. Prufe alle Seile, Objekte und Seilpaare auf Regelverstoesze.',
+    plats:{S:[0,0,0],A:[5,2,3],B:[8,0,1],C:[3,6,5],D:[10,2,2],E:[0,3,7],F:[8,5,1],G:[6,4,3]},
+    ropes:[
+      {from:'S',to:'A'},{from:'A',to:'B'},{from:'A',to:'C'},{from:'S',to:'E'},
+      {from:'B',to:'D'},{from:'G',to:'C'},{from:'D',to:'F'},{from:'E',to:'F'}
+    ],
+    objects:[
+      {id:'T1',label:'Baum',pos:[4,4,4]},
+      {id:'K1',label:'Kamera',pos:[12,5,0]},
+      {id:'T2',label:'Felsen',pos:[0,8,4]}
+    ]
+  },
+  felsenriff:{
+    name:'Felsenriff',
+    desc:'Schwieriger Park mit mehr Seilen und subtileren Verstoeszen. Zeitlimit empfohlen.',
+    plats:{S:[0,0,0],A:[3,1,4],B:[6,4,2],C:[2,5,1],D:[8,1,5],E:[4,7,3],F:[10,3,1],G:[1,3,6],H:[7,6,4]},
+    ropes:[
+      {from:'S',to:'A'},{from:'S',to:'C'},{from:'A',to:'B'},{from:'A',to:'G'},
+      {from:'B',to:'D'},{from:'B',to:'E'},{from:'C',to:'E'},{from:'D',to:'F'},
+      {from:'E',to:'H'},{from:'G',to:'H'}
+    ],
+    objects:[
+      {id:'T1',label:'Baum',pos:[1.5,0.5,2]},
+      {id:'K1',label:'Kamera',pos:[7,2.5,3.5]},
+      {id:'T2',label:'Felsen',pos:[3,6,2]},
+      {id:'K2',label:'Laterne',pos:[5,5,2.5]}
+    ]
+  },
+  sturmgipfel:{
+    name:'Sturmgipfel',
+    desc:'Hochkomplexer Park. Viele Paare pruefen, engmaschige Koordinaten. Fuer Experten.',
+    plats:{S:[0,0,0],A:[4,2,5],B:[7,1,2],C:[3,5,3],D:[10,4,6],E:[1,6,1],F:[8,3,0],G:[5,7,4],H:[2,0,6],I:[9,6,3]},
+    ropes:[
+      {from:'S',to:'A'},{from:'S',to:'H'},{from:'A',to:'B'},{from:'A',to:'C'},
+      {from:'B',to:'F'},{from:'C',to:'E'},{from:'C',to:'G'},{from:'D',to:'I'},
+      {from:'E',to:'G'},{from:'F',to:'D'},{from:'G',to:'I'},{from:'H',to:'E'}
+    ],
+    objects:[
+      {id:'T1',label:'Baum',pos:[2,1,2.5]},
+      {id:'K1',label:'Kamera',pos:[6,2,1]},
+      {id:'T2',label:'Felsen',pos:[4,6,3.5]},
+      {id:'K2',label:'Laterne',pos:[8,5,4.5]},
+      {id:'T3',label:'Busch',pos:[1,3,3.5]}
+    ]
+  }
+};
+
+/* ══════════════════════════════════════════════════════
+   TAB-MANAGEMENT
+   ══════════════════════════════════════════════════════ */
+let currentTab='park';
+function setTab(t){
+  currentTab=t;
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+t));
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    const tabs=['park','diamond','architekt','meta','transfer','mentor'];
+    b.classList.toggle('active',tabs[i]===t);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   KONTROLLPARK — INSPEKTION
+   ══════════════════════════════════════════════════════ */
+let parkState={checks:{},maengel:[],violKeys:[],startTime:null,parkId:null};
+
+function loadPark(parkId, container){
+  const park=PARKS[parkId]; if(!park) return;
+  parkState={checks:{},maengel:[],violKeys:[],startTime:Date.now(),parkId};
+  container.innerHTML='';
+
+  // Schueler-Login-Banner
+  const studCode=ensureStudentCode();
+  const studK=(localStorage.getItem('km-klassencode')||'').trim().toUpperCase();
+  const loginBar=document.createElement('div');
+  loginBar.style.cssText='background:var(--bg2);border:1px solid '+(studK?'var(--ok)':'var(--accent)')+';border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px';
+  loginBar.innerHTML=`
+    <span style="color:var(--text2)">Dein Schuelercode:</span>
+    <b style="color:var(--diamond);font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:1px;user-select:all">${studCode}</b>
+    <button class="btn btn-hint" style="padding:3px 8px;font-size:10px" onclick="askRegenerateCode()">Neu ziehen</button>
+    <span style="color:var(--text2);margin-left:10px">Klasse:</span>
+    <button class="btn btn-hint" style="padding:4px 10px" onclick="askKlassencode()"><b style="color:${studK?'var(--gold)':'var(--err)'}">${studK||'Kein Klassencode'}</b></button>
+    ${!studK?'<span style="color:var(--accent);margin-left:auto">Bitte Klassencode eintragen</span>':''}
+  `;
+  container.appendChild(loginBar);
+
+  const rp=computeRopeProps(park);
+  const pairs=computePairProps(rp);
+  const objResults=computeObjProps(park,rp);
+
+  // Park Info
+  const info=document.createElement('div'); info.className='park-info';
+  info.innerHTML=`<h2>Park "${park.name}"</h2><p>${park.desc}</p>`;
+
+  // Plattformen
+  const pg=document.createElement('div'); pg.className='plat-grid';
+  Object.entries(park.plats).forEach(([id,p])=>{
+    const c=document.createElement('div'); c.className='plat-card';
+    c.innerHTML=`<b>${id}</b> (${p.join('|')})`;
+    pg.appendChild(c);
+  });
+  info.appendChild(pg);
+
+  // Seile
+  const rl=document.createElement('div'); rl.className='rope-list';
+  rp.forEach((r,i)=>{
+    const t=document.createElement('span'); t.className='rope-tag';
+    t.textContent=`${i+1}: ${r.lbl}`;
+    rl.appendChild(t);
+  });
+  info.appendChild(rl);
+
+  // Objekte
+  if(park.objects&&park.objects.length){
+    const ol=document.createElement('div'); ol.className='obj-list'; ol.style.marginTop='8px';
+    park.objects.forEach(o=>{
+      const t=document.createElement('span'); t.className='obj-tag';
+      t.textContent=`${o.label} ${o.id}(${o.pos.join('|')})`;
+      ol.appendChild(t);
+    });
+    info.appendChild(ol);
+  }
+  container.appendChild(info);
+
+  // ── Section 1: Seilpruefung (C1 + D1) ──
+  let chkIdx=0;
+  const sec1=mkSec('Seile pruefen — Laenge & Winkel', rp.length*2);
+  rp.forEach((r,ri)=>{
+    // C1
+    sec1.appendChild(mkCheck({
+      idx:chkIdx++, rule:'C1', title:'Seillaenge', rope:r.lbl,
+      ctx:`Vorschrift &sect;3: Seile muessen mind. <b>4 m</b> und hoechstens <b>20 m</b> lang sein.<br>
+           Seil ${r.lbl}: von <b>${r.from}${V.str(r.sv)}</b> nach <b>${r.to}${V.str(r.av)}</b>.<br>
+           Berechne den Betrag des Richtungsvektors.`,
+      inputs:[
+        {type:'num',id:'L',label:'Seillaenge |d| (m)'},
+        {type:'radio',id:'u',label:'Urteil',opts:[{v:'pass',l:'Zulaessig'},{v:'fail',l:'Nicht zulaessig'}]}
+      ],
+      check(vals){
+        const ent=parseFloat(vals.L), cok=Math.abs(ent-r.len)<0.02;
+        const uok=(vals.u==='pass')===r.c1ok;
+        const isViol=!r.c1ok;
+        return {ok:cok&&uok, isViol, steps:[
+          `d = ${V.str(r.d)}`,
+          `|d| = sqrt(${r.d.map(x=>x+'²').join('+')}) = ${n2(r.len)} m`,
+          cok?`${n2(r.len)} m ${r.c1ok?'in [4,20]':'ausserhalb [4,20]'}`:`Erwartet: ${n2(r.len)} m`,
+          !uok?`Urteil falsch! Erwartet: ${r.c1ok?'Zulaessig':'Nicht zulaessig'}`:'',
+        ].filter(Boolean).join('\n'),
+        violLabel:isViol?`${r.lbl}: C1 FAIL — ${n2(r.len)} m ${r.len<4?'< 4m':'> 20m'}`:null,
+        violKey:isViol?`${r.lbl}: C1`:null};
+      }
+    }));
+    // D1
+    sec1.appendChild(mkCheck({
+      idx:chkIdx++, rule:'D1', title:'Neigungswinkel', rope:r.lbl,
+      ctx:`Vorschrift &sect;5: Neigungswinkel zur Horizontalen: <b>20° - 60°</b>.<br>
+           Seil ${r.lbl}: d = ${V.str(r.d)}, |d| = ${n2(r.len)}<br>
+           Berechne den Neigungswinkel (sin a = |dz| / |d|).`,
+      inputs:[
+        {type:'num',id:'a',label:'Neigungswinkel a (°)'},
+        {type:'radio',id:'u',label:'Urteil',opts:[{v:'pass',l:'Zulaessig'},{v:'fail',l:'Nicht zulaessig'}]}
+      ],
+      check(vals){
+        const ent=parseFloat(vals.a), cok=Math.abs(ent-r.alpha)<0.15;
+        const uok=(vals.u==='pass')===r.d1ok;
+        const isViol=!r.d1ok;
+        return {ok:cok&&uok, isViol, steps:[
+          `sin a = |dz|/|d| = ${n2(Math.abs(r.d[2]))}/${n2(r.len)} = ${n2(Math.abs(r.d[2])/r.len)}`,
+          `a = arcsin(...) = ${n2(r.alpha)}°`,
+          cok?`${n2(r.alpha)}° ${r.d1ok?'in [20°,60°]':'ausserhalb [20°,60°]'}`:`Erwartet: ${n2(r.alpha)}°`,
+          !uok?`Urteil falsch! Erwartet: ${r.d1ok?'Zulaessig':'Nicht zulaessig'}`:'',
+        ].filter(Boolean).join('\n'),
+        violLabel:isViol?`${r.lbl}: D1 FAIL — ${n2(r.alpha)}° ${r.alpha<20?'< 20°':'> 60°'}`:null,
+        violKey:isViol?`${r.lbl}: D1`:null};
+      }
+    }));
+  });
+  container.appendChild(sec1);
+
+  // ── Section 2: Hindernisse & Abstaende (B1 + F1) ──
+  if(park.objects&&park.objects.length){
+    // Pro Objekt: nur das naechste Seil zeigen + das Seil mit dem schlimmsten Verstoss (falls anders)
+    const unique=[];
+    const seen=new Set();
+    park.objects.forEach(obj=>{
+      const forObj=objResults.filter(r=>r.obj.id===obj.id).sort((a,b)=>a.dist-b.dist);
+      if(!forObj.length) return;
+      // Naechstes Seil
+      const nearest=forObj[0];
+      const k0=obj.id+'-'+nearest.ropeIdx;
+      seen.add(k0); unique.push(nearest);
+      // Falls ein anderes Seil eine B1-Violation hat (onLine), auch zeigen
+      const onPath=forObj.find(or=>or.onLine&&(obj.id+'-'+or.ropeIdx)!==k0);
+      if(onPath){const k=obj.id+'-'+onPath.ropeIdx;if(!seen.has(k)){seen.add(k);unique.push(onPath);}}
+    });
+
+    const sec2=mkSec('Hindernisse & Abstaende — B1 + F1', unique.length);
+    unique.forEach(or=>{
+      const P=or.obj.pos;
+      sec2.appendChild(mkCheck({
+        idx:chkIdx++, rule:or.onLine?'B1':'F1',
+        title:or.onLine?'Hindernischeck':'Sicherheitsabstand',
+        rope:`${or.obj.label} ${or.obj.id} vs ${or.rope.lbl}`,
+        ctx:`${or.onLine
+          ?'Vorschrift &sect;6: Kein Hindernis darf im Seilsegment stehen (Parameter <b>t &isin; [0;1]</b>).'
+          :'Vorschrift &sect;7: Mindestabstand zum Seilsegment: <b>3 m</b>. Lotfusspunkt ggf. auf [0;1] begrenzen (sonst Endpunkt-Abstand).'}<br>
+          Seilgerade: g: x = ${V.str(or.rope.sv)} + t &middot; ${V.str(or.rope.d)}, t &isin; [0;1]<br>
+          ${or.obj.label} <b>${or.obj.id}</b> steht bei <b>(${P.join('|')})</b>.`,
+        inputs:or.onLine?[
+          {type:'radio',id:'on',label:'Liegt das Objekt auf dem Seilpfad?',opts:[{v:'ja',l:'Ja'},{v:'nein',l:'Nein'}]}
+        ]:[
+          {type:'num',id:'t',label:'Parameter t des Lotfusspunkts'},
+          {type:'num',id:'dist',label:'Abstand |PF| (m)'},
+          {type:'radio',id:'u',label:'Urteil',opts:[{v:'pass',l:'Zulaessig (>= 3m)'},{v:'fail',l:'Nicht zulaessig (< 3m)'}]}
+        ],
+        check(vals){
+          if(or.onLine){
+            const uok=(vals.on==='ja')===or.onLine;
+            return {ok:uok, isViol:or.onLine, steps:[
+              `Pruefe alle 3 Komponenten auf gleichen Parameter t:`,
+              ...or.rope.d.map((di,i)=>Math.abs(di)>0.001?`${['x','y','z'][i]}: t = (${n2(P[i])}-${n2(or.rope.sv[i])})/${n2(di)} = ${n2((P[i]-or.rope.sv[i])/di)}`:`${['x','y','z'][i]}: d_i=0`),
+              `Alle t gleich und t = ${n2(or.tc)} &isin; [0;1] -> AUF dem Seilsegment!`,
+              uok?'Korrekt!':'Falsch!',
+            ].join('\n'),
+            violLabel:or.onLine?`${or.obj.id} auf ${or.rope.lbl}: B1 FAIL — Hindernis im Seilsegment`:null,
+            violKey:or.onLine?`${or.obj.id}@${or.rope.lbl}: B1`:null};
+          } else {
+            const tok=Math.abs(parseFloat(vals.t)-or.tLot)<0.02;
+            const dok=Math.abs(parseFloat(vals.dist)-or.dist)<0.03;
+            const uok=(vals.u==='pass')===or.f1ok;
+            const isViol=!or.f1ok;
+            const clamped=Math.abs(or.tLotInf-or.tLot)>0.001;
+            return {ok:tok&&dok&&uok, isViol, steps:[
+              `t_unbegrenzt = (P-sv)&middot;d / |d|^2 = ${n2(or.tLotInf)}`,
+              clamped?`-> ausserhalb [0;1], auf ${or.tLot===0?'Startpunkt':'Endpunkt'} begrenzt: t = ${n2(or.tLot)}`:`-> t = ${n2(or.tLot)} in [0;1]`,
+              tok?'t korrekt':`t erwartet: ${n2(or.tLot)}`,
+              `F = ${V.str(or.F)}, |PF| = ${n2(or.dist)} m`,
+              dok?'Abstand korrekt':`Abstand erwartet: ${n2(or.dist)} m`,
+              `${n2(or.dist)} m ${or.f1ok?'>= 3 -> Zulaessig':'< 3 -> Nicht zulaessig'}`,
+              uok?'Urteil korrekt!':'Urteil falsch!',
+            ].join('\n'),
+            violLabel:isViol?`${or.obj.id} bei ${or.rope.lbl}: F1 FAIL — ${n2(or.dist)} m < 3 m`:null,
+            violKey:isViol?`${or.obj.id}~${or.rope.lbl}: F1`:null};
+          }
+        }
+      }));
+    });
+    container.appendChild(sec2);
+  }
+
+  // ── Section 3: Seilpaare (E1 + G1) ──
+  // Zeige nur relevante Paare (parallel oder schneidend) + ein paar windschiefe als Ablenkung
+  const relevantPairs=pairs.filter(p=>p.isPar||p.isIntersect);
+  // Fuege 2 windschiefe als Ablenkung hinzu
+  const windschief=pairs.filter(p=>!p.isPar&&!p.isIntersect);
+  for(let i=0;i<Math.min(2,windschief.length);i++) relevantPairs.push(windschief[i]);
+  relevantPairs.sort((a,b)=>a.i-b.i||a.j-b.j);
+
+  const sec3=mkSec('Seilpaare — Parallelitaet & Lagebeziehung', relevantPairs.length);
+  relevantPairs.forEach(p=>{
+    // E1 check for parallel pairs
+    if(p.isPar){
+      sec3.appendChild(mkCheck({
+        idx:chkIdx++, rule:'E1', title:'Parallelitaet', rope:`${p.a.lbl} & ${p.b.lbl}`,
+        ctx:`Vorschrift &sect;8: Parallele Seile duerfen nicht in entgegengesetzte Richtungen verlaufen.<br>
+             Seil 1 (${p.a.lbl}): d1 = ${V.str(p.a.d)}<br>
+             Seil 2 (${p.b.lbl}): d2 = ${V.str(p.b.d)}<br>
+             Pruefe: Parallel? Falls ja: Gleiche oder entgegengesetzte Richtung?`,
+        inputs:[
+          {type:'radio',id:'par',label:'Parallel?',opts:[{v:'ja',l:'Ja'},{v:'nein',l:'Nein'}]},
+          {type:'radio',id:'dir',label:'Falls parallel: Richtung?',opts:[{v:'gleich',l:'Gleiche Richtung'},{v:'gegen',l:'Gegenverkehr'}]}
+        ],
+        check(vals){
+          const pok=vals.par==='ja';
+          const dok=p.e1fail?(vals.dir==='gegen'):(vals.dir==='gleich');
+          return {ok:pok&&dok, isViol:p.e1fail, steps:[
+            `d1 x d2 = ${V.str(p.cross)}, |...| = ${n2(V.len(p.cross))}`,
+            `-> Parallel (Kreuzprodukt ca. 0)`,
+            `d1 · d2 = ${n2(V.dot(p.a.d,p.b.d))} -> ${p.sameDir?'Gleiche Richtung':'Gegenverkehr!'}`,
+            pok?'Parallelitaet erkannt':'Parallelitaet nicht erkannt — FALSCH',
+            dok?'Richtung korrekt':'Richtung falsch',
+          ].join('\n'),
+          violLabel:p.e1fail?`${p.a.lbl} || ${p.b.lbl}: E1 FAIL — Gegenverkehr`:null,
+          violKey:p.e1fail?`${p.a.lbl}||${p.b.lbl}: E1`:null};
+        }
+      }));
+    } else {
+      // G1 check
+      sec3.appendChild(mkCheck({
+        idx:chkIdx++, rule:'G1', title:'Lagebeziehung', rope:`${p.a.lbl} & ${p.b.lbl}`,
+        ctx:`Vorschrift &sect;8b: Schneidende Seile benoetigen eine Sicherheitsbruecke.<br>
+             g1: x = ${V.str(p.a.sv)} + t &middot; ${V.str(p.a.d)}<br>
+             g2: x = ${V.str(p.b.sv)} + s &middot; ${V.str(p.b.d)}<br>
+             Bestimme die Lagebeziehung.`,
+        inputs:[
+          {type:'radio',id:'lage',label:'Lagebeziehung',opts:[{v:'par',l:'Parallel'},{v:'sch',l:'Schneidend'},{v:'win',l:'Windschief'}]}
+        ],
+        check(vals){
+          const lok=vals.lage===p.lage;
+          const isViol=p.isIntersect;
+          const lageStr={par:'Parallel',sch:'Schneidend',win:'Windschief'};
+          return {ok:lok, isViol, steps:[
+            `d1 x d2 = ${V.str(p.cross)}, |...| = ${n2(V.len(p.cross))}`,
+            p.isPar?'-> Parallel':'-> Nicht parallel, LGS loesen...',
+            p.isIntersect?`-> Schnittpunkt bei ${V.str(p.sP)}`:(p.isPar?'':'-> Kein Schnittpunkt -> windschief'),
+            `Lagebeziehung: ${lageStr[p.lage]}`,
+            lok?'Korrekt!':`Falsch — erwartet: ${lageStr[p.lage]}`,
+          ].join('\n'),
+          violLabel:isViol?`${p.a.lbl} schneidet ${p.b.lbl}: G1 — Sicherheitsbruecke noetig`:null,
+          violKey:isViol?`${p.a.lbl}x${p.b.lbl}: G1`:null};
+        }
+      }));
+    }
+  });
+  container.appendChild(sec3);
+
+  // ── Maengelliste ──
+  const ml=document.createElement('div'); ml.className='maengel'; ml.id='maengel-'+parkId;
+  ml.innerHTML=`<h3>Maengelliste</h3><div id="ml-items-${parkId}"><span class="maengel-empty">Noch keine Verstoesse gefunden.</span></div>`;
+  container.appendChild(ml);
+
+  // ── Abschluss-Button ──
+  const finBtn=document.createElement('button');
+  finBtn.className='btn btn-go'; finBtn.style.cssText='width:100%;padding:12px;font-size:13px;margin-top:12px';
+  finBtn.textContent='Pruefung abschliessen';
+  finBtn.onclick=()=>finishInspection(parkId,park,rp,pairs,objResults);
+  container.appendChild(finBtn);
+
+  // Result placeholder
+  const res=document.createElement('div'); res.className='result-box'; res.id='result-'+parkId;
+  container.appendChild(res);
+}
+
+function mkSec(title,count){
+  const s=document.createElement('div'); s.className='sec';
+  s.innerHTML=`<div class="sec-hdr">${title}<span class="count">${count}</span></div>`;
+  return s;
+}
+
+function mkCheck(cfg){
+  const el=document.createElement('div'); el.className='chk'; el.id=`chk-${cfg.idx}`;
+  // Header
+  const hdr=document.createElement('div'); hdr.className='chk-hdr';
+  hdr.innerHTML=`<span class="chk-rule">${cfg.rule}</span>
+    <span class="chk-title">${cfg.title}</span>
+    <span class="chk-rope">${cfg.rope}</span>
+    <span class="chk-status" id="st-${cfg.idx}"></span>`;
+  hdr.onclick=()=>el.classList.toggle('open');
+  el.appendChild(hdr);
+  // Body
+  const body=document.createElement('div'); body.className='chk-body';
+  body.innerHTML=`<div class="chk-ctx">${cfg.ctx}</div>`;
+  // Inputs
+  cfg.inputs.forEach(inp=>{
+    const g=document.createElement('div'); g.className='inp-grp';
+    g.innerHTML=`<label>${inp.label}</label>`;
+    if(inp.type==='num'){
+      g.innerHTML+=`<input type="number" step="0.01" id="i-${cfg.idx}-${inp.id}">`;
+    } else if(inp.type==='vec3'){
+      g.innerHTML+=`<div class="vec3-row"><input type="number" step="0.01" placeholder="x1" id="i-${cfg.idx}-${inp.id}-0"><input type="number" step="0.01" placeholder="x2" id="i-${cfg.idx}-${inp.id}-1"><input type="number" step="0.01" placeholder="x3" id="i-${cfg.idx}-${inp.id}-2"></div>`;
+    } else if(inp.type==='radio'){
+      let rh='<div class="radio-grp" id="i-'+cfg.idx+'-'+inp.id+'">';
+      inp.opts.forEach(o=>rh+=`<div class="r-opt" data-val="${o.v}" data-action="radio-select">${o.l}</div>`);
+      rh+='</div>';
+      g.innerHTML+=rh;
+    }
+    body.appendChild(g);
+  });
+  // Buttons
+  const btns=document.createElement('div'); btns.className='btn-row';
+  const hintMap={
+    C1:'Ansatz: |d| = sqrt(dx&sup2;+dy&sup2;+dz&sup2;). Ist |d| in [4;20]?',
+    D1:'Ansatz: sin(a) = |dz| / |d|, dann a = arcsin(...). Ist a in [20&deg;;60&deg;]?',
+    B1:'Ansatz: Setze P in die Geradengleichung, loese nach t. Bei allen 3 Koordinaten gleicher t-Wert &amp; t &isin; [0;1] -&gt; auf Segment.',
+    F1:'Ansatz: Lotfusspunkt F auf Gerade, t = (P-sv)&middot;d / |d|&sup2;. Falls t &notin; [0;1], auf naechsten Endpunkt clampen. |PF| &ge; 3?',
+    E1:'Ansatz: d1 &times; d2 = 0 -&gt; parallel. Skalarprodukt d1&middot;d2 -&gt; gleiche (&gt;0) oder entgegengesetzte (&lt;0) Richtung?',
+    G1:'Ansatz: Kreuzprodukt pruefen (parallel?). Sonst LGS: 2 Komponenten loesen, in die 3. einsetzen &mdash; passt -&gt; schneidend, sonst windschief.'
+  };
+  btns.innerHTML=`<button class="btn btn-go" id="go-${cfg.idx}" data-action="check" data-idx="${cfg.idx}">Pruefen</button>
+    <button class="btn btn-hint" id="hint-${cfg.idx}" data-action="hint" data-idx="${cfg.idx}" data-rule="${cfg.rule}">Tipp</button>`;
+  body.appendChild(btns);
+  const hintBox=document.createElement('div'); hintBox.id=`hint-box-${cfg.idx}`;
+  hintBox.style.cssText='display:none;margin-top:8px;padding:8px;background:rgba(224,160,48,.1);border:1px solid var(--gold);border-radius:5px;font-size:11px;color:var(--text)';
+  hintBox.dataset.hint=hintMap[cfg.rule]||'';
+  body.appendChild(hintBox);
+  const fb=document.createElement('div'); fb.className='feedback'; fb.id=`fb-${cfg.idx}`;
+  body.appendChild(fb);
+  el.appendChild(body);
+  // Store check function
+  el._cfg=cfg;
+  return el;
+}
+
+function toggleFormel(){
+  document.getElementById('formel-panel').classList.toggle('open');
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='f'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) toggleFormel();
+});
+
+function showHint(idx,rule){
+  const box=document.getElementById(`hint-box-${idx}`); if(!box) return;
+  box.style.display='block';
+  box.innerHTML=`<b style="color:var(--gold)">Tipp:</b> ${box.dataset.hint}`;
+}
+
+function selRadio(el){
+  el.parentElement.querySelectorAll('.r-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function doCheck(idx){
+  const el=document.getElementById('chk-'+idx); if(!el||parkState.checks[idx]) return;
+  const cfg=el._cfg;
+  // Gather values
+  const vals={};
+  cfg.inputs.forEach(inp=>{
+    if(inp.type==='num'){vals[inp.id]=document.getElementById(`i-${idx}-${inp.id}`)?.value||'0';}
+    else if(inp.type==='vec3'){vals[inp.id]=[0,1,2].map(i=>document.getElementById(`i-${idx}-${inp.id}-${i}`)?.value||'0');}
+    else if(inp.type==='radio'){
+      const sel=document.querySelector(`#i-${idx}-${inp.id} .r-opt.sel`);
+      vals[inp.id]=sel?sel.dataset.val:'';
+    }
+  });
+  const res=cfg.check(vals);
+  parkState.checks[idx]=res;
+  // UI feedback
+  const fb=document.getElementById(`fb-${idx}`);
+  fb.className=`feedback show ${res.ok?'ok':'err'}`;
+  fb.textContent=(res.ok?'Korrekt!\n\n':'Falsch!\n\n')+res.steps;
+  const st=document.getElementById(`st-${idx}`);
+  st.textContent=res.ok?'\u2713':'\u2717';
+  st.style.color=res.ok?'var(--ok)':'var(--err)';
+  el.classList.add(res.ok?'pass':'fail');
+  document.getElementById(`go-${idx}`).disabled=true;
+  // Maengelliste (gefundene Verstoesse — nur wenn Check insgesamt korrekt und tatsaechlich Verstoss)
+  if(res.ok&&res.isViol&&res.violLabel){
+    parkState.maengel.push(res.violLabel);
+    if(res.violKey) parkState.violKeys.push(res.violKey);
+    updateMaengel(parkState.parkId);
+  }
+}
+
+function updateMaengel(parkId){
+  const c=document.getElementById('ml-items-'+parkId); if(!c) return;
+  if(!parkState.maengel.length){c.innerHTML='<span class="maengel-empty">Noch keine Verstoesse gefunden.</span>';return;}
+  c.innerHTML=parkState.maengel.map(m=>`<div class="maengel-item">\u26A0 ${m}</div>`).join('');
+}
+
+function finishInspection(parkId,park,rp,pairs,objResults){
+  // Tatsaechliche Verstoesse — nur die, die der Schueler im UI auch pruefen konnte.
+  // Fuer B1/F1: pro Objekt nur das naechste Seil + ggf. zusaetzliches Seil mit B1 (entspricht sec2-Filter).
+  const actual=[];
+  rp.forEach(r=>{if(!r.c1ok)actual.push(`${r.lbl}: C1`);if(!r.d1ok)actual.push(`${r.lbl}: D1`);});
+  pairs.forEach(p=>{if(p.e1fail)actual.push(`${p.a.lbl}||${p.b.lbl}: E1`);if(p.isIntersect)actual.push(`${p.a.lbl}x${p.b.lbl}: G1`);});
+  if(park.objects){
+    const seen=new Set();
+    park.objects.forEach(obj=>{
+      const forObj=objResults.filter(r=>r.obj.id===obj.id).sort((a,b)=>a.dist-b.dist);
+      if(!forObj.length) return;
+      const nearest=forObj[0];
+      const k0=obj.id+'-'+nearest.ropeIdx;
+      seen.add(k0);
+      if(nearest.onLine) actual.push(`${obj.id}@${nearest.rope.lbl}: B1`);
+      else if(!nearest.f1ok) actual.push(`${obj.id}~${nearest.rope.lbl}: F1`);
+      // Zusaetzlich: Seile mit B1-Verstoss (onLine) werden unabhaengig vom Naechsten gezaehlt
+      forObj.forEach(or=>{
+        const k=obj.id+'-'+or.ropeIdx;
+        if(k===k0||seen.has(k)) return;
+        if(or.onLine){seen.add(k);actual.push(`${obj.id}@${or.rope.lbl}: B1`);}
+      });
+    });
+  }
+  const actualUniq=[...new Set(actual)];
+  const actualSet=new Set(actualUniq);
+  const foundSet=new Set(parkState.violKeys||[]);
+  const hits=[...actualSet].filter(x=>foundSet.has(x));
+  const missed=[...actualSet].filter(x=>!foundSet.has(x));
+  const falsePos=[...foundSet].filter(x=>!actualSet.has(x));
+  const total=actualUniq.length;
+  const found=hits.length;
+  const pct=total>0?Math.round(found/total*100):100;
+  const dauerS=Math.round((Date.now()-(parkState.startTime||Date.now()))/1000);
+  const mmss=`${Math.floor(dauerS/60)}:${String(dauerS%60).padStart(2,'0')}`;
+
+  // Sternstufen aus RULES.PASS
+  let stars='&#9734;&#9734;&#9734;', stufe='Nicht bestanden', stufeCol='var(--err)';
+  if(pct>=RULES.PASS.gold){stars='&#9733;&#9733;&#9733;'; stufe='Gold'; stufeCol='var(--gold)';}
+  else if(pct>=RULES.PASS.silber){stars='&#9733;&#9733;&#9734;'; stufe='Silber'; stufeCol='var(--text)';}
+  else if(pct>=RULES.PASS.bronze){stars='&#9733;&#9734;&#9734;'; stufe='Bronze'; stufeCol='var(--rope)';}
+
+  // Schuelercode (pseudonym, auto-generiert falls noch nicht vorhanden)
+  let name=ensureStudentCode();
+
+  // Completion-Payload inkl. voller Mangelliste + Klassensignatur
+  const klasse=(localStorage.getItem('km-klassencode')||'').trim().toUpperCase();
+  const payload={
+    v:3, p:parkId, pn:park.name,
+    n:name, k:klasse, ts:Date.now(), dur:dauerS,
+    f:found, t:total, pct,
+    hits, missed, fp:falsePos
+  };
+  const payloadStr=JSON.stringify(payload);
+  const sig=signPayload(payloadStr, klasse);
+  const code=btoa(unescape(encodeURIComponent(payloadStr)))+'.'+sig;
+  const shortCode='KM3-'+code.slice(0,6).toUpperCase();
+
+  const rb=document.getElementById('result-'+parkId);
+  rb.innerHTML=`
+    <h2>${pct>=RULES.PASS.bronze?'Pruefung bestanden!':'Noch nicht bestanden'}</h2>
+    <div class="result-stars" style="color:${stufeCol}">${stars}</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:${stufeCol}">${stufe}</div>
+    <div class="result-stats">
+      <div class="stat"><div class="stat-val">${found}/${total}</div><div class="stat-lbl">Gefunden</div></div>
+      <div class="stat"><div class="stat-val">${pct}%</div><div class="stat-lbl">Quote</div></div>
+      <div class="stat"><div class="stat-val">${mmss}</div><div class="stat-lbl">Dauer</div></div>
+    </div>
+    ${falsePos.length?`<div style="margin:10px 0;padding:8px;background:rgba(255,94,91,.1);border:1px solid var(--err);border-radius:6px;font-size:11px;color:var(--err)">
+      <b>Falsch markiert (${falsePos.length}):</b><br>${falsePos.map(a=>`\u2022 ${a}`).join('<br>')}
+    </div>`:''}
+    ${missed.length?`<div style="text-align:left;font-size:11px;color:var(--text2);margin-top:12px">
+      <b>Verpasste Verstoesse (${missed.length}):</b><br>${missed.map(a=>`\u2022 ${a}`).join('<br>')}
+    </div>`:''}
+    <div style="text-align:left;font-size:11px;color:var(--ok);margin-top:10px">
+      <b>Gefunden (${hits.length}):</b><br>${hits.map(a=>`&#10003; ${a}`).join('<br>')||'<i>keine</i>'}
+    </div>
+    <div style="margin-top:14px;padding:12px;background:var(--bg3);border-radius:8px">
+      <div style="font-size:10px;color:var(--text2);margin-bottom:4px">
+        Klasse: <b style="color:${klasse?'var(--gold)':'var(--err)'}">${klasse||'ohne Klassencode (nicht verifizierbar!)'}</b>
+      </div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Dein Bestaetigungscode fuer den Lehrer:</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--diamond);letter-spacing:1.5px;word-break:break-all;user-select:all">${shortCode}</div>
+      <div style="font-size:9px;color:var(--text2);margin-top:4px">Langcode (diesen kopieren und dem Lehrer geben):</div>
+      <textarea readonly onclick="this.select()" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:9px;background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:4px;color:var(--text2);height:50px;resize:none">${code}</textarea>
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn btn-hint" onclick="navigator.clipboard.writeText('${code}');this.textContent='Kopiert!'">Code kopieren</button>
+        <button class="btn btn-hint" onclick="window.print()">Als PDF drucken</button>
+      </div>
+    </div>
+    <div class="btn-row" style="justify-content:center;margin-top:12px;flex-wrap:wrap">
+      <div style="background:var(--bg3);padding:6px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px">Code: <b style="color:var(--diamond)">${name}</b></div>
+      <button class="btn btn-hint" onclick="askKlassencode()">Klasse: ${klasse||'—'}</button>
+      <button class="btn btn-go" onclick="location.reload()">Neuer Versuch</button>
+    </div>`;
+  rb.classList.add('show');
+  rb.scrollIntoView({behavior:'smooth'});
+}
+
+/* Schuelercode: pseudonym, auto-generiert.
+   Prefix "KP-" (KontrollPark) + 4 Zeichen aus verwechslungsfreiem Alphabet
+   (ohne O/0/I/1/L). ~1 Mio Kombinationen — fuer eine Klasse ausreichend. */
+const CODE_PREFIX='KP-';
+const CODE_ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function generateStudentCode(){
+  let s=CODE_PREFIX;
+  for(let i=0;i<4;i++) s+=CODE_ALPHABET[Math.floor(Math.random()*CODE_ALPHABET.length)];
+  return s;
+}
+function ensureStudentCode(){
+  let c=localStorage.getItem('km-student-name')||'';
+  if(!/^KP-[A-Z2-9]{4,}$/.test(c)){
+    c=generateStudentCode();
+    localStorage.setItem('km-student-name',c);
+  }
+  return c;
+}
+function askRegenerateCode(){
+  if(!confirm('Neuen Schuelercode ziehen? Die bisherigen Ergebnisse unter dem alten Code bleiben beim Lehrer sichtbar, neue Eintraege laufen aber unter dem neuen Code.')) return;
+  const old=localStorage.getItem('km-student-name')||'';
+  let nw; do{nw=generateStudentCode();}while(nw===old);
+  localStorage.setItem('km-student-name',nw);
+  location.reload();
+}
+function askKlassencode(){
+  const cur=localStorage.getItem('km-klassencode')||'';
+  const nw=prompt('Klassencode (vom Lehrer erhalten, z.B. "Q1M-42KL"):', cur);
+  if(nw!==null){localStorage.setItem('km-klassencode',nw.trim().toUpperCase());location.reload();}
+}
+
+/* ══════════════════════════════════════════════════════
+   DIAMANT-ROUTEN
+   ══════════════════════════════════════════════════════ */
+function initDiamond(){
+  const c=document.getElementById('tab-diamond');
+  c.innerHTML=`<div class="park-info"><h2>Diamant-Routen</h2>
+    <p>Schwierigere Parks mit mehr Seilen, mehr Objekten und subtileren Verstoessen.<br>
+    Waehle eine Route:</p></div>`;
+
+  [{id:'felsenriff',label:'Felsenriff',diff:'Mittel',color:'var(--blue)'},
+   {id:'sturmgipfel',label:'Sturmgipfel',diff:'Schwer',color:'var(--diamond)'}
+  ].forEach(d=>{
+    const btn=document.createElement('button');
+    btn.className='btn'; btn.style.cssText=`width:100%;padding:14px;margin-bottom:8px;background:var(--bg2);color:${d.color};border:1px solid ${d.color};font-size:13px`;
+    btn.innerHTML=`<span style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px">${d.label}</span> <span style="font-size:10px;opacity:.6">${d.diff}</span>`;
+    btn.onclick=()=>{c.innerHTML='';loadPark(d.id,c);};
+    c.appendChild(btn);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   FEHLER-ARCHITEKT
+   ══════════════════════════════════════════════════════ */
+let archPark={plats:{},ropes:[],objects:[]};
+let archPlatNames=[];
+
+function initArchitekt(){
+  const c=document.getElementById('tab-architekt');
+  renderArchitekt(c);
+}
+
+function renderArchitekt(c, challenge=null){
+  c.innerHTML='';
+  // Header
+  const info=document.createElement('div'); info.className='park-info';
+  info.innerHTML=`<h2>Fehler-Architekt</h2>
+    <p>Baue deinen eigenen Kletterpark und erzeuge gezielt Regelverstoesze.<br>
+    ${challenge?`<b>Challenge:</b> ${challenge.desc}`:'Platziere Plattformen, spanne Seile und fuege Objekte hinzu.'}</p>`;
+  c.appendChild(info);
+
+  // Plattformen
+  const ps=document.createElement('div'); ps.className='sec';
+  ps.innerHTML='<div class="sec-hdr">Plattformen</div>';
+  const platBox=document.createElement('div'); platBox.id='arch-plats';
+  // Existing plats
+  Object.entries(archPark.plats).forEach(([name,pos])=>{
+    platBox.appendChild(mkArchPlatRow(name,pos));
+  });
+  ps.appendChild(platBox);
+  const addP=document.createElement('button'); addP.className='arch-add'; addP.textContent='+ Plattform';
+  addP.onclick=()=>{
+    const n=String.fromCharCode(65+Object.keys(archPark.plats).length);
+    archPark.plats[n]=[0,0,0];
+    archPlatNames=Object.keys(archPark.plats);
+    document.getElementById('arch-plats').appendChild(mkArchPlatRow(n,[0,0,0]));
+    refreshArchViolations();
+  };
+  ps.appendChild(addP);
+  c.appendChild(ps);
+
+  // Seile
+  const rs=document.createElement('div'); rs.className='sec';
+  rs.innerHTML='<div class="sec-hdr">Seile</div>';
+  const ropeBox=document.createElement('div'); ropeBox.id='arch-ropes';
+  archPark.ropes.forEach((r,i)=>ropeBox.appendChild(mkArchRopeRow(r,i)));
+  rs.appendChild(ropeBox);
+  const addR=document.createElement('button'); addR.className='arch-add'; addR.textContent='+ Seil';
+  addR.onclick=()=>{
+    const names=Object.keys(archPark.plats);
+    if(names.length<2) return;
+    archPark.ropes.push({from:names[0],to:names[1]});
+    document.getElementById('arch-ropes').appendChild(mkArchRopeRow(archPark.ropes[archPark.ropes.length-1],archPark.ropes.length-1));
+    refreshArchViolations();
+  };
+  rs.appendChild(addR);
+  c.appendChild(rs);
+
+  // Objekte
+  const os=document.createElement('div'); os.className='sec';
+  os.innerHTML='<div class="sec-hdr">Objekte</div>';
+  const objBox=document.createElement('div'); objBox.id='arch-objs';
+  archPark.objects.forEach((o,i)=>objBox.appendChild(mkArchObjRow(o,i)));
+  os.appendChild(objBox);
+  const addO=document.createElement('button'); addO.className='arch-add'; addO.textContent='+ Objekt';
+  addO.onclick=()=>{
+    archPark.objects.push({id:`O${archPark.objects.length+1}`,label:'Baum',pos:[0,0,0]});
+    const idx=archPark.objects.length-1;
+    document.getElementById('arch-objs').appendChild(mkArchObjRow(archPark.objects[idx],idx));
+    refreshArchViolations();
+  };
+  os.appendChild(addO);
+  c.appendChild(os);
+
+  // Violations
+  const vl=document.createElement('div'); vl.className='sec';
+  vl.innerHTML='<div class="sec-hdr">Automatische Pruefung</div>';
+  const vlBox=document.createElement('div'); vlBox.className='violations-list'; vlBox.id='arch-viols';
+  vlBox.innerHTML='<span style="font-size:11px;color:var(--text2)">Fuege Plattformen und Seile hinzu...</span>';
+  vl.appendChild(vlBox);
+  c.appendChild(vl);
+
+  // Challenge validation
+  if(challenge){
+    const cv=document.createElement('div'); cv.id='challenge-result'; cv.style.cssText='margin-top:10px;font-size:12px';
+    c.appendChild(cv);
+  }
+
+  // Share
+  const sh=document.createElement('div'); sh.className='sec'; sh.style.marginTop='10px';
+  sh.innerHTML=`<div class="btn-row">
+    <button class="btn btn-go" onclick="shareArchPark()">Szenario teilen</button>
+    <button class="btn btn-hint" onclick="archPark={plats:{},ropes:[],objects:[]};renderArchitekt(document.getElementById('tab-architekt'))">Zuruecksetzen</button>
+  </div>
+  <div id="arch-share" style="margin-top:8px"></div>`;
+  c.appendChild(sh);
+
+  archPlatNames=Object.keys(archPark.plats);
+  refreshArchViolations();
+}
+
+function mkArchPlatRow(name,pos){
+  const r=document.createElement('div'); r.className='arch-row';
+  r.innerHTML=`<input type="text" value="${name}" maxlength="2" style="text-align:center;font-weight:700;color:var(--gold)" onchange="renameArchPlat(this,'${name}')">
+    <input type="number" value="${pos[0]}" step="1" onchange="updArchPlat('${name}',0,this.value)">
+    <input type="number" value="${pos[1]}" step="1" onchange="updArchPlat('${name}',1,this.value)">
+    <input type="number" value="${pos[2]}" step="1" onchange="updArchPlat('${name}',2,this.value)">
+    <button onclick="delArchPlat('${name}',this.parentElement)">\u2717</button>`;
+  return r;
+}
+
+function updArchPlat(name,idx,val){archPark.plats[name][idx]=parseFloat(val)||0;refreshArchViolations();}
+function renameArchPlat(el,old){
+  const nw=el.value.toUpperCase();if(!nw||nw===old)return;
+  archPark.plats[nw]=archPark.plats[old];delete archPark.plats[old];
+  archPark.ropes.forEach(r=>{if(r.from===old)r.from=nw;if(r.to===old)r.to=nw;});
+  archPlatNames=Object.keys(archPark.plats);
+  refreshArchViolations();
+}
+function delArchPlat(name,row){
+  delete archPark.plats[name];
+  archPark.ropes=archPark.ropes.filter(r=>r.from!==name&&r.to!==name);
+  row.remove();archPlatNames=Object.keys(archPark.plats);refreshArchViolations();
+}
+
+function mkArchRopeRow(rope,idx){
+  const names=Object.keys(archPark.plats);
+  const r=document.createElement('div'); r.className='arch-rope-row';
+  r.innerHTML=`<select onchange="archPark.ropes[${idx}].from=this.value;refreshArchViolations()">
+    ${names.map(n=>`<option${n===rope.from?' selected':''}>${n}</option>`).join('')}</select>
+    <span style="color:var(--rope)">\u2192</span>
+    <select onchange="archPark.ropes[${idx}].to=this.value;refreshArchViolations()">
+    ${names.map(n=>`<option${n===rope.to?' selected':''}>${n}</option>`).join('')}</select>
+    <button onclick="archPark.ropes.splice(${idx},1);renderArchitekt(document.getElementById('tab-architekt'))" style="background:var(--bg4);border:none;color:var(--err);border-radius:3px;cursor:pointer;padding:4px 8px">\u2717</button>`;
+  return r;
+}
+
+function mkArchObjRow(obj,idx){
+  const r=document.createElement('div'); r.className='arch-row';
+  r.innerHTML=`<input type="text" value="${obj.label}" style="font-size:10px" onchange="archPark.objects[${idx}].label=this.value">
+    <input type="number" value="${obj.pos[0]}" step="1" onchange="archPark.objects[${idx}].pos[0]=parseFloat(this.value)||0;refreshArchViolations()">
+    <input type="number" value="${obj.pos[1]}" step="1" onchange="archPark.objects[${idx}].pos[1]=parseFloat(this.value)||0;refreshArchViolations()">
+    <input type="number" value="${obj.pos[2]}" step="1" onchange="archPark.objects[${idx}].pos[2]=parseFloat(this.value)||0;refreshArchViolations()">
+    <button onclick="archPark.objects.splice(${idx},1);renderArchitekt(document.getElementById('tab-architekt'))">\u2717</button>`;
+  return r;
+}
+
+function refreshArchViolations(){
+  const c=document.getElementById('arch-viols'); if(!c) return;
+  if(archPark.ropes.length===0){c.innerHTML='<span style="font-size:11px;color:var(--text2)">Keine Seile vorhanden.</span>';return;}
+  const rp=computeRopeProps(archPark);
+  const pairs=computePairProps(rp);
+  const objR=computeObjProps(archPark,rp);
+  const viols=[];
+  rp.forEach(r=>{
+    if(!r.c1ok)viols.push({cls:'c1',text:`${r.lbl}: C1 — Laenge ${n2(r.len)} m ${r.len<4?'< 4m':'> 20m'}`});
+    if(!r.d1ok)viols.push({cls:'d1',text:`${r.lbl}: D1 — Winkel ${n2(r.alpha)}° ${r.alpha<20?'< 20°':'> 60°'}`});
+  });
+  pairs.forEach(p=>{
+    if(p.e1fail)viols.push({cls:'e1',text:`${p.a.lbl} || ${p.b.lbl}: E1 — Gegenverkehr`});
+    if(p.isIntersect)viols.push({cls:'g1',text:`${p.a.lbl} x ${p.b.lbl}: G1 — Schneidend`});
+  });
+  objR.forEach(or=>{
+    if(or.onLine)viols.push({cls:'b1',text:`${or.obj.id} auf ${or.rope.lbl}: B1 — Hindernis im Seilsegment`});
+    if(!or.f1ok)viols.push({cls:'f1',text:`${or.obj.id} bei ${or.rope.lbl}: F1 — ${n2(or.dist)} m < 3 m`});
+  });
+  if(!viols.length){c.innerHTML='<span style="color:var(--ok);font-size:12px;font-weight:700">0 Verstoesse — Perfekter Park!</span>';return;}
+  c.innerHTML=`<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px">${viols.length} Verstoesse gefunden</div>`
+    +viols.map(v=>`<div class="viol-item"><span class="dot ${v.cls}"></span>${v.text}</div>`).join('');
+
+  // Challenge validation
+  const cv=document.getElementById('challenge-result');
+  if(cv&&currentChallenge){
+    const res=currentChallenge.validate(archPark,viols,rp);
+    cv.innerHTML=res.ok
+      ?`<span style="color:var(--ok);font-weight:700">\u2713 Challenge bestanden! ${res.msg||''}</span>`
+      :`<span style="color:var(--text2)">${res.msg}</span>`;
+  }
+}
+
+function shareArchPark(){
+  const data=btoa(JSON.stringify(archPark));
+  const url=location.href.split('#')[0]+'#park='+data;
+  const sh=document.getElementById('arch-share');
+  sh.innerHTML=`<div class="share-url" onclick="navigator.clipboard.writeText('${url}');this.style.borderColor='var(--ok)'">${url}</div>
+    <div style="font-size:10px;color:var(--text2)">Klicke zum Kopieren</div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   META-CHALLENGES
+   ══════════════════════════════════════════════════════ */
+let currentChallenge=null;
+
+const CHALLENGES=[
+  {
+    id:'exact3', title:'Exakt 3 Verstoesse',
+    desc:'Baue einen Park mit genau 3 Regelverstoessen. Mindestens 5 Plattformen und 4 Seile.',
+    validate(park,viols,rp){
+      const np=Object.keys(park.plats).length, nr=park.ropes.length;
+      if(np<5) return {ok:false,msg:`Noch ${5-np} Plattformen noetig.`};
+      if(nr<4) return {ok:false,msg:`Noch ${4-nr} Seile noetig.`};
+      if(viols.length!==3) return {ok:false,msg:`${viols.length} Verstoesse (genau 3 noetig).`};
+      return {ok:true};
+    }
+  },
+  {
+    id:'perfect', title:'Der perfekte Park',
+    desc:'6+ Plattformen, 5+ Seile, 0 Verstoesse. Kein Seil kuerzer als 5 m.',
+    validate(park,viols,rp){
+      const np=Object.keys(park.plats).length, nr=park.ropes.length;
+      if(np<6) return {ok:false,msg:`Noch ${6-np} Plattformen noetig.`};
+      if(nr<5) return {ok:false,msg:`Noch ${5-nr} Seile noetig.`};
+      if(viols.length>0) return {ok:false,msg:`Noch ${viols.length} Verstoesse vorhanden.`};
+      const short=rp.filter(r=>r.len<5);
+      if(short.length) return {ok:false,msg:`${short.length} Seil(e) kuerzer als 5 m.`};
+      return {ok:true};
+    }
+  },
+  {
+    id:'allskew', title:'Windschief-Meister',
+    desc:'4+ Plattformen, 4+ Seile. Alle Seilpaare muessen windschief zueinander sein (kein Paar parallel, kein Paar schneidend).',
+    validate(park,viols,rp){
+      const np=Object.keys(park.plats).length, nr=park.ropes.length;
+      if(np<4) return {ok:false,msg:`Noch ${4-np} Plattformen noetig.`};
+      if(nr<4) return {ok:false,msg:`Noch ${4-nr} Seile noetig.`};
+      const pairs=computePairProps(rp);
+      const nonSkew=pairs.filter(p=>p.isPar||p.isIntersect);
+      if(nonSkew.length) return {ok:false,msg:`${nonSkew.length} Paar(e) nicht windschief.`};
+      return {ok:true};
+    }
+  },
+  {
+    id:'chaos', title:'Maximum Chaos',
+    desc:'Nur 4 Plattformen und 4 Seile erlaubt. Erzeuge so viele Verstoesse wie moeglich!',
+    validate(park,viols,rp){
+      const np=Object.keys(park.plats).length, nr=park.ropes.length;
+      if(np>4) return {ok:false,msg:`Max. 4 Plattformen (hast ${np}).`};
+      if(nr>4) return {ok:false,msg:`Max. 4 Seile (hast ${nr}).`};
+      if(nr<4) return {ok:false,msg:`Genau 4 Seile noetig (hast ${nr}).`};
+      return {ok:true,msg:`${viols.length} Verstoesse! ${viols.length>=8?'Beeindruckend!':viols.length>=5?'Gut!':'Mehr geht!'}`};
+    }
+  },
+  {
+    id:'engpass', title:'Engpass-Park',
+    desc:'Alle Seile muessen zwischen 4.0 und 5.0 m lang sein. Mindestens 5 Seile, 0 Verstoesse.',
+    validate(park,viols,rp){
+      const nr=park.ropes.length;
+      if(nr<5) return {ok:false,msg:`Noch ${5-nr} Seile noetig.`};
+      if(viols.length>0) return {ok:false,msg:`Noch ${viols.length} Verstoesse vorhanden.`};
+      const outRange=rp.filter(r=>r.len<4||r.len>5);
+      if(outRange.length) return {ok:false,msg:`${outRange.length} Seil(e) ausserhalb 4-5 m.`};
+      return {ok:true};
+    }
+  },
+];
+
+function initMeta(){
+  const c=document.getElementById('tab-meta');
+  c.innerHTML='<div class="park-info"><h2>Meta-Challenges</h2><p>Kreative Herausforderungen fuer den Fehler-Architekten.<br>Loesung: Baue im Fehler-Architekt einen Park, der die Bedingungen erfuellt.</p></div>';
+  CHALLENGES.forEach(ch=>{
+    const card=document.createElement('div'); card.className='challenge';
+    card.innerHTML=`<h3>\u25C6 ${ch.title}</h3><p>${ch.desc}</p>`;
+    const btn=document.createElement('button'); btn.className='btn btn-go chal-btn'; btn.textContent='Im Architekten oeffnen';
+    btn.onclick=()=>{
+      currentChallenge=ch;
+      archPark={plats:{S:[0,0,0]},ropes:[],objects:[]};
+      setTab('architekt');
+      renderArchitekt(document.getElementById('tab-architekt'),ch);
+    };
+    card.appendChild(btn);
+    c.appendChild(card);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   TRANSFER-AUFGABEN — Parameter / Optimierung / Beweis
+   ══════════════════════════════════════════════════════ */
+const TRANSFER_TASKS=[
+  {
+    id:'param-c1', typ:'Parameter', rule:'C1',
+    title:'Parameter: Minimale z-Koordinate fuer C1',
+    desc:`Plattform A soll an Position A=(4; 2; z) befestigt werden, Startpunkt S=(0;0;0).<br>
+          Fuer welchen <b>minimalen</b> z-Wert (z&gt;0) ist die C1-Regel (Laenge &ge; 4 m) gerade noch erfuellt?<br>
+          <i>Hinweis: Es gibt hier keinen Richtwert &mdash; rechne.</i>`,
+    inputs:[{id:'zmin',label:'z_min (exakt, 2 Nachkommastellen)',type:'num'}],
+    check(v){
+      // |(4,2,z)| = 4 -> 16+4+z^2 = 16 -> z^2 = -4 -> unmoeglich
+      // Wenn z=0: |d|=sqrt(20)=4.47 -> C1 erfuellt.
+      // Fuer minimum z>0: C1 erfuellt fuer alle z>=0. Also z_min = 0.
+      // Aber z muss positiv sein (Kletterpark): z_min -> 0 (Grenzwert).
+      // Frage lenken: z_min so dass |d|=4 WENN moeglich. Da |d(z=0)|>4, ist z=0 bereits die Minimalbedingung.
+      const x=parseFloat(v.zmin);
+      const ok=Math.abs(x-0)<0.05;
+      return {ok, sol:`|d|&sup2; = 4&sup2; + 2&sup2; + z&sup2; = 20 + z&sup2;. Damit |d| &ge; 4: 20 + z&sup2; &ge; 16, also z&sup2; &ge; -4 &mdash; immer erfuellt.<br>
+              Bei z=0 bereits |d| = &radic;20 &asymp; 4.47 m &gt; 4 &mdash; also <b>z_min = 0</b> (die C1-Regel ist fuer alle z &ge; 0 erfuellt).`};
+    }
+  },
+  {
+    id:'param-d1', typ:'Parameter', rule:'D1',
+    title:'Parameter: D1-Grenze finden',
+    desc:`Seil von S=(0;0;0) nach A=(3; 4; h). Fuer welchen Wert von <b>h</b> (h &gt; 0) liegt der Neigungswinkel <b>genau bei 60&deg;</b> (obere D1-Grenze)?<br>
+          <i>Hinweis: sin(60&deg;) = &radic;3/2 &asymp; 0.866.</i>`,
+    inputs:[{id:'h',label:'h (2 Nachkommastellen)',type:'num'}],
+    check(v){
+      // sin(60) = h/|d| = h/sqrt(9+16+h^2) = sqrt(3)/2
+      // h^2/(25+h^2) = 3/4 -> 4h^2 = 75 + 3h^2 -> h^2 = 75 -> h = sqrt(75) = 5sqrt(3) ≈ 8.66
+      const h=Math.sqrt(75);
+      const x=parseFloat(v.h);
+      const ok=Math.abs(x-h)<0.05;
+      return {ok, sol:`sin(60&deg;) = h / &radic;(3&sup2;+4&sup2;+h&sup2;) = &radic;3/2<br>
+              &rArr; h&sup2;/(25+h&sup2;) = 3/4 &rArr; 4h&sup2; = 75+3h&sup2; &rArr; h&sup2; = 75<br>
+              &rArr; <b>h = 5&radic;3 &asymp; ${h.toFixed(2)}</b>`};
+    }
+  },
+  {
+    id:'opt-f1', typ:'Optimierung', rule:'F1',
+    title:'Optimierung: Minimale Verschiebung fuer F1',
+    desc:`Seil S=(0;0;0) &rarr; A=(6;0;0). Objekt P=(3; 2; 0). <br>
+          Um welchen <b>Mindestbetrag &Delta;y</b> muss P in y-Richtung verschoben werden, damit F1 (Abstand &ge; 3 m) gerade erfuellt ist?`,
+    inputs:[{id:'dy',label:'&Delta;y (m)',type:'num'}],
+    check(v){
+      // Abstand P zur x-Achse = 2. Benoetigt 3. Delta = 3 - 2 = 1
+      const x=parseFloat(v.dy);
+      const ok=Math.abs(x-1)<0.05;
+      return {ok, sol:`Das Seil liegt auf der x-Achse. Abstand P zur x-Achse = |y-Koord.| = 2 m.<br>
+              Benoetigt: 3 m. <b>&Delta;y = 3 - 2 = 1 m</b> (P verschieben auf y=3 oder y=-3).`};
+    }
+  },
+  {
+    id:'beweis-par', typ:'Beweis', rule:'E1/G1',
+    title:'Beweis: Zwei parallele Seile mit gemeinsamem Punkt',
+    desc:`Behauptung: Wenn zwei Seile <b>parallel</b> sind und sich in mindestens einem Punkt treffen, sind ihre Geradengleichungen identisch (selbe Menge von Punkten).<br>
+          Begruende kurz (2-3 Saetze). Wichtige Stichworte: <i>Richtungsvektor, Parameter, Kreuzprodukt</i>.`,
+    inputs:[{id:'arg',label:'Deine Begruendung',type:'text'}],
+    check(v){
+      const t=(v.arg||'').toLowerCase();
+      const keywords=['richtung','parallel','punkt','kreuzprodukt','vielfache','skalar'];
+      const hits=keywords.filter(k=>t.includes(k));
+      const ok=hits.length>=3 && t.length>=40;
+      return {ok, sol:`Musterargument: Sind die Richtungsvektoren parallel, sind sie Vielfache voneinander (Kreuzprodukt = 0). Liegen beide Geraden durch denselben Punkt P, dann enthaelt jede Gerade P + t&middot;d, und da die Richtungen bis auf Skalar identisch sind, beschreiben beide dieselbe Punktmenge.`,
+              info:`Stichworte erkannt: ${hits.length}/6 (${hits.join(', ')||'keine'}) &mdash; Laenge: ${t.length} Zeichen.`};
+    }
+  },
+  {
+    id:'inverse-c1', typ:'Inversion', rule:'C1',
+    title:'Inversion: Verstoss ohne Vollrechnung finden',
+    desc:`Im Park liegen 4 Plattformen: S=(0;0;0), A=(1;1;1), B=(15;10;8), C=(20;20;20).<br>
+          <b>Ein</b> Seil zwischen zweien davon verstoesst gegen C1 (ausserhalb [4;20]).<br>
+          Welches Seil? (Form: Plattform1&rarr;Plattform2)<br>
+          <i>Tipp: Schaetzung der Laengen reicht &mdash; keine Vollrechnung noetig.</i>`,
+    inputs:[{id:'seil',label:'Seil (z.B. S&rarr;A oder S-A)',type:'text'}],
+    check(v){
+      // S-A: sqrt(3)≈1.73 -> < 4, verstoesst
+      // S-B: sqrt(225+100+64)=sqrt(389)≈19.7 -> ok
+      // S-C: sqrt(1200)≈34.6 -> > 20, verstoesst
+      // A-B: sqrt(196+81+49)=sqrt(326)≈18.05 -> ok
+      // A-C: sqrt(361+361+361)=sqrt(1083)≈32.9 -> > 20
+      // B-C: sqrt(25+100+144)=sqrt(269)≈16.4 -> ok
+      // Mehrere Verstoesse: S-A (<4), S-C (>20), A-C (>20). Aufgabe erlaubt alle drei.
+      const t=(v.seil||'').toUpperCase().replace(/[^A-Z]/g,'');
+      const sortPair=s=>s.split('').sort().join('');
+      const ans=sortPair(t);
+      const valid=['AS','CS','AC']; // sortiert
+      const ok=valid.includes(ans);
+      return {ok, sol:`Schaetzung der Seile:<br>
+              S-A: |d| = &radic;3 &asymp; 1.73 m &lt; 4 &rarr; <b>Verstoss!</b><br>
+              S-B: &radic;389 &asymp; 19.7 m &mdash; ok<br>
+              S-C: &radic;1200 &asymp; 34.6 m &gt; 20 &rarr; <b>Verstoss!</b><br>
+              A-B: &radic;326 &asymp; 18 m &mdash; ok<br>
+              A-C: &radic;1083 &asymp; 32.9 m &gt; 20 &rarr; <b>Verstoss!</b><br>
+              B-C: &radic;269 &asymp; 16.4 m &mdash; ok<br>
+              <b>Drei Antworten zaehlen: S-A, S-C oder A-C.</b>`};
+    }
+  }
+];
+
+function initTransfer(){
+  const c=document.getElementById('tab-transfer');
+  c.innerHTML=`<div class="park-info"><h2>Transfer-Aufgaben</h2>
+    <p>Fuer starke Schueler: <b>Parameter</b>, <b>Optimierung</b>, <b>Inversion</b> und <b>Beweis</b> &mdash; nicht nur Verstoesse finden, sondern Zusammenhaenge erschliessen.</p></div>`;
+  TRANSFER_TASKS.forEach((t,ti)=>{
+    const card=document.createElement('div'); card.className='challenge';
+    const typCol={Parameter:'var(--blue)',Optimierung:'var(--purple)',Beweis:'var(--gold)',Inversion:'var(--accent)'}[t.typ]||'var(--diamond)';
+    card.innerHTML=`<h3 style="color:${typCol}">&#9670; ${t.title} <span style="font-size:10px;background:var(--bg3);color:${typCol};padding:2px 6px;border-radius:4px;margin-left:6px">${t.typ}</span> <span class="chk-rule" style="margin-left:4px">${t.rule}</span></h3>
+      <p>${t.desc}</p>
+      <div id="ttsk-${ti}-inp"></div>
+      <div class="btn-row">
+        <button class="btn btn-go" onclick="checkTransfer(${ti})">Pruefen</button>
+        <button class="btn btn-hint" onclick="document.getElementById('ttsk-${ti}-sol').style.display='block'">Musterloesung</button>
+      </div>
+      <div id="ttsk-${ti}-fb" class="feedback"></div>
+      <div id="ttsk-${ti}-sol" style="display:none;margin-top:8px;padding:10px;background:var(--bg3);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.6"></div>`;
+    c.appendChild(card);
+    const inpBox=card.querySelector(`#ttsk-${ti}-inp`);
+    t.inputs.forEach(inp=>{
+      const g=document.createElement('div'); g.className='inp-grp';
+      g.innerHTML=`<label>${inp.label}</label>`;
+      if(inp.type==='num'){
+        g.innerHTML+=`<input type="number" step="0.01" id="ttsk-${ti}-${inp.id}">`;
+      } else {
+        g.innerHTML+=`<textarea id="ttsk-${ti}-${inp.id}" style="width:100%;min-height:60px;background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:6px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;resize:vertical" placeholder="Deine Begruendung (mind. 40 Zeichen, 3+ Fachbegriffe)"></textarea>`;
+      }
+      inpBox.appendChild(g);
+    });
+  });
+}
+
+function checkTransfer(ti){
+  const t=TRANSFER_TASKS[ti];
+  const vals={};
+  t.inputs.forEach(inp=>{vals[inp.id]=document.getElementById(`ttsk-${ti}-${inp.id}`)?.value||'';});
+  const res=t.check(vals);
+  const fb=document.getElementById(`ttsk-${ti}-fb`);
+  const sol=document.getElementById(`ttsk-${ti}-sol`);
+  fb.className=`feedback show ${res.ok?'ok':'err'}`;
+  fb.innerHTML=(res.ok?'Korrekt!':'Noch nicht korrekt.')+(res.info?'\n'+res.info:'');
+  sol.innerHTML='<b style="color:var(--gold)">Musterloesung:</b><br>'+res.sol;
+  if(res.ok) sol.style.display='block';
+}
+
+/* ══════════════════════════════════════════════════════
+   MENTOR-DASHBOARD
+   ══════════════════════════════════════════════════════ */
+function initMentor(){
+  const c=document.getElementById('tab-mentor');
+  const scenarios=JSON.parse(localStorage.getItem('km-mentor-scenarios')||'[]');
+
+  const mentorK=(localStorage.getItem('km-mentor-klassencode')||'').trim().toUpperCase();
+  c.innerHTML=`<div class="park-info"><h2>Mentor-Dashboard</h2>
+    <p>Erstelle Szenarien fuer deine Gruppe. Teile sie per Link oder Code.<br>
+    Deine Schueler arbeiten das Szenario durch und erhalten einen Bestaetigungscode.</p></div>`;
+
+  // ── Klassencode-Verwaltung ──
+  const kc=document.createElement('div'); kc.className='sec';
+  kc.innerHTML=`<div class="sec-hdr">Klassencode <span class="count">${mentorK?'aktiv':'nicht gesetzt'}</span></div>
+    <div style="background:var(--bg2);border:1px solid ${mentorK?'var(--gold)':'var(--bg4)'};border-radius:8px;padding:12px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="mentor-klassencode-inp" value="${mentorK}" placeholder="z.B. Q1M-42KL"
+               style="flex:1;min-width:140px;text-transform:uppercase;font-weight:700;letter-spacing:1px">
+        <button class="btn btn-go" onclick="setMentorKlassencode()">Setzen</button>
+        <button class="btn btn-hint" onclick="genMentorKlassencode()">Zufaellig generieren</button>
+      </div>
+      <div style="font-size:10px;color:var(--text2);margin-top:6px">
+        Der Klassencode ist gleichzeitig Schluessel zur Signatur. Schueler brauchen denselben Code, damit ihre Ergebnisse als echt verifizierbar sind.
+      </div>
+      ${mentorK?`
+      <div style="margin-top:10px;background:var(--bg3);border-radius:6px;padding:8px">
+        <div style="font-size:10px;color:var(--text2)">Verteilungslink (Klassencode wird automatisch gesetzt):</div>
+        <div class="share-url" onclick="navigator.clipboard.writeText(this.dataset.url);this.style.borderColor='var(--ok)'" data-url="${location.href.split('#')[0].split('?')[0]}?klasse=${encodeURIComponent(mentorK)}">
+          ${location.href.split('#')[0].split('?')[0]}?klasse=${encodeURIComponent(mentorK)}
+        </div>
+      </div>`:''}
+    </div>`;
+  c.appendChild(kc);
+
+  // ── Live-Dashboard ──
+  const dash=document.createElement('div'); dash.className='sec';
+  dash.innerHTML=`<div class="sec-hdr">Live-&Uuml;bersicht</div><div id="mentor-dashboard"></div>`;
+  c.appendChild(dash);
+
+  // Neues Szenario
+  const ns=document.createElement('div'); ns.className='sec';
+  ns.innerHTML=`<div class="sec-hdr">Neues Szenario</div>
+    <button class="btn btn-go" onclick="createMentorScenario()">+ Szenario im Architekten erstellen</button>
+    <div style="margin-top:10px">
+      <label style="font-size:10px;color:var(--text2)">Oder: Aktuellen Architekten-Park als Szenario speichern</label>
+      <div class="btn-row" style="margin-top:4px">
+        <input type="text" id="scen-name" placeholder="Szenario-Name" style="flex:1">
+        <button class="btn btn-go" onclick="saveMentorScenario()">Speichern</button>
+      </div>
+    </div>`;
+  c.appendChild(ns);
+
+  // Szenarien laden
+  if(scenarios.length){
+    const sl=document.createElement('div'); sl.className='sec';
+    sl.innerHTML='<div class="sec-hdr">Meine Szenarien <span class="count">'+scenarios.length+'</span></div>';
+    scenarios.forEach((s,i)=>{
+      const card=document.createElement('div'); card.className='scenario-card';
+      const data=btoa(JSON.stringify(s.park));
+      const url=location.href.split('#')[0]+'#park='+data;
+      const shortCode=data.slice(0,8).toUpperCase();
+      card.innerHTML=`<h3>${s.name}</h3>
+        <div class="meta">${Object.keys(s.park.plats).length} Plattf. | ${s.park.ropes.length} Seile | ${s.viols} Verstoesse</div>
+        <div class="code">KM-${shortCode}</div>
+        <div class="share-url" onclick="navigator.clipboard.writeText('${url}');this.style.borderColor='var(--ok)'">${url.slice(0,60)}...</div>
+        <div class="btn-row">
+          <button class="btn btn-go" onclick="loadMentorScenario(${i})">Laden</button>
+          <button class="btn btn-hint" onclick="deleteMentorScenario(${i})">Loeschen</button>
+        </div>`;
+      sl.appendChild(card);
+    });
+    c.appendChild(sl);
+  }
+
+  // Szenario importieren
+  const imp=document.createElement('div'); imp.className='sec';
+  imp.innerHTML=`<div class="sec-hdr">Szenario laden</div>
+    <div class="btn-row">
+      <input type="text" id="import-code" placeholder="URL oder Code einfuegen" style="flex:1">
+      <button class="btn btn-go" onclick="importScenario()">Laden</button>
+    </div>`;
+  c.appendChild(imp);
+
+  // Ergebnis pruefen
+  const ep=document.createElement('div'); ep.className='sec';
+  ep.innerHTML=`<div class="sec-hdr">Schueler-Ergebnis pruefen <span class="count">Langcode</span></div>
+    <textarea id="verify-code" placeholder="Langcode aus Schueler-Ergebnis einfuegen (Base64)" style="width:100%;min-height:60px;background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;resize:vertical"></textarea>
+    <div class="btn-row" style="margin-top:6px">
+      <button class="btn btn-go" onclick="verifyCode()">Pruefen &amp; in Klassenliste aufnehmen</button>
+    </div>
+    <div id="verify-result" style="margin-top:8px;font-size:12px"></div>`;
+  c.appendChild(ep);
+
+  // Lehrer-Roster (Klassenauswertung)
+  const lr=document.createElement('div'); lr.className='sec';
+  lr.innerHTML=`<div class="sec-hdr">Klassenauswertung <span class="count">Fehler-Heatmap</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:10px;color:var(--text2)">Filter:</label>
+      <select id="roster-filter" onchange="renderLehrerRoster();renderMentorDashboard()" style="background:var(--bg);border:1px solid var(--bg5);border-radius:4px;padding:5px 8px;color:var(--text);font-size:11px">
+        <option value="">Alle Klassen</option>
+      </select>
+      <span id="filter-info" style="font-size:10px;color:var(--text2)"></span>
+    </div>
+    <div id="lehrer-roster"></div>`;
+  c.appendChild(lr);
+  renderMentorDashboard();
+  renderLehrerRoster();
+}
+
+function setMentorKlassencode(){
+  const v=(document.getElementById('mentor-klassencode-inp')?.value||'').trim().toUpperCase();
+  localStorage.setItem('km-mentor-klassencode',v);
+  initMentor();
+}
+function genMentorKlassencode(){
+  const a='BCDFGHJKLMNPQRSTVWXZ', b='23456789';
+  const rnd=(s,n)=>Array.from({length:n},()=>s[Math.floor(Math.random()*s.length)]).join('');
+  const code=rnd(a,3)+rnd(b,2)+'-'+rnd(a,2)+rnd(b,1);
+  document.getElementById('mentor-klassencode-inp').value=code;
+  setMentorKlassencode();
+}
+
+function renderMentorDashboard(){
+  const c=document.getElementById('mentor-dashboard'); if(!c) return;
+  const roster=JSON.parse(localStorage.getItem('km-lehrer-roster')||'[]');
+  const mentorK=(localStorage.getItem('km-mentor-klassencode')||'').trim().toUpperCase();
+  const filt=document.getElementById('roster-filter')?.value||'';
+  const data=roster.filter(r=>!filt||(r.k||'').toUpperCase()===filt);
+
+  if(!data.length){
+    c.innerHTML='<div style="background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:20px;text-align:center;color:var(--text2);font-size:12px">Noch keine Ergebnisse in der Klassenliste.</div>';
+    return;
+  }
+  const n=data.length;
+  const avgPct=Math.round(data.reduce((s,r)=>s+(r.pct||0),0)/n);
+  const passed=data.filter(r=>(r.pct||0)>=RULES.PASS.bronze).length;
+  const passRate=Math.round(passed/n*100);
+  const best=[...data].sort((a,b)=>(b.pct||0)-(a.pct||0))[0];
+  const latest=[...data].sort((a,b)=>(b.ts||0)-(a.ts||0))[0];
+  const avgDur=Math.round(data.filter(r=>r.dur).reduce((s,r)=>s+r.dur,0)/Math.max(1,data.filter(r=>r.dur).length));
+  const avgDurStr=avgDur?`${Math.floor(avgDur/60)}:${String(avgDur%60).padStart(2,'0')}`:'—';
+  const sigOk=data.filter(r=>r._sigOk===true).length;
+  const sigBad=data.filter(r=>r._sigOk===false).length;
+  // Verpasst/Gefunden pro Regel
+  const ruleStats={C1:{hit:0,miss:0},D1:{hit:0,miss:0},B1:{hit:0,miss:0},F1:{hit:0,miss:0},E1:{hit:0,miss:0},G1:{hit:0,miss:0}};
+  data.forEach(r=>{
+    (r.hits||[]).forEach(h=>{const m=h.match(/(C1|D1|B1|F1|E1|G1)/);if(m)ruleStats[m[1]].hit++;});
+    (r.missed||[]).forEach(h=>{const m=h.match(/(C1|D1|B1|F1|E1|G1)/);if(m)ruleStats[m[1]].miss++;});
+  });
+
+  const latestPct=latest.pct||0;
+  const latestCol=latestPct>=90?'var(--gold)':latestPct>=80?'var(--text)':latestPct>=70?'var(--rope)':'var(--err)';
+  const avgCol=avgPct>=80?'var(--gold)':avgPct>=65?'var(--rope)':'var(--err)';
+  const passCol=passRate>=80?'var(--ok)':passRate>=50?'var(--gold)':'var(--err)';
+
+  c.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px">
+      <div class="stat"><div class="stat-val">${n}</div><div class="stat-lbl">Schueler${filt?` (${filt})`:' gesamt'}</div></div>
+      <div class="stat"><div class="stat-val" style="color:${avgCol}">${avgPct}%</div><div class="stat-lbl">&Oslash; Quote</div></div>
+      <div class="stat"><div class="stat-val" style="color:${passCol}">${passRate}%</div><div class="stat-lbl">Bestehensquote (&ge;${RULES.PASS.bronze}%)</div></div>
+      <div class="stat"><div class="stat-val">${avgDurStr}</div><div class="stat-lbl">&Oslash; Dauer</div></div>
+      <div class="stat"><div class="stat-val" style="color:${latestCol};font-size:14px;line-height:1.2">${latest.n||'?'}<br><span style="font-size:10px;color:var(--text2)">${new Date(latest.ts||0).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div><div class="stat-lbl">Letzte Einreichung (${latestPct}%)</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--gold);font-size:14px;line-height:1.2">${best.n||'?'}<br><span style="font-size:10px;color:var(--text2)">${best.pct}% &middot; ${best.pn||best.p}</span></div><div class="stat-lbl">Beste Leistung</div></div>
+      <div class="stat" style="${sigBad?'border:1px solid var(--err)':''}"><div class="stat-val" style="color:${sigBad?'var(--err)':'var(--ok)'};font-size:14px">${sigOk} &#10003; / ${sigBad} &#10007;</div><div class="stat-lbl">Signatur ok/falsch</div></div>
+    </div>
+    <div style="background:var(--bg3);border-radius:6px;padding:10px;margin-bottom:6px">
+      <div style="font-size:11px;font-weight:700;color:var(--rope);margin-bottom:6px">Trefferquote pro Regel</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">
+        ${Object.entries(ruleStats).map(([rule,s])=>{
+          const tot=s.hit+s.miss, q=tot?Math.round(s.hit/tot*100):0;
+          const col=q>=80?'var(--ok)':q>=50?'var(--gold)':'var(--err)';
+          return `<div style="text-align:center;padding:4px;background:var(--bg);border-radius:4px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2)">${rule}</div>
+            <div style="font-weight:700;color:${col};font-size:13px">${tot?q+'%':'—'}</div>
+            <div style="font-size:9px;color:var(--text2)">${s.hit}/${tot}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // Filter-Select fuellen
+  const sel=document.getElementById('roster-filter');
+  if(sel){
+    const klassen=[...new Set(roster.map(r=>(r.k||'').toUpperCase()).filter(Boolean))].sort();
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Alle Klassen ('+roster.length+')</option>'+
+      klassen.map(k=>`<option value="${k}"${k===cur?' selected':''}>${k} (${roster.filter(r=>(r.k||'').toUpperCase()===k).length})</option>`).join('');
+    const fi=document.getElementById('filter-info');
+    if(fi) fi.textContent=filt?`${data.length} Eintraege fuer "${filt}"`:`${roster.length} Eintraege gesamt`;
+  }
+}
+
+function createMentorScenario(){
+  archPark={plats:{S:[0,0,0]},ropes:[],objects:[]};
+  currentChallenge=null;
+  setTab('architekt');
+  renderArchitekt(document.getElementById('tab-architekt'));
+}
+
+function saveMentorScenario(){
+  const name=document.getElementById('scen-name')?.value||'Szenario';
+  if(Object.keys(archPark.plats).length<2||archPark.ropes.length<1){alert('Park braucht mind. 2 Plattformen und 1 Seil.');return;}
+  const rp=computeRopeProps(archPark);
+  const pairs=computePairProps(rp);
+  const objR=computeObjProps(archPark,rp);
+  let viols=0;
+  rp.forEach(r=>{if(!r.c1ok)viols++;if(!r.d1ok)viols++;});
+  pairs.forEach(p=>{if(p.e1fail)viols++;if(p.isIntersect)viols++;});
+  objR.forEach(o=>{if(o.onLine)viols++;if(!o.f1ok)viols++;});
+  const scenarios=JSON.parse(localStorage.getItem('km-mentor-scenarios')||'[]');
+  scenarios.push({name,park:JSON.parse(JSON.stringify(archPark)),viols,ts:Date.now()});
+  localStorage.setItem('km-mentor-scenarios',JSON.stringify(scenarios));
+  initMentor();
+}
+
+function loadMentorScenario(idx){
+  const scenarios=JSON.parse(localStorage.getItem('km-mentor-scenarios')||'[]');
+  if(!scenarios[idx]) return;
+  archPark=JSON.parse(JSON.stringify(scenarios[idx].park));
+  setTab('architekt');
+  renderArchitekt(document.getElementById('tab-architekt'));
+}
+
+function deleteMentorScenario(idx){
+  const scenarios=JSON.parse(localStorage.getItem('km-mentor-scenarios')||'[]');
+  scenarios.splice(idx,1);
+  localStorage.setItem('km-mentor-scenarios',JSON.stringify(scenarios));
+  initMentor();
+}
+
+function importScenario(){
+  const val=document.getElementById('import-code')?.value||'';
+  let data=val;
+  if(val.includes('#park=')) data=val.split('#park=')[1];
+  try{
+    const park=JSON.parse(atob(data));
+    if(!park.plats||!park.ropes) throw 'Invalid';
+    // Lade als Kontrollpark
+    const c=document.getElementById('tab-park');
+    const tempId='import-'+Date.now();
+    PARKS[tempId]={name:'Importiert',desc:'Importiertes Szenario.',plats:park.plats,ropes:park.ropes,objects:park.objects||[]};
+    setTab('park');
+    loadPark(tempId,c);
+  } catch(e){ alert('Ungueltiger Code.'); }
+}
+
+function decodeStudentCode(raw){
+  let s=(raw||'').trim();
+  if(s.startsWith('KM2-')||s.startsWith('KM3-')) return {_err:'kurzcode'};
+  s=s.replace(/\s+/g,'');
+  // v3: "base64.signatur"
+  let sig=null, b64=s;
+  if(s.includes('.')){[b64,sig]=s.split('.');}
+  try{
+    const json=decodeURIComponent(escape(atob(b64)));
+    const d=JSON.parse(json);
+    if(d && typeof d==='object' && 'p' in d){
+      // Signaturpruefung
+      if(sig){
+        const klasse=(d.k||'').trim().toUpperCase();
+        const expected=signPayload(json, klasse);
+        d._sigOk=(expected===sig);
+      } else {
+        d._sigOk=null; // keine Signatur (v2 oder unsigniert)
+      }
+      return d;
+    }
+  }catch(e){}
+  return null;
+}
+
+function verifyCode(){
+  const code=document.getElementById('verify-code')?.value||'';
+  const el=document.getElementById('verify-result');
+  const d=decodeStudentCode(code);
+  if(!d){
+    el.innerHTML='<span style="color:var(--err)">Ungueltiger Code. Bitte den LANGcode aus dem Schueler-Textfeld einfuegen.</span>';
+    return;
+  }
+  if(d._err==='kurzcode'){
+    el.innerHTML='<span style="color:var(--accent)">Nur Kurzcode erkannt. Bitte den LANGcode (Textfeld) einfuegen.</span>';
+    return;
+  }
+  // Signaturabgleich gegen gesetzten Lehrer-Klassencode
+  const mentorK=(localStorage.getItem('km-mentor-klassencode')||'').trim().toUpperCase();
+  let sigWarn='';
+  if(mentorK && d.k && mentorK!==d.k){
+    sigWarn=`<div style="background:rgba(255,94,91,.1);border:1px solid var(--err);border-radius:5px;padding:6px;margin-bottom:6px;font-size:11px;color:var(--err)">
+      Klasse stimmt NICHT mit aktiver Klasse "${mentorK}" ueberein (Code-Klasse: "${d.k}").</div>`;
+  }
+  if(d._sigOk===false){
+    sigWarn+=`<div style="background:rgba(255,94,91,.1);border:1px solid var(--err);border-radius:5px;padding:6px;margin-bottom:6px;font-size:11px;color:var(--err)">
+      Signatur UNGUELTIG — Code wurde manipuliert oder mit falschem Klassencode erzeugt.</div>`;
+  } else if(d._sigOk===null){
+    sigWarn+=`<div style="background:rgba(232,160,48,.1);border:1px solid var(--gold);border-radius:5px;padding:6px;margin-bottom:6px;font-size:11px;color:var(--gold)">
+      Code ohne Signatur (aelteres v2-Format oder kein Klassencode).</div>`;
+  } else if(d._sigOk===true){
+    sigWarn+=`<div style="background:rgba(107,203,119,.08);border:1px solid var(--ok);border-radius:5px;padding:6px;margin-bottom:6px;font-size:11px;color:var(--ok)">
+      Signatur gueltig &#10003; &mdash; Klasse "${d.k}"</div>`;
+  }
+  // In Roster speichern (sofern neu)
+  const roster=JSON.parse(localStorage.getItem('km-lehrer-roster')||'[]');
+  const rSig=(d.n||'?')+'|'+d.p+'|'+d.ts;
+  if(!roster.find(r=>r._sig===rSig)){
+    roster.push({...d,_sig:rSig,_imported:Date.now()});
+    localStorage.setItem('km-lehrer-roster',JSON.stringify(roster));
+  }
+  const ts=new Date(d.ts||Date.now());
+  const dauer=d.dur?`${Math.floor(d.dur/60)}:${String(d.dur%60).padStart(2,'0')}`:'—';
+  const mmss=dauer;
+  const stufe=d.pct>=90?'<span style="color:var(--gold)">Gold</span>':d.pct>=80?'<span style="color:var(--text)">Silber</span>':d.pct>=70?'<span style="color:var(--rope)">Bronze</span>':'<span style="color:var(--err)">nicht bestanden</span>';
+  el.innerHTML=sigWarn+`<div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:6px">
+    <div style="font-size:13px;font-weight:700;color:var(--text)">${d.n||'<i style=\"color:var(--text2)\">kein Name</i>'} &mdash; Park <b>${d.pn||d.p}</b></div>
+    <div style="font-size:11px;color:var(--text2);margin:4px 0">${ts.toLocaleString('de-DE')} &middot; Dauer ${mmss} &middot; ${stufe}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0">
+      <div class="stat" style="padding:6px"><div class="stat-val" style="font-size:16px">${d.f}/${d.t}</div><div class="stat-lbl">Gefunden</div></div>
+      <div class="stat" style="padding:6px"><div class="stat-val" style="font-size:16px;color:var(--err)">${(d.missed||[]).length}</div><div class="stat-lbl">Verpasst</div></div>
+      <div class="stat" style="padding:6px"><div class="stat-val" style="font-size:16px;color:var(--accent)">${(d.fp||[]).length}</div><div class="stat-lbl">Falsch</div></div>
+    </div>
+    ${(d.hits||[]).length?`<div style="font-size:11px;color:var(--ok);margin-top:6px"><b>Gefunden:</b> ${d.hits.join(' &middot; ')}</div>`:''}
+    ${(d.missed||[]).length?`<div style="font-size:11px;color:var(--err);margin-top:4px"><b>Verpasst:</b> ${d.missed.join(' &middot; ')}</div>`:''}
+    ${(d.fp||[]).length?`<div style="font-size:11px;color:var(--accent);margin-top:4px"><b>Falsch markiert:</b> ${d.fp.join(' &middot; ')}</div>`:''}
+  </div>`;
+  renderLehrerRoster();
+  renderMentorDashboard();
+}
+
+function renderLehrerRoster(){
+  const c=document.getElementById('lehrer-roster'); if(!c) return;
+  const filt=(document.getElementById('roster-filter')?.value||'').trim().toUpperCase();
+  const rosterAll=JSON.parse(localStorage.getItem('km-lehrer-roster')||'[]')
+    .sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const roster=filt?rosterAll.filter(r=>(r.k||'').toUpperCase()===filt):rosterAll;
+  if(!roster.length){c.innerHTML='<div style="font-size:11px;color:var(--text2);font-style:italic">'+(filt?`Keine Eintraege fuer Klasse "${filt}".`:'Noch keine Schuelercodes eingegeben.')+'</div>';return;}
+  // Aggregat: welche Verstoesse wurden am haeufigsten verpasst?
+  const missedCnt={}, hitCnt={}, fpCnt={};
+  roster.forEach(r=>{(r.missed||[]).forEach(m=>missedCnt[m]=(missedCnt[m]||0)+1);
+                     (r.hits||[]).forEach(h=>hitCnt[h]=(hitCnt[h]||0)+1);
+                     (r.fp||[]).forEach(f=>fpCnt[f]=(fpCnt[f]||0)+1);});
+  const topMissed=Object.entries(missedCnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topFp=Object.entries(fpCnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  let html=`<div style="font-size:11px;color:var(--text2);margin-bottom:6px">${roster.length} Eintraege${filt?` (Klasse ${filt})`:''}</div>`;
+  html+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead><tr style="background:var(--bg3);color:var(--text2)">
+      <th style="padding:6px 4px;text-align:left">Code</th>
+      <th style="padding:6px 4px;text-align:left">Klasse</th>
+      <th style="padding:6px 4px;text-align:left">Park</th>
+      <th style="padding:6px 4px;text-align:center">Quote</th>
+      <th style="padding:6px 4px;text-align:center">Gef.</th>
+      <th style="padding:6px 4px;text-align:center">Verp.</th>
+      <th style="padding:6px 4px;text-align:center">Falsch</th>
+      <th style="padding:6px 4px;text-align:center">Dauer</th>
+      <th style="padding:6px 4px;text-align:center">Sig</th>
+      <th style="padding:6px 4px"></th>
+    </tr></thead><tbody>`;
+  roster.forEach((r,i)=>{
+    const col=r.pct>=90?'var(--gold)':r.pct>=80?'var(--text)':r.pct>=70?'var(--rope)':'var(--err)';
+    const dauer=r.dur?`${Math.floor(r.dur/60)}:${String(r.dur%60).padStart(2,'0')}`:'—';
+    const sigIco=r._sigOk===true?'<span style="color:var(--ok)">&#10003;</span>':r._sigOk===false?'<span style="color:var(--err)">&#10007;</span>':'<span style="color:var(--text2)">-</span>';
+    html+=`<tr style="border-bottom:1px solid var(--bg3)">
+      <td style="padding:6px 4px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--diamond)">${r.n||'<i style=\"color:var(--text2)\">?</i>'}</td>
+      <td style="padding:6px 4px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:10px">${r.k||'—'}</td>
+      <td style="padding:6px 4px;color:var(--text2)">${r.pn||r.p}</td>
+      <td style="padding:6px 4px;text-align:center;color:${col};font-weight:700">${r.pct}%</td>
+      <td style="padding:6px 4px;text-align:center;color:var(--ok)">${(r.hits||[]).length}</td>
+      <td style="padding:6px 4px;text-align:center;color:var(--err)">${(r.missed||[]).length}</td>
+      <td style="padding:6px 4px;text-align:center;color:var(--accent)">${(r.fp||[]).length}</td>
+      <td style="padding:6px 4px;text-align:center;color:var(--text2);font-family:'JetBrains Mono',monospace">${dauer}</td>
+      <td style="padding:6px 4px;text-align:center">${sigIco}</td>
+      <td style="padding:6px 4px;text-align:center"><button class="btn btn-hint" style="padding:2px 8px;font-size:10px" onclick="deleteLehrerEntry('${r._sig||''}')">&#10005;</button></td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+
+  // Diagnostik
+  if(topMissed.length){
+    html+=`<div style="margin-top:14px;padding:10px;background:var(--bg3);border-radius:6px">
+      <div style="font-size:11px;font-weight:700;color:var(--err);margin-bottom:4px">Am haeufigsten verpasst</div>
+      ${topMissed.map(([k,v])=>`<div style="font-size:10px;color:var(--text2);padding:2px 0">${v}x &middot; ${k}</div>`).join('')}
+    </div>`;
+  }
+  if(topFp.length){
+    html+=`<div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:6px">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px">Haeufige Falschalarme</div>
+      ${topFp.map(([k,v])=>`<div style="font-size:10px;color:var(--text2);padding:2px 0">${v}x &middot; ${k}</div>`).join('')}
+    </div>`;
+  }
+
+  // Aktionen
+  html+=`<div class="btn-row" style="margin-top:12px;flex-wrap:wrap">
+    <button class="btn btn-go" onclick="exportLehrerCsv()">CSV exportieren</button>
+    <button class="btn btn-hint" onclick="printRoster()">Als PDF drucken</button>
+    <button class="btn btn-hint" onclick="if(confirm('Alle ${roster.length} Eintraege loeschen?')){localStorage.removeItem('km-lehrer-roster');renderLehrerRoster();renderMentorDashboard();}">Alle loeschen</button>
+  </div>`;
+  c.innerHTML=html;
+}
+
+function deleteLehrerEntry(sig){
+  const r=JSON.parse(localStorage.getItem('km-lehrer-roster')||'[]');
+  const idx=r.findIndex(x=>x._sig===sig);
+  if(idx<0) return;
+  r.splice(idx,1);
+  localStorage.setItem('km-lehrer-roster',JSON.stringify(r));
+  renderLehrerRoster();
+  renderMentorDashboard();
+}
+
+function printRoster(){
+  const filt=(document.getElementById('roster-filter')?.value||'').trim().toUpperCase();
+  let ph=document.querySelector('.print-header');
+  if(!ph){ph=document.createElement('div');ph.className='print-header';document.body.insertBefore(ph,document.body.firstChild);}
+  ph.textContent=`KletterMath Kontrollpark — Klassenauswertung${filt?' Klasse '+filt:''} — ${new Date().toLocaleDateString('de-DE')}`;
+  window.print();
+}
+
+function exportLehrerCsv(){
+  const r=JSON.parse(localStorage.getItem('km-lehrer-roster')||'[]')
+    .sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const rows=[['Code','Klasse','Park','Datum','Dauer(s)','Quote%','Gefunden','Verpasst','Falsch','SigOk','Hits','Missed','FP']];
+  r.forEach(e=>rows.push([
+    e.n||'',e.k||'',e.pn||e.p||'',new Date(e.ts||0).toISOString(),
+    e.dur||'',e.pct||'',
+    (e.hits||[]).length,(e.missed||[]).length,(e.fp||[]).length,
+    e._sigOk===true?'ok':e._sigOk===false?'INVALID':'—',
+    (e.hits||[]).join(';'),(e.missed||[]).join(';'),(e.fp||[]).join(';')
+  ]));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`kontrollpark-klasse-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════ */
+/* Zentrale Event-Delegation: ein Listener fuer alle data-action-Buttons.
+   Ersetzt onclick-Attribute fuer Tabs, Radio-Optionen, Check-Buttons, Tipp. */
+function installDelegator(){
+  document.addEventListener('click', e=>{
+    const t=e.target.closest('[data-action],[data-tab]');
+    if(!t) return;
+    if(t.dataset.tab){ setTab(t.dataset.tab); return; }
+    const act=t.dataset.action;
+    if(act==='radio-select'){ selRadio(t); }
+    else if(act==='check'){ doCheck(+t.dataset.idx); }
+    else if(act==='hint'){ showHint(+t.dataset.idx, t.dataset.rule); }
+  });
+}
+
+function init(){
+  installDelegator();
+  // Klassencode via URL-Parameter uebernehmen (?klasse=XXX)
+  const params=new URLSearchParams(location.search);
+  const urlKlasse=params.get('klasse');
+  if(urlKlasse){localStorage.setItem('km-klassencode',urlKlasse.trim().toUpperCase());}
+  // Check URL for imported park
+  const hash=location.hash;
+  if(hash.includes('#park=')){
+    try{
+      const park=JSON.parse(atob(hash.split('#park=')[1]));
+      if(park.plats&&park.ropes){
+        const tempId='shared-'+Date.now();
+        PARKS[tempId]={name:'Geteilter Park',desc:'Ein Mentor hat dir dieses Szenario geschickt.',plats:park.plats,ropes:park.ropes,objects:park.objects||[]};
+        loadPark(tempId,document.getElementById('tab-park'));
+        initDiamond();initMeta();initTransfer();initMentor();initArchitekt();
+        return;
+      }
+    }catch(e){}
+  }
+  loadPark('waldschlucht',document.getElementById('tab-park'));
+  initDiamond();
+  initMeta();
+  initTransfer();
+  initMentor();
+  initArchitekt();
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
