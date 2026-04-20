@@ -1,0 +1,20 @@
+name: Kontrollpark Test kp_list
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: kp_list.php abrufen
+        run: |
+          echo "=== Ungefiltert ==="
+          curl -sS -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_list.php" | \
+            python3 -m json.tool
+          echo ""
+          echo "=== Filter klasse=E2E-TEST ==="
+          curl -sS -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_list.php?klasse=E2E-TEST" | \
+            python3 -m json.tool
