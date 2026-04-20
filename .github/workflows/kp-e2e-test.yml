@@ -11,7 +11,7 @@ jobs:
         run: |
           CREATE=$(curl -sS -X POST -H "Content-Type: application/json" \
             -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
-            -d '{"klasse":"E2E-VAL-TEST","count":1,"labels":["TestUser"]}' \
+            -d '{"klasse":"E2E-VAL-TEST","count":1}' \
             "https://mrbl.4lima.de/klettermath-v6/api/kp_codes_create.php")
           echo "Create: $CREATE"
           CODE=$(echo "$CREATE" | grep -oP '"code":"\K[A-Z0-9-]+' | head -1)
