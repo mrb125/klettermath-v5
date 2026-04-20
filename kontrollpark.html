@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Kontrollpark v3.1 — 2026-04-20 — Inspektor-Modus: gefuehrte Check-Cards entfernt, stattdessen Regeln-Panel + einheitliches Meldeformular (Schueler findet Verstoesse selbst, kein Feedback, nur Lehrer sieht Auswertung) -->
+<!-- Kontrollpark v3.2 — 2026-04-20 — Server-Validierung: nur registrierte Codes duerfen einreichen; localStorage-Queue fuer Offline/Netzfehler mit Auto-Flush + Banner-Anzeige; Fehler-UI unterscheidet inhaltlich (Code/Klasse) vs. netzbedingt -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -292,11 +292,69 @@ const KP_API_BASE = (location.hostname==='localhost'||location.hostname==='127.0
 function kpApi(endpoint){ return KP_API_BASE ? KP_API_BASE+'/'+endpoint : null; }
 async function kpSubmit(payload, sig, sigOk){
   const url=kpApi('kp_submit.php'); if(!url) return {ok:false, skipped:true};
+  const body={...payload, sig, sig_ok:sigOk};
   try{
     const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({...payload, sig, sig_ok:sigOk})});
-    return await r.json();
-  }catch(e){ return {ok:false, error:e.message}; }
+      body:JSON.stringify(body)});
+    const json=await r.json();
+    if(!json.ok && !isContentError(json.error)){
+      // HTTP ok, aber Server sagt „Datenbankfehler" o.ä. → retry-würdig
+      kpQueueAdd(body, json.error||'Server');
+    }
+    return json;
+  }catch(e){
+    // Netzwerk-/CORS-Fehler → Queue
+    kpQueueAdd(body, e.message);
+    return {ok:false, error:e.message, queued:true};
+  }
+}
+
+function isContentError(msg){
+  if(!msg) return false;
+  return /nicht registriert|andere Klasse|Kein Schuelercode|Kein Body/i.test(msg);
+}
+
+/* localStorage-Queue fuer fehlgeschlagene Submissions.
+   Struktur: [{id, body, tries, lastError, addedAt}]
+   Wird beim Laden automatisch geflusht; Anzeige im Login-Banner. */
+const KP_QUEUE_KEY='km-kp-submit-queue';
+function kpQueueRead(){ try{return JSON.parse(localStorage.getItem(KP_QUEUE_KEY)||'[]');}catch(e){return [];} }
+function kpQueueWrite(q){ localStorage.setItem(KP_QUEUE_KEY, JSON.stringify(q)); }
+function kpQueueAdd(body, err){
+  const q=kpQueueRead();
+  q.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,6), body, tries:0, lastError:err, addedAt:Date.now()});
+  kpQueueWrite(q);
+  kpQueueUpdateUI();
+}
+async function kpQueueFlush(){
+  const url=kpApi('kp_submit.php'); if(!url) return;
+  let q=kpQueueRead();
+  if(!q.length) return;
+  const remaining=[];
+  for(const item of q){
+    try{
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item.body)});
+      const json=await r.json();
+      if(json.ok) continue; // erledigt
+      if(isContentError(json.error)) continue; // inhaltlicher Fehler — verwerfen, kein Retry moeglich
+      item.tries++; item.lastError=json.error||'Server';
+      remaining.push(item);
+    }catch(e){
+      item.tries++; item.lastError=e.message;
+      if(item.tries<10) remaining.push(item);
+    }
+  }
+  kpQueueWrite(remaining);
+  kpQueueUpdateUI();
+}
+function kpQueueUpdateUI(){
+  const el=document.getElementById('kp-queue-bar'); if(!el) return;
+  const q=kpQueueRead();
+  if(!q.length){ el.style.display='none'; return; }
+  el.style.display='';
+  el.innerHTML=`<span style="color:var(--accent)">⏳ ${q.length} Einreichung${q.length>1?'en':''} in Warteschlange</span>
+    <button class="btn btn-hint" style="padding:3px 8px;font-size:10px;margin-left:8px" onclick="kpQueueFlush()">Jetzt senden</button>
+    <button class="btn btn-hint" style="padding:3px 8px;font-size:10px;margin-left:4px" onclick="if(confirm('Warteschlange leeren? Daten gehen verloren.')){localStorage.removeItem('km-kp-submit-queue');kpQueueUpdateUI();}">Verwerfen</button>`;
 }
 async function kpFetchList(klasse){
   const url=kpApi('kp_list.php'); if(!url) return {ok:false, skipped:true};
@@ -697,9 +755,13 @@ function loadPark(parkId, container){
     <button class="btn btn-hint" style="padding:3px 8px;font-size:10px" onclick="askRegenerateCode()">Neu ziehen</button>
     <span style="color:var(--text2);margin-left:10px">Klasse:</span>
     <button class="btn btn-hint" style="padding:4px 10px" onclick="askKlassencode()"><b style="color:${studK?'var(--gold)':'var(--err)'}">${studK||'Kein Klassencode'}</b></button>
-    ${!studK?'<span style="color:var(--accent);margin-left:auto">Bitte Klassencode eintragen</span>':''}
+    ${!studK?'<span style="color:var(--accent)">Bitte Klassencode eintragen</span>':''}
+    <span style="font-size:10px;color:var(--text2)">Code muss von deiner Lehrkraft registriert sein.</span>
+    <span id="kp-queue-bar" style="margin-left:auto;display:none;font-size:11px"></span>
   `;
   container.appendChild(loginBar);
+  kpQueueUpdateUI();
+  kpQueueFlush();
 
   const rp=computeRopeProps(park);
   const pairs=computePairProps(rp);
@@ -1151,9 +1213,22 @@ function finishInspection(parkId,park,rp,pairs,objResults){
   kpSubmit(payload, sig, true).then(r=>{
     const st=document.getElementById('kp-submit-status-'+parkId);
     if(!st) return;
-    if(r.skipped){ st.innerHTML='<span style="color:var(--text2)">(Lokal, keine Backend-&Uuml;bertragung)</span>'; }
-    else if(r.ok){ st.innerHTML='<span style="color:var(--ok)">&#10003; An Lehrkraft &uuml;bermittelt (ID '+r.id+')</span>'; }
-    else { st.innerHTML='<span style="color:var(--err)">&#9888; Uebertragung fehlgeschlagen ('+(r.error||'Server')+'). Langcode fuer Lehrkraft kopieren.</span>'; }
+    if(r.skipped){
+      st.innerHTML='<span style="color:var(--text2)">(Lokal, keine Backend-&Uuml;bertragung)</span>';
+    } else if(r.ok){
+      st.innerHTML='<span style="color:var(--ok)">&#10003; An Lehrkraft &uuml;bermittelt (ID '+r.id+')</span>';
+    } else if(r.error && /nicht registriert|andere Klasse/i.test(r.error)){
+      // Inhaltlicher Fehler — Schueler muss Lehrkraft ansprechen
+      st.innerHTML='<div style="background:rgba(255,94,91,.1);border:1px solid var(--err);border-radius:6px;padding:10px;text-align:left">'
+        +'<b style="color:var(--err)">Nicht gespeichert:</b> '+r.error+'<br>'
+        +'<span style="font-size:10px;color:var(--text2)">Gib deiner Lehrkraft den Langcode aus dem Feld oben &mdash; damit wird dein Ergebnis manuell erfasst.</span></div>';
+    } else if(r.queued){
+      st.innerHTML='<div style="background:rgba(232,160,48,.08);border:1px solid var(--gold);border-radius:6px;padding:10px;text-align:left">'
+        +'<b style="color:var(--gold)">&#9888; Noch nicht gesendet</b> &mdash; Verbindung fehlt. Dein Ergebnis ist lokal gespeichert und wird beim naechsten Laden automatisch uebertragen.<br>'
+        +'<span style="font-size:10px;color:var(--text2)">Tipp: Im Login-Banner oben siehst du die Warteschlange und kannst manuell erneut senden.</span></div>';
+    } else {
+      st.innerHTML='<span style="color:var(--accent)">&#9888; &Uuml;bertragung fehlgeschlagen ('+(r.error||'Server')+'). Langcode f&uuml;r Lehrkraft kopieren.</span>';
+    }
   });
 
   const rb=document.getElementById('result-'+parkId);

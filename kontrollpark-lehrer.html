@@ -173,10 +173,15 @@ tbody td{padding:6px;border-bottom:1px solid var(--bg3)}
 
 <!-- 6. Submissions -->
 <div class="card">
-  <h2>Einzelergebnisse</h2>
+  <h2>Einzelergebnisse <span class="count" id="attempt-mode-info">bester Versuch</span></h2>
   <div class="row">
+    <label>Ansicht:</label>
+    <select id="attempt-mode" onchange="setAttemptMode(this.value)">
+      <option value="best">Nur bester Versuch pro Schüler</option>
+      <option value="all">Alle Versuche (Verlauf)</option>
+    </select>
     <button class="btn btn-hint" onclick="loadSubmissions()">Aktualisieren</button>
-    <button class="btn btn-hint" onclick="exportCsv()">Als CSV exportieren</button>
+    <button class="btn btn-hint" onclick="exportCsv()">Als CSV exportieren (aktuelle Ansicht)</button>
     <div class="spacer" style="flex:1"></div>
     <button class="btn btn-danger" onclick="deleteSubmissions()">Alle Ergebnisse dieser Klasse löschen</button>
   </div>
@@ -190,12 +195,55 @@ const API_BASE = 'https://mrbl.4lima.de/klettermath-v6/api';
 let state = {
   teacherKey: localStorage.getItem('kpl-teacher-key') || '',
   klasse:     localStorage.getItem('kpl-klasse')      || '',
+  attemptMode: localStorage.getItem('kpl-attempt-mode') || 'best', // 'best' oder 'all'
   codes:      [],
-  submissions:[],
+  submissions:[],       // gefilterte Sicht (abhängig von attemptMode)
+  submissionsAll:[],    // Rohdaten vom Server
   ruleStats:  {},
+  ruleStatsAll:{},
   topMissed:  {},
-  topFp:      {}
+  topMissedAll:{},
+  topFp:      {},
+  topFpAll:   {}
 };
+
+/* Wendet attemptMode auf die Rohdaten an und berechnet abgeleitete Aggregate neu.
+   'best' = pro student_code nur den Eintrag mit hoechstem pct (bei Gleichstand: neuster)
+   'all'  = alle Einreichungen */
+function applyAttemptMode(){
+  if(state.attemptMode==='all'){
+    state.submissions = state.submissionsAll;
+    state.ruleStats   = state.ruleStatsAll;
+    state.topMissed   = state.topMissedAll;
+    state.topFp       = state.topFpAll;
+    return;
+  }
+  // best: pro student_code besten Versuch (max pct, bei Gleichstand neuester created_at)
+  const byStudent = {};
+  state.submissionsAll.forEach(r=>{
+    const k=r.student_code||'?';
+    const cur=byStudent[k];
+    if(!cur || (r.pct|0) > (cur.pct|0) ||
+       ((r.pct|0)===(cur.pct|0) && new Date(r.created_at) > new Date(cur.created_at))){
+      byStudent[k]=r;
+    }
+  });
+  state.submissions = Object.values(byStudent).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  // Aggregate aus der gefilterten Liste neu berechnen
+  const rs={C1:{h:0,m:0},D1:{h:0,m:0},B1:{h:0,m:0},F1:{h:0,m:0},E1:{h:0,m:0},G1:{h:0,m:0}};
+  const missed={}, fp={};
+  state.submissions.forEach(r=>{
+    (r.hits||[]).forEach(h=>{const m=h.match(/(C1|D1|B1|F1|E1|G1)/);if(m)rs[m[1]].h++;});
+    (r.missed||[]).forEach(h=>{
+      const m=h.match(/(C1|D1|B1|F1|E1|G1)/);if(m)rs[m[1]].m++;
+      missed[h]=(missed[h]||0)+1;
+    });
+    (r.fp||[]).forEach(f=>{ fp[f]=(fp[f]||0)+1; });
+  });
+  state.ruleStats = rs;
+  state.topMissed = Object.fromEntries(Object.entries(missed).sort((a,b)=>b[1]-a[1]).slice(0,10));
+  state.topFp     = Object.fromEntries(Object.entries(fp).sort((a,b)=>b[1]-a[1]).slice(0,10));
+}
 
 async function api(path, opts={}){
   const url = API_BASE + '/' + path;
@@ -352,11 +400,13 @@ async function loadSubmissions(){
     document.getElementById('sub-table').innerHTML = `<div class="alert alert-warn">Keine Submissions geladen.</div>`;
     return;
   }
-  state.submissions = r.submissions || [];
-  state.ruleStats   = r.ruleStats   || {};
-  state.topMissed   = r.topMissed   || {};
-  state.topFp       = r.topFp       || {};
-  document.getElementById('sub-count').textContent = state.submissions.length + ' Einreichungen';
+  state.submissionsAll = r.submissions || [];
+  state.ruleStatsAll   = r.ruleStats   || {};
+  state.topMissedAll   = r.topMissed   || {};
+  state.topFpAll       = r.topFp       || {};
+  applyAttemptMode();
+  const tot=state.submissionsAll.length, cur=state.submissions.length;
+  document.getElementById('sub-count').textContent = cur+' / '+tot + ' Einreichungen';
   renderDashboard();
   renderSubmissionsTable();
   setStatus('Verbunden · ' + state.submissions.length + ' Einreichungen', 'var(--ok)');
@@ -486,9 +536,20 @@ function exportCsv(){
   a.click();
 }
 
+function setAttemptMode(mode){
+  state.attemptMode = mode;
+  localStorage.setItem('kpl-attempt-mode', mode);
+  document.getElementById('attempt-mode-info').textContent = mode==='best'?'bester Versuch':'alle Versuche';
+  applyAttemptMode();
+  renderDashboard();
+  renderSubmissionsTable();
+}
+
 // Init
 document.getElementById('teacher-key').value = state.teacherKey;
 document.getElementById('klasse-inp').value  = state.klasse;
+document.getElementById('attempt-mode').value = state.attemptMode;
+document.getElementById('attempt-mode-info').textContent = state.attemptMode==='best'?'bester Versuch':'alle Versuche';
 refreshClassDisplay();
 if(state.teacherKey) loadAll();
 </script>

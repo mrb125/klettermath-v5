@@ -26,6 +26,23 @@ if(!$studentCode){ echo json_encode(['ok'=>false,'error'=>'Kein Schuelercode']);
 
 try {
   $db = getDB();
+
+  // Server-seitige Validierung: Code muss von Lehrkraft angelegt sein
+  $chk = $db->prepare('SELECT class_code FROM km_kp_students WHERE student_code=?');
+  $chk->execute([$studentCode]);
+  $reg = $chk->fetch();
+  if(!$reg){
+    echo json_encode(['ok'=>false,'error'=>'Dein Code ist nicht registriert. Bitte frage deine Lehrkraft, ob der Code angelegt wurde.']);
+    exit;
+  }
+  // Klassenkonsistenz: wenn der Schueler einen Klassencode mitschickt, muss er zum
+  // registrierten Klassencode passen. Falls leer, uebernehmen wir den registrierten.
+  if($classCode && $reg['class_code'] && $reg['class_code'] !== $classCode){
+    echo json_encode(['ok'=>false,'error'=>'Dein Code gehoert zu einer anderen Klasse ('.$reg['class_code'].').']);
+    exit;
+  }
+  if(!$classCode) $classCode = $reg['class_code'];
+
   $stmt = $db->prepare('
     INSERT INTO km_kp_submissions
       (student_code, class_code, park_id, park_name, pct, found_count, total_count,
