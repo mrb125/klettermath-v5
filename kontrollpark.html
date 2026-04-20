@@ -1891,6 +1891,9 @@ function init(){
   initTransfer();
   initMentor();
   initArchitekt();
+  // Deep-Link via Hash: #mentor, #transfer, #architekt, #diamond, #meta
+  const h=location.hash.replace('#','');
+  if(['mentor','transfer','architekt','diamond','meta','park'].includes(h)) setTab(h);
 }
 
 document.addEventListener('DOMContentLoaded',init);

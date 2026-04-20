@@ -39,6 +39,32 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .menu-btn{background:none;border:1px solid var(--bg5);border-radius:5px;color:var(--text2);
           padding:5px 11px;cursor:pointer;font-size:16px;line-height:1;transition:all .15s}
 .menu-btn:hover{background:var(--bg4);color:var(--text)}
+.code-btn{background:none;border:1px solid var(--bg5);border-radius:5px;color:var(--text2);
+          padding:5px 11px;cursor:pointer;font-size:14px;line-height:1;transition:all .15s}
+.code-btn:hover{background:var(--bg4);color:var(--text)}
+.code-badge{background:rgba(232,160,48,.15);color:var(--gold);padding:2px 8px;border-radius:4px;font-size:11px;
+            font-family:'JetBrains Mono',monospace;font-weight:700}
+
+/* CODE MODAL */
+#code-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:center;
+            justify-content:center}
+#code-modal.open{display:flex}
+.code-box{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:28px;
+          width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px}
+.code-box h3{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--rope)}
+.code-box p{font-size:12px;color:var(--text2)}
+.code-box input{background:var(--bg);border:1px solid var(--bg5);border-radius:6px;padding:10px 12px;
+               color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center;
+               letter-spacing:3px;text-transform:uppercase}
+.code-box input:focus{outline:none;border-color:var(--rope)}
+.code-status{font-size:11px;color:var(--text2);text-align:center;min-height:20px}
+.code-status.ok{color:var(--ok)}
+.code-status.err{color:var(--err)}
+.code-btns{display:flex;gap:8px;justify-content:center}
+.code-btns button{padding:7px 16px;border-radius:6px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;
+                  font-weight:700;font-size:12px;transition:opacity .15s}
+.code-btn-submit{background:var(--rope);color:var(--bg)}
+.code-btn-close{background:var(--bg4);color:var(--text)}
 
 /* DRAWER */
 #drawer{position:fixed;top:0;right:0;bottom:0;width:370px;z-index:20;display:flex;
@@ -279,8 +305,10 @@ input.num-input{width:90px!important}
   <h1 style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--rope)">KletterMath <span style="font-size:12px;opacity:.5;letter-spacing:1px">v5</span></h1>
   <button class="phase-btn active" id="btn-missions" onclick="setPhase('missions')">Missionen</button>
   <button class="phase-btn locked" id="btn-tuev" onclick="tryTuev()">TÜV-Prüfung</button>
+  <a class="phase-btn" href="kontrollpark.html" target="_blank" rel="noopener" style="text-decoration:none" title="Inspektions-Training fuer starke Schueler (DSGVO-freundlich: pseudonyme Codes)">🔍 Kontrollpark</a>
   <span class="score-badge" id="score-badge">0/10</span>
   <div id="hdr-sp"></div>
+  <button class="code-btn" id="code-btn-hdr" onclick="openCodeModal()" title="Schülercodes">🔑</button>
   <button class="menu-btn" onclick="openComp()" title="Kompendium">📖</button>
   <button class="menu-btn" onclick="toggleDrawer()">☰</button>
 </div>
@@ -291,6 +319,20 @@ input.num-input{width:90px!important}
     <button class="close-btn" onclick="toggleDrawer()">✕</button>
   </div>
   <div id="drw-body"></div>
+</div>
+
+<!-- CODE MODAL -->
+<div id="code-modal">
+  <div class="code-box">
+    <h3>Schülercodes</h3>
+    <p>Gib deinen 6-stelligen Code ein, um deinen Fortschritt zu synchen:</p>
+    <input type="text" id="code-input" maxlength="6" placeholder="z.B. ABC123" onkeydown="if(event.key==='Enter')submitCode()">
+    <div class="code-status" id="code-status"></div>
+    <div class="code-btns">
+      <button class="code-btn-submit" onclick="submitCode()">✓ Anmelden</button>
+      <button class="code-btn-close" onclick="closeCodeModal()">✕ Schließen</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -460,7 +502,8 @@ const COMP=[
 const PARK_CONFIG = {
   A: [4, 1, 3]
 };
-const RULES = ['A1', 'C1', 'C3', 'D1', 'E1', 'B1', 'F1', 'G1']; // aktive Regeln — werden gemischt
+const RULES = ['A1', 'C1', 'C3', 'D1', 'E1', 'B1', 'F1', 'G1']; // Fallback — alle verfügbaren Regeln
+function getActiveRules(){ return (STATE.cfg.activeRules || RULES).filter(id=>RDEFS[id]); }
 
 /* ── Plattform-Varianten (pro Buchstabe wählbar) ──────────
    Verfügbare Varianten:
@@ -568,7 +611,7 @@ const APP = {
 
 const STATE = {
   d: { done: [] },
-  cfg: { unlocked: [], tuevForced: false }, // vom Lehrerbereich (km5-lehrer)
+  cfg: { unlocked: [], tuevForced: false, examMode: false, activeRules: null }, // vom Lehrerbereich (km5-lehrer)
   load(){
     try{ const s=localStorage.getItem('km5'); if(s) this.d=JSON.parse(s); }catch(e){}
     if(!this.d) this.d={done:[]};
@@ -577,9 +620,11 @@ const STATE = {
   },
   _loadCfg(){
     try{ const s=localStorage.getItem('km5-lehrer'); if(s) this.cfg=JSON.parse(s); }catch(e){}
-    if(!this.cfg) this.cfg={unlocked:[],tuevForced:false};
+    if(!this.cfg) this.cfg={};
     if(!this.cfg.unlocked) this.cfg.unlocked=[];
     if(this.cfg.tuevForced===undefined) this.cfg.tuevForced=false;
+    if(this.cfg.examMode===undefined) this.cfg.examMode=false;
+    if(!Array.isArray(this.cfg.activeRules)||this.cfg.activeRules.length===0) this.cfg.activeRules=null;
   },
   save(){ try{ localStorage.setItem('km5',JSON.stringify(this.d)); }catch(e){} },
   isDone(id){ return this.d.done.includes(id); },
@@ -590,9 +635,93 @@ const STATE = {
     return MISSIONS.some(m=>m.unlocks&&m.unlocks.includes(id)&&this.isDone(m.id));
   },
   isTuevUnlocked(){ return this.isDone(7) || this.cfg.tuevForced; },
-  complete(id){ if(!this.isDone(id)) this.d.done.push(id); this.save(); },
+  complete(id){ if(!this.isDone(id)) this.d.done.push(id); this.save(); syncProgress(); },
   reset(){ this.d={done:[]}; this.save(); }
 };
+
+/* ══════════════════════════════════════════════════════
+   SCHÜLERCODES & SYNC
+   ══════════════════════════════════════════════════════ */
+const SYNC_API = 'https://mrbl.4lima.de/klettermath-dashboard/api';
+
+function getStudentCode() { return localStorage.getItem('km5_code') || null; }
+function setStudentCode(code) { localStorage.setItem('km5_code', code); updateCodeBadge(); }
+
+function updateCodeBadge(){
+  const code=getStudentCode(), btn=document.getElementById('code-btn-hdr');
+  if(!btn)return;
+  if(code){
+    btn.textContent='🔑 '+code;
+    btn.classList.add('code-badge');
+  }else{
+    btn.textContent='🔑';
+    btn.classList.remove('code-badge');
+  }
+}
+
+function openCodeModal(){
+  const m=document.getElementById('code-modal');
+  if(m)m.classList.add('open');
+  const inp=document.getElementById('code-input');
+  if(inp){
+    inp.value=getStudentCode()||'';
+    inp.focus();
+  }
+}
+
+function closeCodeModal(){
+  const m=document.getElementById('code-modal');
+  if(m)m.classList.remove('open');
+}
+
+async function submitCode(){
+  const code=document.getElementById('code-input').value.trim().toUpperCase();
+  const status=document.getElementById('code-status');
+  if(code.length!==6){
+    status.innerHTML='<span style="color:var(--err)">Bitte 6-stelligen Code eingeben</span>';
+    return;
+  }
+  status.textContent='Validiere…';
+  try{
+    const res=await fetch(SYNC_API+'/validate.php',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code})
+    });
+    const data=await res.json();
+    if(data.valid){
+      setStudentCode(code);
+      status.innerHTML='<span style="color:var(--ok)">✓ Angemeldet! Klasse: '+data.class+'</span>';
+      setTimeout(closeCodeModal,1500);
+      syncProgress();
+    }else{
+      status.innerHTML='<span style="color:var(--err)">✗ Code ungültig</span>';
+    }
+  }catch(e){
+    status.innerHTML='<span style="color:var(--err)">Fehler beim Verbinden</span>';
+  }
+}
+
+async function syncProgress(){
+  const code=getStudentCode();
+  if(!code)return;
+  const missions=STATE.d.done||[];
+  const xp=missions.length*30;
+  try{
+    await fetch(SYNC_API+'/sync.php',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        code,
+        missions,
+        xp,
+        streak:0,
+        mastery:{},
+        errors:{}
+      })
+    });
+  }catch(e){}
+}
 
 function ropeKey(r){ return `${r.from}→${r.to}`; }
 function ropeVecByKey(key){
@@ -1560,7 +1689,7 @@ function makeStepCard(mId,idx,step,missionDone){
   const checkBtn=document.createElement('button'); checkBtn.className='btn-check'; checkBtn.textContent='Prüfen';
   checkBtn.onclick=()=>checkStep(mId,idx);
   btns.appendChild(checkBtn);
-  if(step.hint){
+  if(step.hint && !STATE.cfg.examMode){
     const hintBtn=document.createElement('button'); hintBtn.className='btn-hint-s'; hintBtn.textContent='Tipp';
     hintBtn.onclick=()=>hintBox.classList.toggle('show');
     btns.appendChild(hintBtn);
@@ -1726,7 +1855,7 @@ function renderComp(){
 function startTuev(){
   if(APP.ropes.length===0){ alert('Erst mindestens ein Seil spannen.'); return; }
   APP.tuevPhase='inspect';
-  APP.order=shuffle(RULES.filter(id=>RDEFS[id]));
+  APP.order=shuffle(getActiveRules());
   APP.results={}; APP.ruleRopes={}; APP.ruleScen={};
   updateProgBadge();
   renderDrawer();
@@ -2681,6 +2810,15 @@ function init(){
   applyMissionHighlight({platforms:[0,1,2,3,4,5,6,7],showRopes:false});
   renderDrawer();
   if(!drawerOpen) toggleDrawer();
+
+  // Code initialization
+  updateCodeBadge();
+  const params=new URLSearchParams(window.location.search);
+  const urlCode=params.get('code');
+  if(urlCode && urlCode.length===6){
+    setStudentCode(urlCode.toUpperCase());
+    syncProgress();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
