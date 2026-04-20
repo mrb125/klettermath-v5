@@ -1,0 +1,21 @@
+name: Kontrollpark DB Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tabelle km_kp_submissions anlegen
+        run: |
+          echo "Calling kp_setup.php..."
+          response=$(curl -sS -w "\nHTTP_STATUS:%{http_code}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_setup.php?key=${{ secrets.KM_TEACHER_KEY }}")
+          echo "$response"
+          status=$(echo "$response" | grep -oP 'HTTP_STATUS:\K[0-9]+')
+          if [ "$status" != "200" ]; then
+            echo "Setup fehlgeschlagen (HTTP $status)"
+            exit 1
+          fi
+          echo "Setup erfolgreich."
