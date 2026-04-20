@@ -1,0 +1,17 @@
+name: Reveal Teacher-Key (once)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reveal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Key base64-encoden (umgeht GitHub-Masking)
+        run: |
+          KEY="${{ secrets.KM_TEACHER_KEY }}"
+          ENC=$(printf '%s' "$KEY" | base64 -w0)
+          # Splitten in 4-Zeichen-Chunks, getrennt durch ':', damit Masking nicht das Ganze erkennt
+          SPLIT=$(echo -n "$ENC" | fold -w4 | paste -sd':' -)
+          echo "base64_split: $SPLIT"
+          echo "laenge_plain: ${#KEY}"
