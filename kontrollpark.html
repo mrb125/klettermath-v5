@@ -616,49 +616,49 @@ function computeObjProps(park,ropeProps){
 const PARKS={
   waldschlucht:{
     name:'Waldschlucht',
-    desc:'Ein Praktikant hat den Kletterpark geplant. Prufe alle Seile, Objekte und Seilpaare auf Regelverstoesze.',
-    plats:{S:[0,0,0],A:[5,2,3],B:[8,0,1],C:[3,6,5],D:[10,2,2],E:[0,3,7],F:[8,5,1],G:[6,4,3]},
+    desc:'Ein Praktikant hat den Kletterpark geplant. Finde heraus, welche Seile, Plattformen und Objekte gegen welche Regel verstoßen. Koordinaten können negativ sein.',
+    plats:{S:[-5,-3,0],A:[0,-1,3],B:[3,-3,1],C:[-2,3,5],D:[5,-1,2],E:[-5,0,7],F:[3,2,1],G:[1,1,3]},
     ropes:[
       {from:'S',to:'A'},{from:'A',to:'B'},{from:'A',to:'C'},{from:'S',to:'E'},
       {from:'B',to:'D'},{from:'G',to:'C'},{from:'D',to:'F'},{from:'E',to:'F'}
     ],
     objects:[
-      {id:'T1',label:'Baum',pos:[4,4,4]},
-      {id:'K1',label:'Kamera',pos:[12,5,0]},
-      {id:'T2',label:'Felsen',pos:[0,8,4]}
+      {id:'T1',label:'Baum',pos:[-1,1,4]},
+      {id:'K1',label:'Kamera',pos:[7,2,0]},
+      {id:'T2',label:'Felsen',pos:[-5,5,4]}
     ]
   },
   felsenriff:{
     name:'Felsenriff',
-    desc:'Schwieriger Park mit mehr Seilen und subtileren Verstoeszen. Zeitlimit empfohlen.',
-    plats:{S:[0,0,0],A:[3,1,4],B:[6,4,2],C:[2,5,1],D:[8,1,5],E:[4,7,3],F:[10,3,1],G:[1,3,6],H:[7,6,4]},
+    desc:'Schwieriger Park mit mehr Seilen und subtileren Verstößen. Koordinaten in allen 4 Quadranten.',
+    plats:{S:[-5,-4,0],A:[-2,-3,4],B:[1,0,2],C:[-3,1,1],D:[3,-3,5],E:[-1,3,3],F:[5,-1,1],G:[-4,-1,6],H:[2,2,4]},
     ropes:[
       {from:'S',to:'A'},{from:'S',to:'C'},{from:'A',to:'B'},{from:'A',to:'G'},
       {from:'B',to:'D'},{from:'B',to:'E'},{from:'C',to:'E'},{from:'D',to:'F'},
       {from:'E',to:'H'},{from:'G',to:'H'}
     ],
     objects:[
-      {id:'T1',label:'Baum',pos:[1.5,0.5,2]},
-      {id:'K1',label:'Kamera',pos:[7,2.5,3.5]},
-      {id:'T2',label:'Felsen',pos:[3,6,2]},
-      {id:'K2',label:'Laterne',pos:[5,5,2.5]}
+      {id:'T1',label:'Baum',pos:[-3.5,-3.5,2]},
+      {id:'K1',label:'Kamera',pos:[2,-1.5,3.5]},
+      {id:'T2',label:'Felsen',pos:[-2,2,2]},
+      {id:'K2',label:'Laterne',pos:[0,1,2.5]}
     ]
   },
   sturmgipfel:{
     name:'Sturmgipfel',
-    desc:'Hochkomplexer Park. Viele Paare pruefen, engmaschige Koordinaten. Fuer Experten.',
-    plats:{S:[0,0,0],A:[4,2,5],B:[7,1,2],C:[3,5,3],D:[10,4,6],E:[1,6,1],F:[8,3,0],G:[5,7,4],H:[2,0,6],I:[9,6,3]},
+    desc:'Hochkomplexer Park. Viele Paare prüfen, weitläufige negative und positive Koordinaten. Für Experten.',
+    plats:{S:[-4,-4,0],A:[0,-2,5],B:[3,-3,2],C:[-1,1,3],D:[6,0,6],E:[-3,2,1],F:[4,-1,0],G:[1,3,4],H:[-2,-4,6],I:[5,2,3]},
     ropes:[
       {from:'S',to:'A'},{from:'S',to:'H'},{from:'A',to:'B'},{from:'A',to:'C'},
       {from:'B',to:'F'},{from:'C',to:'E'},{from:'C',to:'G'},{from:'D',to:'I'},
       {from:'E',to:'G'},{from:'F',to:'D'},{from:'G',to:'I'},{from:'H',to:'E'}
     ],
     objects:[
-      {id:'T1',label:'Baum',pos:[2,1,2.5]},
-      {id:'K1',label:'Kamera',pos:[6,2,1]},
-      {id:'T2',label:'Felsen',pos:[4,6,3.5]},
-      {id:'K2',label:'Laterne',pos:[8,5,4.5]},
-      {id:'T3',label:'Busch',pos:[1,3,3.5]}
+      {id:'T1',label:'Baum',pos:[-2,-3,2.5]},
+      {id:'K1',label:'Kamera',pos:[2,-2,1]},
+      {id:'T2',label:'Felsen',pos:[0,2,3.5]},
+      {id:'K2',label:'Laterne',pos:[4,1,4.5]},
+      {id:'T3',label:'Busch',pos:[-3,-1,3.5]}
     ]
   }
 };
