@@ -1,0 +1,21 @@
+name: Kontrollpark Test-Daten entfernen
+
+on:
+  workflow_dispatch:
+    inputs:
+      klasse:
+        description: 'Klassencode zum Loeschen (z.B. E2E-TEST)'
+        required: true
+        default: 'E2E-TEST'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submissions einer Klasse loeschen
+        run: |
+          echo "Loesche alle Submissions mit Klasse '${{ inputs.klasse }}'..."
+          curl -sS -X GET \
+            -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_delete.php?klasse=${{ inputs.klasse }}"
+          echo ""
