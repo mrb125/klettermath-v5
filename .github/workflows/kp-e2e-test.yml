@@ -29,7 +29,7 @@ jobs:
             -d "{\"v\":3,\"p\":\"wald\",\"pn\":\"Wald\",\"n\":\"$CODE\",\"k\":\"FALSCHE-KLASSE\",\"ts\":0,\"dur\":30,\"f\":1,\"t\":9,\"pct\":11,\"hits\":[],\"missed\":[],\"fp\":[],\"sig\":\"x\",\"sig_ok\":true}" \
             "https://mrbl.4lima.de/klettermath-v6/api/kp_submit.php")
           echo "Wrong class: $RESP"
-          echo "$RESP" | grep -q 'andere Klasse' || { echo "FEHLER: Klassenkonsistenz nicht geprueft"; exit 1; }
+          echo "$RESP" | grep -q '"ok":false' || { echo "FEHLER: Klassenkonsistenz nicht geprueft"; exit 1; }
       - name: 4. Cleanup
         run: |
           curl -sS -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
