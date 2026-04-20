@@ -1,0 +1,39 @@
+name: Kontrollpark E2E Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Code anlegen (erwarte KP-XXXX in Response)
+        run: |
+          CREATE=$(curl -sS -X POST -H "Content-Type: application/json" \
+            -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
+            -d '{"klasse":"E2E-VAL-TEST","count":1,"labels":["TestUser"]}' \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_codes_create.php")
+          echo "Create: $CREATE"
+          CODE=$(echo "$CREATE" | grep -oP '"code":"\K[A-Z0-9-]+' | head -1)
+          echo "CODE=$CODE" >> $GITHUB_ENV
+      - name: 2. Submission mit registriertem Code (erwarte ok)
+        run: |
+          RESP=$(curl -sS -X POST -H "Content-Type: application/json" \
+            -d "{\"v\":3,\"p\":\"wald\",\"pn\":\"Wald\",\"n\":\"$CODE\",\"k\":\"E2E-VAL-TEST\",\"ts\":0,\"dur\":30,\"f\":1,\"t\":9,\"pct\":11,\"hits\":[\"A: C1\"],\"missed\":[],\"fp\":[],\"sig\":\"x\",\"sig_ok\":true}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_submit.php")
+          echo "Registered submit: $RESP"
+          echo "$RESP" | grep -q '"ok":true' || { echo "FEHLER: Registrierter Code wurde abgelehnt!"; exit 1; }
+      - name: 3. Submission mit FALSCHER Klasse (erwarte Fehler)
+        run: |
+          RESP=$(curl -sS -X POST -H "Content-Type: application/json" \
+            -d "{\"v\":3,\"p\":\"wald\",\"pn\":\"Wald\",\"n\":\"$CODE\",\"k\":\"FALSCHE-KLASSE\",\"ts\":0,\"dur\":30,\"f\":1,\"t\":9,\"pct\":11,\"hits\":[],\"missed\":[],\"fp\":[],\"sig\":\"x\",\"sig_ok\":true}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_submit.php")
+          echo "Wrong class: $RESP"
+          echo "$RESP" | grep -q 'andere Klasse' || { echo "FEHLER: Klassenkonsistenz nicht geprueft"; exit 1; }
+      - name: 4. Cleanup
+        run: |
+          curl -sS -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_delete.php?klasse=E2E-VAL-TEST"
+          curl -sS -H "X-Teacher-Key: ${{ secrets.KM_TEACHER_KEY }}" \
+            "https://mrbl.4lima.de/klettermath-v6/api/kp_codes_delete.php?klasse=E2E-VAL-TEST"
+          echo "Cleanup ok"
