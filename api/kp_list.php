@@ -25,29 +25,31 @@ try {
     $stmt->execute();
   }
   $rows = $stmt->fetchAll();
-  foreach($rows as &$r){
-    $r['hits']   = json_decode($r['hits_json']   ?? '[]', true) ?? [];
-    $r['missed'] = json_decode($r['missed_json'] ?? '[]', true) ?? [];
-    $r['fp']     = json_decode($r['fp_json']     ?? '[]', true) ?? [];
-    unset($r['hits_json'], $r['missed_json'], $r['fp_json']);
-  }
-  // Aggregat: haeufigste verpasste / falsch markierte Regeln
+  // Einzel-Loop: dekodieren UND aggregieren in einem Durchgang (kein reference-bug)
   $missedAgg=[]; $fpAgg=[]; $ruleStats=[
     'C1'=>['h'=>0,'m'=>0], 'D1'=>['h'=>0,'m'=>0], 'B1'=>['h'=>0,'m'=>0],
     'F1'=>['h'=>0,'m'=>0], 'E1'=>['h'=>0,'m'=>0], 'G1'=>['h'=>0,'m'=>0]
   ];
+  $out = [];
   foreach($rows as $r){
-    foreach($r['missed'] as $m){
+    $hits   = json_decode($r['hits_json']   ?? '[]', true) ?: [];
+    $missed = json_decode($r['missed_json'] ?? '[]', true) ?: [];
+    $fp     = json_decode($r['fp_json']     ?? '[]', true) ?: [];
+    foreach($hits as $h){
+      if(preg_match('/(C1|D1|B1|F1|E1|G1)/', $h, $mm)) $ruleStats[$mm[1]]['h']++;
+    }
+    foreach($missed as $m){
       $missedAgg[$m] = ($missedAgg[$m] ?? 0) + 1;
       if(preg_match('/(C1|D1|B1|F1|E1|G1)/', $m, $mm)) $ruleStats[$mm[1]]['m']++;
     }
-    foreach($r['fp'] as $f){
+    foreach($fp as $f){
       $fpAgg[$f] = ($fpAgg[$f] ?? 0) + 1;
     }
-    foreach($r['hits'] as $h){
-      if(preg_match('/(C1|D1|B1|F1|E1|G1)/', $h, $mm)) $ruleStats[$mm[1]]['h']++;
-    }
+    unset($r['hits_json'], $r['missed_json'], $r['fp_json']);
+    $r['hits']=$hits; $r['missed']=$missed; $r['fp']=$fp;
+    $out[] = $r;
   }
+  $rows = $out;
   arsort($missedAgg); arsort($fpAgg);
 
   echo json_encode([
