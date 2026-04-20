@@ -794,18 +794,7 @@
   </style>
 </head>
 <body>
-  <!-- LOGIN SCREEN -->
-  <div id="login-screen">
-    <div class="login-box">
-      <h1>KletterMath v5</h1>
-      <div class="form-group">
-        <label for="password">Lehrerpasswort</label>
-        <input type="password" id="password" placeholder="Passwort eingeben">
-      </div>
-      <button class="login-btn" onclick="handleLogin()">Anmelden</button>
-      <div class="login-error" id="login-error">Falsches Passwort</div>
-    </div>
-  </div>
+  <!-- LOGIN SCREEN entfernt — offener Zugriff -->
 
   <!-- MAIN APP -->
   <div id="app" style="display:none;">
@@ -813,7 +802,6 @@
     <div id="header">
       <h1>🏔️ KletterMath v5 Lehrerdashboard</h1>
       <div class="header-spacer"></div>
-      <button class="logout-btn" onclick="handleLogout()">Abmelden</button>
     </div>
 
     <!-- MAIN CONTAINER -->
@@ -1374,39 +1362,16 @@ H(0,5,3) K(4,6,2) E(7,2,0)<br>
     }
 
     function checkSession() {
-      const isAuthenticated = sessionStorage.getItem('km5-lehrer-auth') === 'true';
-      if (!isAuthenticated) {
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('app').style.display = 'none';
-      } else {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
-        refreshStudents();
-      }
+      // Lehrer-Login entfernt — direkter Zugriff
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      refreshStudents();
     }
 
     // ════════════════════════════════════════════════════════════
     // LOGIN/LOGOUT
     // ════════════════════════════════════════════════════════════
-    function handleLogin() {
-      const pwd = document.getElementById('password').value;
-      if (pwd === TEACHER_PASSWORD) {
-        sessionStorage.setItem('km5-lehrer-auth', 'true');
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
-        refreshStudents();
-      } else {
-        document.getElementById('login-error').classList.add('show');
-        setTimeout(() => {
-          document.getElementById('login-error').classList.remove('show');
-        }, 3000);
-      }
-    }
-
-    function handleLogout() {
-      sessionStorage.removeItem('km5-lehrer-auth');
-      location.reload();
-    }
+    // Login/Logout entfernt
 
     // ════════════════════════════════════════════════════════════
     // NAVIGATION
