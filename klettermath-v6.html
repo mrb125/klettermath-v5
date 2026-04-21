@@ -429,8 +429,7 @@ input.num-input{width:90px!important}
 
 <div id="hdr">
   <h1 style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--rope)">KletterMath <span style="font-size:12px;opacity:.5;letter-spacing:1px">v6</span></h1>
-  <button class="phase-btn active" id="btn-regelsetup" onclick="setPhase('regelsetup')">Regeln</button>
-  <button class="phase-btn" id="btn-warmup" onclick="setPhase('warmup')">Warmup</button>
+  <button class="phase-btn active" id="btn-warmup" onclick="setPhase('warmup')">Warmup</button>
   <button class="phase-btn" id="btn-growth" onclick="setPhase('growth')">Park</button>
   <button class="phase-btn" id="btn-sandbox" onclick="setPhase('sandbox')">Sandbox</button>
   <button class="phase-btn locked" id="btn-analyse" onclick="setPhase('analyse')">Analyse</button>
@@ -4684,10 +4683,13 @@ function init(){
 
   updateProgBadge();
 
-  // Determine starting phase based on progress
+  // Determine starting phase based on progress — start direkt mit Warmup
+  // Default-Regelreihenfolge setzen, damit Warmup/Park-Phasen nicht blockieren
   if(APP.ruleOrder.length===0){
-    APP.phase='regelsetup';
-  } else if(!APP.warmupDone){
+    APP.ruleOrder = ['V1','C1','SA1'];
+    STATE.saveRuleOrder(APP.ruleOrder);
+  }
+  if(!APP.warmupDone){
     APP.phase='warmup';
     if(APP.ropes.length===0) setupWarmupPark();
   } else {
