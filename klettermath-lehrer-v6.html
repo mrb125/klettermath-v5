@@ -388,8 +388,17 @@ async function loadAll(){
       apiFetch('dashboard.php'),
       apiFetch('codes.php')
     ]);
-    _data.students = dash.ok ? dash.students : [];
-    _data.codes    = codes.ok ? codes.codes : [];
+    // API liefert class_name/missions/last_active — Frontend erwartet class/missions_done/last_sync
+    _data.students = (dash.ok ? dash.students : []).map(s => ({
+      ...s,
+      class: s.class_name || s.class || '',
+      missions_done: Array.isArray(s.missions) ? s.missions.length : (s.progress || 0),
+      last_sync: s.last_active || s.last_sync || null
+    }));
+    _data.codes = (codes.ok ? codes.codes : []).map(c => ({
+      ...c,
+      class: c.class_name || c.class || ''
+    }));
     _lastFetch = new Date();
     renderOverview();
     renderStudents();
@@ -524,9 +533,10 @@ async function doCreate(){
       method:'POST', body: JSON.stringify({action:'create',class:cls,count})
     });
     if(!d.ok){ err.textContent = d.error||'Fehler'; return; }
-    const newCodes = d.codes;
+    // codes.php liefert {ok:true, created:[<codeString>, ...]} — Strings, keine Objekte
+    const newCodes = (d.created||[]).map(code => ({code, class: cls, class_name: cls, active: 1}));
     // update local data
-    _data.codes = [...newCodes.map(c=>({...c,active:true})), ..._data.codes];
+    _data.codes = [...newCodes, ..._data.codes];
     renderCodes();
     // show generated
     document.getElementById('generated-section').style.display = '';
@@ -537,7 +547,7 @@ async function doCreate(){
         ${c.code}
         <div class="code-chip-cls">${c.class||cls}</div>
       </div>`).join('');
-    toast(`${count} Codes für ${cls} erstellt`);
+    toast(`${newCodes.length} Codes für ${cls} erstellt`);
   } catch(e){
     err.textContent = 'Verbindungsfehler';
   }

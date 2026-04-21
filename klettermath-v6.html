@@ -319,10 +319,10 @@ input.num-input{width:90px!important}
            color:var(--rope);line-height:1;text-shadow:0 0 60px rgba(200,131,58,.4)}
 .wlc-sub{font-size:17px;font-weight:700;color:var(--text);letter-spacing:.5px;margin-top:-4px}
 .wlc-desc{font-size:14px;color:var(--text2);line-height:1.65;max-width:340px}
-.wlc-code-input{background:var(--bg);border:2px solid var(--bg5);border-radius:10px;
-                padding:18px 28px;color:var(--text);font-family:'JetBrains Mono',monospace;
-                font-size:30px;text-align:center;letter-spacing:10px;text-transform:uppercase;
-                width:270px;transition:border-color .2s;margin-top:6px}
+.wlc-code-input{background:var(--bg);border:2px solid var(--bg5);border-radius:14px;
+                padding:26px 36px;color:var(--text);font-family:'JetBrains Mono',monospace;
+                font-size:44px;text-align:center;letter-spacing:14px;text-transform:uppercase;
+                width:400px;max-width:90vw;transition:border-color .2s;margin-top:10px}
 .wlc-code-input:focus{outline:none;border-color:var(--rope);box-shadow:0 0 0 4px rgba(200,131,58,.15)}
 .wlc-code-err{font-size:13px;min-height:20px;margin-top:-4px}
 .btn-wlc-start{background:var(--rope);color:var(--bg);border:none;padding:16px 52px;
@@ -799,7 +799,7 @@ const STATE = {
     if(!Array.isArray(this.cfg.scenarios)) this.cfg.scenarios=[];
     if(!Array.isArray(this.cfg.activeRules)||this.cfg.activeRules.length===0) this.cfg.activeRules=null;
   },
-  save(){ try{ localStorage.setItem('km6',JSON.stringify(this.d)); }catch(e){} },
+  save(){ try{ localStorage.setItem('km6',JSON.stringify(this.d)); }catch(e){} if(typeof scheduleSync==='function') scheduleSync(); },
   isWarmupDone(){ return this.d.warmupDone; },
   isParkComplete(){ return this.d.parkComplete; },
   isAbnahmeUnlocked(){ return this.cfg.abnahmeUnlocked; },
@@ -876,22 +876,56 @@ async function submitCode(){
 async function syncProgress(){
   const code=getStudentCode();
   if(!code)return;
-  const missions=STATE.d.done||[];
-  const xp=missions.length*30;
+  const d=STATE.d||{};
+  // ── v6-Diagnose: relevante Fortschritts- und Prüfdaten (ohne ruleOrder) ──
+  const mastery = {
+    warmupDone:         !!d.warmupDone,
+    warmupPhase:        APP.warmupPhase || null,
+    warmupChecked:      APP.warmupChecked      || {},
+    warmupGrenzChecked: APP.warmupGrenzChecked || {},
+    warmupFehlerDone:   APP.warmupFehlerDone   || {},
+    warmupRepairDone:   APP.warmupRepairDone   || {},
+    parkComplete:       !!d.parkComplete,
+    platforms:          d.platforms || {},
+    ropes:              d.ropes     || [],
+    protokoll:          d.protokoll || {},
+  };
+  const errors = d.schwaechen || {};
+  // Fortschritts-XP: aus tatsächlichen v6-Events
+  let xp = 0;
+  if(d.warmupDone)    xp += 100;
+  if(d.parkComplete)  xp += 100;
+  xp += Object.keys(APP.warmupFehlerDone   || {}).length * 20;
+  xp += Object.keys(APP.warmupRepairDone   || {}).length * 20;
+  // korrekt identifizierte Regelverstöße zählen
+  const countCorrect = (m)=>{
+    let n=0;
+    for(const rk in m){ for(const rid in m[rk]){ if(m[rk][rid]?.correct) n++; } }
+    return n;
+  };
+  xp += countCorrect(APP.warmupChecked      || {}) * 5;
+  xp += countCorrect(APP.warmupGrenzChecked || {}) * 5;
   try{
     await fetch(SYNC_API+'/sync.php',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         code,
-        missions,
+        missions: d.done||[],
         xp,
         streak:0,
-        mastery:{},
-        errors:{}
+        mastery,
+        errors
       })
     });
   }catch(e){}
+}
+
+// ── Auto-Sync: nach STATE.save() und nach Warmup-Prüfungen (debounced) ──
+let _syncTimer = null;
+function scheduleSync(){
+  if(_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(()=>{ syncProgress(); }, 1500);
 }
 
 /* ── Lehrer-API ────────────────────────────────────── */
@@ -901,7 +935,9 @@ async function teacherFetch(endpoint, body=null){
   const opts = { method: body?'POST':'GET', headers: {'Content-Type':'application/json','X-Teacher-Key':_teacherKey} };
   if(body) opts.body = JSON.stringify(body);
   const res = await fetch(SYNC_API+'/'+endpoint, opts);
-  return res.json();
+  const txt = await res.text();
+  try { return JSON.parse(txt); }
+  catch(e){ return {ok:false, error:`HTTP ${res.status}: ${txt.slice(0,200)}`}; }
 }
 
 async function openTeacherPanel(){
@@ -2073,16 +2109,17 @@ function buildDrawerRegelsetup(){
    DRAWER — PHASE 2: WARMUP (3 Plattformen + Prüfprotokoll)
    ══════════════════════════════════════════════════════ */
 /* ── Warmup-Plattformen (3 Plattformen, je eine Regel fällt durch) ──
-   S im Ursprung (0,0,0). Seile gehen nach unten (dz<0) oder hoch (V1-Test).
-   S→W1: V1 ✓, C1 ✗ (|d|=√21≈4.58 > 4),  SA1 ✗ (z_S=0<2)
-   S→W2: V1 ✗ (geht hoch, dz=+1),  C1 ✓,    SA1 ✗ (z_S=0<2)
-   S→W3: V1 ✓, C1 ✓,  SA1 ✗ (z_S=0<2 & horiz=√8≈2.83<3)
+   S im Ursprung (0,0,0). Plattformen liegen bewusst auch in NEGATIVEN
+   x1/x2-Bereichen (Warmup zeigt: Koordinaten dürfen negativ sein).
+   S→W1: V1 ✓ (dz=+1), C1 ✗ (|d|=√21≈4.58 > 4),  SA1 ✗ (z_S=0<2)  [neg x, neg y]
+   S→W2: V1 ✗ (geht hoch, dz=+2),  C1 ✓,         SA1 ✗ (z_S=0<2)  [neg y]
+   S→W3: V1 ✓, C1 ✓,  SA1 ✗ (z_S=0<2 & horiz=√8≈2.83<3)          [neg x]
    ────────────────────────────────────────────────────────────── */
 const WARMUP_PLATS = {
-  S:  {x:0, y:0, z:0, fixed:true},
-  W1: {x:4, y:2, z:1, fixed:true},  // dz=+1 → V1 fail; |d|=√21≈4.58 → C1 fail
-  W2: {x:2, y:1, z:2, fixed:true},  // dz=+2 → V1 fail; |d|=√9=3 ≤ 4 → C1 pass
-  W3: {x:2, y:2, z:1, fixed:true},  // dz=+1 → V1 fail; |d|=√9=3 ≤ 4 → C1 pass; SA1 fail
+  S:  {x:0,  y:0,  z:0, fixed:true},
+  W1: {x:-4, y:-2, z:1, fixed:true},  // NEG x,y: dz=+1 → V1 fail; |d|=√21≈4.58 → C1 fail
+  W2: {x:2,  y:-1, z:2, fixed:true},  // NEG y:   dz=+2 → V1 fail; |d|=√9=3 ≤ 4 → C1 pass
+  W3: {x:-2, y:2,  z:1, fixed:true},  // NEG x:   dz=+1 → V1 fail; |d|=√9=3 ≤ 4 → C1 pass; SA1 fail
 };
 const WARMUP_ROPES = [
   {from:'S', to:'W1', type:'seil'},
@@ -2876,6 +2913,7 @@ function submitWarmupCheck(rKey, rope, rid, d, sv, av){
   const checkedMap=isGrenz?APP.warmupGrenzChecked:APP.warmupChecked;
   if(!checkedMap[rKey]) checkedMap[rKey]={};
   checkedMap[rKey][rid]={correct:ok};
+  if(typeof scheduleSync==='function') scheduleSync();
 
   const ropesRef=isGrenz?WARMUP_GRENZ_ROPES:WARMUP_ROPES;
   generateWarmupSuggestion(rKey, rid, ok, ropesRef, checkedMap, violRef);
@@ -4689,8 +4727,18 @@ function init(){
     return;
   }
 
-  // Start screen: direkt Welcome (Code-Eingabe nur noch via 🔑-Button im Header)
-  _showWelcome();
+  // Start screen: Code-Eingabe zuerst; wenn Schüler schon eingeloggt → direkt Welcome
+  if(getStudentCode()){
+    _showWelcome();
+  } else {
+    _showCodeScreen();
+  }
+}
+
+function _showCodeScreen(){
+  document.getElementById('s-code').classList.remove('hidden');
+  document.getElementById('s-welcome').classList.add('hidden');
+  setTimeout(()=>document.getElementById('wlc-code-input')?.focus(),80);
 }
 
 /* ══════════════════════════════════════════════════════
