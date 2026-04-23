@@ -1853,7 +1853,11 @@ function renderDrawer(){
    ══════════════════════════════════════════════════════ */
 function buildDrawerPark(){
   const frag = document.createDocumentFragment();
+  const mode = APP.growthMode; // 'plat' | 'rope' | undefined
+  const showPlat = mode!=='rope';
+  const showRope = mode!=='plat';
 
+  if(showPlat){
   // ── Plattform-Typen Palette ──
   const platTypeSec = document.createElement('div');
   platTypeSec.className = 'sec';
@@ -1887,6 +1891,7 @@ function buildDrawerPark(){
     </div>
     <button class="btn btn-s" style="font-size:11px" onclick="addPlat()">+ Manuell setzen</button>`;
   frag.appendChild(addSec);
+  } // ende showPlat
 
   // ── Plattform-Liste ──
   const platSec = document.createElement('div');
@@ -1903,18 +1908,27 @@ function buildDrawerPark(){
   }
   frag.appendChild(platSec);
 
-  // ── Seil spannen ──
+  if(showRope){
+  // ── Seil / Brücke spannen ──
   const platIds = Object.keys(APP.plats);
   const opts = platIds.map(id=>`<option value="${id}">${id}</option>`).join('');
   const ropeSec = document.createElement('div');
   ropeSec.className = 'sec';
-  ropeSec.innerHTML = `<div class="sec-title">🔗 Seil spannen</div>
+  ropeSec.innerHTML = `<div class="sec-title">🔗 Seil / Brücke spannen</div>
     <div class="row">
       <label>Von</label><select id="rope-from">${opts}</select>
       <label>→ Zu</label><select id="rope-to">${opts}</select>
     </div>
+    <div class="row" style="margin-top:4px">
+      <label>Typ</label>
+      <select id="rope-type" style="background:var(--bg4);color:var(--text);border:1px solid var(--bg5);border-radius:4px;padding:3px 6px;font-size:12px">
+        <option value="seil">Seil (abwärts)</option>
+        <option value="brücke">Brücke (aufwärts)</option>
+      </select>
+    </div>
     <button class="btn btn-p" onclick="addRope()">Spannen</button>`;
   frag.appendChild(ropeSec);
+  } // ende showRope
 
   // ── Seil-Liste ──
   if(APP.ropes.length > 0){
@@ -3094,33 +3108,54 @@ function updateSchwaechen(){
 function buildDrawerGrowth(){
   const frag=document.createDocumentFragment();
 
-  // Growth-Menü: 4 Optionen
+  // Growth-Menü: Einstieg mit 2 Optionen (Regeln + Seil/Brücke). Plattform/Szenario sind
+  // erweiterte Optionen und erst aufklappbar erreichbar.
   const menu=document.createElement('div');
   menu.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px';
   const opts=[
-    {icon:'🏔',label:'Plattform',desc:'Neue Plattform setzen',action:()=>{ APP.growthMode='plat'; renderDrawer(); }},
-    {icon:'🔗',label:'Seil',desc:'Neues Seil spannen',action:()=>{ APP.growthMode='rope'; renderDrawer(); }},
-    {icon:'📋',label:'Szenario',desc:'Vorgefertigten Park laden',action:()=>{ APP.growthMode='scenario'; renderDrawer(); }},
-    {icon:'➕',label:'Zusatzregel',desc:'Neue Regel freischalten',action:()=>{ APP.growthMode='extra'; renderDrawer(); }},
+    {icon:'➕',label:'Regeln wählen',desc:'Welche TÜV-Regeln gelten?',action:()=>{ APP.growthMode='extra'; renderDrawer(); }},
+    {icon:'🔗',label:'Seil / Brücke',desc:'Verbindung spannen',action:()=>{ APP.growthMode='rope'; renderDrawer(); }},
   ];
-  opts.forEach(o=>{
+  const advOpts=[
+    {icon:'🏔',label:'Plattform',desc:'Neue Plattform setzen',action:()=>{ APP.growthMode='plat'; renderDrawer(); }},
+    {icon:'📋',label:'Szenario',desc:'Vorgefertigten Park laden',action:()=>{ APP.growthMode='scenario'; renderDrawer(); }},
+  ];
+  const showAdv = APP.growthMode==='plat' || APP.growthMode==='scenario' || APP.growthAdvOpen;
+  const renderOpt=(o)=>{
     const btn=document.createElement('button');
     btn.style.cssText=`background:var(--bg3);border:1px solid var(--bg5);border-radius:8px;padding:10px 8px;cursor:pointer;text-align:center;transition:all .15s;color:var(--text)`;
     btn.innerHTML=`<div style="font-size:18px">${o.icon}</div><div style="font-size:12px;font-weight:700;margin-top:2px">${o.label}</div><div style="font-size:9px;color:var(--text2)">${o.desc}</div>`;
     btn.onmouseover=()=>btn.style.background='var(--bg4)';
     btn.onmouseout=()=>btn.style.background='var(--bg3)';
     btn.onclick=o.action;
-    menu.appendChild(btn);
-  });
+    return btn;
+  };
+  opts.forEach(o=>menu.appendChild(renderOpt(o)));
+  if(showAdv) advOpts.forEach(o=>menu.appendChild(renderOpt(o)));
   frag.appendChild(menu);
+  if(!showAdv){
+    const advToggle=document.createElement('button');
+    advToggle.style.cssText='background:none;border:none;color:var(--text2);font-size:10px;cursor:pointer;padding:2px 8px 10px;display:block;margin:0 auto 4px;text-decoration:underline dotted';
+    advToggle.textContent='+ erweiterte Optionen (Plattform, Szenario)';
+    advToggle.onclick=()=>{ APP.growthAdvOpen=true; renderDrawer(); };
+    frag.appendChild(advToggle);
+  }
 
-  // Je nach Modus: Park-Bau anzeigen
-  if(!APP.growthMode || APP.growthMode==='plat' || APP.growthMode==='rope'){
+  // Je nach Modus: passendes Panel anzeigen
+  if(APP.growthMode==='plat' || APP.growthMode==='rope'){
     frag.appendChild(buildDrawerPark());
   } else if(APP.growthMode==='scenario'){
     frag.appendChild(buildScenarioLoader());
   } else if(APP.growthMode==='extra'){
     frag.appendChild(buildExtraRuleSelector());
+  } else {
+    const hint=document.createElement('div');
+    hint.style.cssText='font-size:12px;color:var(--text2);line-height:1.6;padding:14px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--rope)';
+    hint.innerHTML=`<b style="color:var(--rope)">So geht's weiter:</b><br>
+      <b>1.</b> Lege oben fest, welche <b>Regeln</b> gelten sollen.<br>
+      <b>2.</b> Spanne dann <b>Seile und Brücken</b> zwischen den Plattformen.<br>
+      <span style="font-size:11px;opacity:.8">Neue Plattformen oder vorgefertigte Szenarien findest du bei Bedarf unter „erweiterte Optionen".</span>`;
+    frag.appendChild(hint);
   }
 
   // "Park fertig" Button
@@ -3190,29 +3225,110 @@ function loadScenario(sc){
 function buildExtraRuleSelector(){
   const frag=document.createDocumentFragment();
   const avail=STATE.cfg.extraRulesAvail||[];
-  const already=APP.extraRules||[];
-  const remaining=avail.filter(id=>!already.includes(id));
-  if(remaining.length===0){
+  const active=new Set(APP.ruleOrder||[]);
+  (STATE.cfg.activeRules||RULES).forEach(r=>active.add(r));
+  (APP.extraRules||[]).forEach(r=>active.add(r));
+
+  // Intro
+  const intro=document.createElement('div');
+  intro.style.cssText='font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px;padding:8px 10px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--rope)';
+  intro.innerHTML=`<b style="color:var(--rope)">Regelauswahl erweitern</b><br>
+    Wähle zusätzliche TÜV-Vorschriften, die du im Park prüfen möchtest. Jede Regel erscheint anschließend in deinem Prüfprotokoll.`;
+  frag.appendChild(intro);
+
+  // Pool: wenn Lehrer nichts freigegeben hat → alle RDEFS (außer bereits aktive)
+  const pool = (avail.length>0 ? avail : Object.keys(RDEFS)).filter(id=>!active.has(id) && RDEFS[id]);
+
+  if(pool.length===0){
     const empty=document.createElement('div');
     empty.style.cssText='font-size:12px;color:var(--text2);text-align:center;padding:20px';
-    empty.textContent=avail.length===0?'Keine Zusatzregeln verfügbar.':'Alle Zusatzregeln freigeschaltet!';
+    empty.textContent='Alle verfügbaren Regeln sind bereits aktiv.';
     frag.appendChild(empty);
-    return frag;
+  } else {
+    // Nach Kategorie gruppieren
+    const byCat={};
+    pool.forEach(rid=>{
+      const def=RDEFS[rid];
+      const cat=def.cat||'Sonstige';
+      (byCat[cat]=byCat[cat]||[]).push(rid);
+    });
+    Object.keys(byCat).sort().forEach(cat=>{
+      const col=CAT_COL[cat]||'#888';
+      const catHdr=document.createElement('div');
+      catHdr.style.cssText=`font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:${col};margin:10px 0 4px;padding-left:2px`;
+      catHdr.textContent=cat;
+      frag.appendChild(catHdr);
+
+      byCat[cat].forEach(rid=>{
+        const def=RDEFS[rid];
+        const needsTwo=def.twoRopes?' · benötigt 2 Seile':'';
+        const optBadge=def.optional?`<span style="font-size:9px;color:var(--gold);padding:2px 6px;background:rgba(232,160,48,.12);border:1px solid rgba(232,160,48,.35);border-radius:3px;margin-left:4px">Optional</span>`:'';
+        const card=document.createElement('div');
+        card.style.cssText=`background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s;border-left:3px solid ${col};display:flex;align-items:center;gap:10px`;
+        card.innerHTML=`<div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${col};font-weight:700">${rid}</span>
+              <span style="font-weight:700;font-size:13px">${def.title}</span>
+              ${optBadge}
+            </div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4">${def.vorschrift||''}</div>
+            ${needsTwo?`<div style="font-size:10px;color:var(--gold);margin-top:3px">${needsTwo.replace(' · ','⚑ ')}</div>`:''}
+          </div>
+          <div class="btn btn-ok btn-s" style="font-size:11px;padding:5px 10px;white-space:nowrap">+ Aktivieren</div>`;
+        card.onmouseover=()=>card.style.background='var(--bg4)';
+        card.onmouseout=()=>card.style.background='var(--bg3)';
+        card.onclick=()=>{
+          if(!APP.extraRules) APP.extraRules=[];
+          APP.extraRules.push(rid);
+          APP.ruleOrder=[...(APP.ruleOrder||[]), rid];
+          STATE.saveRuleOrder(APP.ruleOrder);
+          if(STATE.d) STATE.d.extraRules=[...APP.extraRules];
+          STATE.save();
+          renderDrawer();
+        };
+        frag.appendChild(card);
+      });
+    });
   }
-  remaining.forEach(rid=>{
-    const def=RDEFS[rid];
-    const card=document.createElement('div');
-    card.style.cssText='background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:background .15s';
-    card.innerHTML=`<div style="font-weight:700;font-size:13px">${def?def.title:rid}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:2px">${def?def.cat:'Unbekannt'}</div>`;
-    card.onclick=()=>{
-      APP.extraRules.push(rid);
-      APP.ruleOrder.push(rid);
-      STATE.saveRuleOrder(APP.ruleOrder);
-      renderDrawer();
-    };
-    frag.appendChild(card);
-  });
+
+  // Aktive Regeln anzeigen + entfernen
+  const activeList=[...active].filter(id=>RDEFS[id]);
+  if(activeList.length>0){
+    const hr=document.createElement('hr'); hr.className='div'; hr.style.margin='14px 0 8px'; frag.appendChild(hr);
+    const actHdr=document.createElement('div');
+    actHdr.style.cssText='font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text2);margin-bottom:6px';
+    actHdr.textContent=`Aktive Regeln (${activeList.length})`;
+    frag.appendChild(actHdr);
+    activeList.forEach(rid=>{
+      const def=RDEFS[rid]; const col=CAT_COL[def.cat]||'#888';
+      const isExtra=(APP.extraRules||[]).includes(rid);
+      const row=document.createElement('div');
+      row.style.cssText=`display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:5px;background:var(--bg);border-left:3px solid ${col};margin-bottom:4px`;
+      row.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${col};font-weight:700;min-width:26px">${rid}</span>
+        <span style="flex:1;font-size:12px">${def.title}</span>`;
+      if(isExtra){
+        const rm=document.createElement('button');
+        rm.textContent='Entfernen';
+        rm.style.cssText='background:none;border:none;color:var(--err);font-size:10px;cursor:pointer;padding:2px 6px';
+        rm.onclick=()=>{
+          APP.extraRules=(APP.extraRules||[]).filter(x=>x!==rid);
+          APP.ruleOrder=(APP.ruleOrder||[]).filter(x=>x!==rid);
+          STATE.saveRuleOrder(APP.ruleOrder);
+          if(STATE.d) STATE.d.extraRules=[...APP.extraRules];
+          STATE.save();
+          renderDrawer();
+        };
+        row.appendChild(rm);
+      } else {
+        const lbl=document.createElement('span');
+        lbl.textContent='Basis';
+        lbl.style.cssText='font-size:9px;color:var(--text2);padding:2px 6px;background:var(--bg3);border-radius:3px';
+        row.appendChild(lbl);
+      }
+      frag.appendChild(row);
+    });
+  }
+
   return frag;
 }
 
@@ -3553,10 +3669,11 @@ function delPlat(id){
 function addRope(){
   const from = document.getElementById('rope-from')?.value;
   const to   = document.getElementById('rope-to')?.value;
+  const type = document.getElementById('rope-type')?.value || 'seil';
   if(!from || !to || from===to) return;
   const exists = APP.ropes.some(r => (r.from===from&&r.to===to)||(r.from===to&&r.to===from));
   if(exists) return;
-  APP.ropes.push({ from, to });
+  APP.ropes.push({ from, to, type });
   rebuild3();
   renderDrawer();
 }
@@ -4174,8 +4291,8 @@ const RDEFS = {
 
   C3: {
     cat:'Betrag', title:'Fahrtrichtungsvektor',
-    twoRopes: false,
-    vorschrift:'§9 — Die Bremsanlage benötigt den Einheitsvektor (Länge = 1) der Fahrtrichtung.',
+    twoRopes: false, optional: true,
+    vorschrift:'§9 — Die Bremsanlage benötigt den Einheitsvektor (Länge = 1) der Fahrtrichtung. (Optional, nicht in der Grundschulung)',
     variant:'blind',
     ctx(rid){
       const rd=getRd1(rid); if(!rd) return '';
@@ -4577,7 +4694,7 @@ const RDEFS = {
   V1: {
     cat:'Grundrechnung', title:'Richtungsvektor bestimmen',
     twoRopes:false,
-    vorschrift:'Für eine Brücke muss der Weg nach oben gehen, für ein Seil nach unten.',
+    vorschrift:'§1 — Die Bewegungsrichtung muss eindeutig erkennbar sein: Brücke geht aufwärts (dz>0), Seil abwärts (dz<0).',
     variant:'blind',
     ctx(rid){ const rd=getRd1(rid); if(!rd) return ''; const {sv,av,rope}=rd;
       return `${texPt(rope.from,sv)} &rarr; ${texPt(rope.to,av)}<br>Berechne ${tex('\\vec{d}')} = Zielplattform − Startplattform.`;
@@ -4590,9 +4707,9 @@ const RDEFS = {
   },
 
   SA1: {
-    cat:'Sicherheit', title:'Sicherheitsabstand prüfen',
+    cat:'Sicherheit', title:'Mindesthöhe & horizontaler Abstand',
     twoRopes:false,
-    vorschrift:'Die Plattformen müssen mindestens zwei Meter hoch sein und einen horizontalen Abstand von 3 m haben.',
+    vorschrift:'§4 Mindesthöhe: beide Plattformen ≥ 2 m hoch.  §7 Horizontaler Abstand: Plattformen ≥ 3 m zueinander.',
     variant:'mc',
     genScen(rid){
       const rd=getRd1(rid); if(!rd) return {};
@@ -4621,7 +4738,7 @@ const RDEFS = {
       ])};
     },
     ctx(rid){ const rd=getRd1(rid); if(!rd) return '';
-      return `Vorschrift §4: Plattformen mindestens <b>2 m hoch</b> und horizontaler Abstand <b>≥ 3 m</b>.<br>
+      return `Vorschrift §4 + §7: Beide Plattformen <b>≥ 2 m</b> hoch <b>und</b> horizontaler Abstand <b>≥ 3 m</b>.<br>
         ${texPt(rd.rope.from,rd.sv)} &rarr; ${texPt(rd.rope.to,rd.av)}`;
     },
     inputs:[
@@ -4641,6 +4758,86 @@ const RDEFS = {
         cok?(rok?`✓ ${n2(hDist)} m ≥ 3 m und beide Höhen ≥ 2 m → Zulässig`:`✗ ${!hDistOk?`Abstand ${n2(hDist)} m < 3 m`:''}${!hDistOk&&!heightOk?' und ':''}${!heightOk?'Höhe < 2 m':''} → Nicht zulässig`):`✗ Rechenfehler — erwartet ${n2(hDist)} m`,
         !urteilOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
       ].filter(Boolean).join('\n')};
+    }
+  },
+
+  /* ── §4 Mindesthöhe (eigenständig, Split aus SA1) ── */
+  MH1: {
+    cat:'Sicherheit', title:'Mindesthöhe',
+    twoRopes:false,
+    vorschrift:'§4 — Jede Plattform muss mindestens 2 m hoch liegen. Start- UND Zielplattform prüfen!',
+    variant:'blind',
+    ctx(rid){ const rd=getRd1(rid); if(!rd) return '';
+      return `Vorschrift §4: Beide Plattformen <b>z ≥ 2 m</b>.<br>
+        ${texPt(rd.rope.from,rd.sv)} &rarr; ${texPt(rd.rope.to,rd.av)}<br>
+        Prüfe die Höhe beider Plattformen.`;
+    },
+    inputs:[
+      {type:'num',id:'zS',label:'z der Startplattform',unit:'m',step:0.1},
+      {type:'num',id:'zT',label:'z der Zielplattform',unit:'m',step:0.1},
+      {type:'radio',id:'urteil',label:'TÜV-Urteil',opts:[{v:'pass',l:'✓ Zulässig'},{v:'fail',l:'✗ Nicht zulässig'}]}
+    ],
+    check(rid,vals){ const rd=getRd1(rid); if(!rd) return errR('Seil wählen');
+      const {sv,av}=rd, zS=sv[2], zT=av[2];
+      const zSe=parseFloat(vals.zS), zTe=parseFloat(vals.zT);
+      const zSok=Math.abs(zSe-zS)<0.06, zTok=Math.abs(zTe-zT)<0.06;
+      const rok=zS>=2 && zT>=2;
+      const uOk=(vals.urteil==='pass')===rok;
+      const fails=[]; if(zS<2) fails.push(`z_${rd.rope.from}=${n2(zS)} m < 2 m`); if(zT<2) fails.push(`z_${rd.rope.to}=${n2(zT)} m < 2 m`);
+      return {ok:zSok&&zTok&&uOk,steps:[
+        `z_${rd.rope.from} = ${n2(zS)} m   ${zSok?'✓':'✗ erwartet '+n2(zS)}`,
+        `z_${rd.rope.to} = ${n2(zT)} m   ${zTok?'✓':'✗ erwartet '+n2(zT)}`,
+        rok?`✓ Beide Höhen ≥ 2 m → Zulässig`:`✗ ${fails.join(' · ')} → Nicht zulässig`,
+        !uOk?`✗ Urteil falsch — erwartet: ${rok?'Zulässig':'Nicht zulässig'}`:'',
+      ].filter(Boolean).join('\n')};
+    }
+  },
+
+  /* ── §10 Erreichbarkeit (Graph-Zusammenhang vom Start aus) ── */
+  J1: {
+    cat:'Lagebeziehung', title:'Erreichbarkeit',
+    twoRopes:false, parkRule:true,
+    vorschrift:'§10 — Alle Plattformen müssen vom Start S aus über Seile/Brücken erreichbar sein.',
+    variant:'mc',
+    genScen(rid){
+      const ids=Object.keys(APP.plats);
+      const adj={}; ids.forEach(id=>adj[id]=new Set());
+      APP.ropes.forEach(r=>{ if(adj[r.from]&&adj[r.to]){ adj[r.from].add(r.to); adj[r.to].add(r.from); } });
+      const start = ids.includes('S')?'S':ids[0];
+      const seen=new Set([start]); const queue=[start];
+      while(queue.length){ const cur=queue.shift(); (adj[cur]||[]).forEach(n=>{if(!seen.has(n)){seen.add(n);queue.push(n);}}); }
+      const isolated=ids.filter(id=>!seen.has(id));
+      const ok=isolated.length===0;
+      return { mcOpts: shuffle([
+        { text:`Alle ${ids.length} Plattformen sind von ${start} aus über Seile/Brücken erreichbar.`, correct:ok,
+          expl:ok?`BFS von ${start} erreicht alle Plattformen.`:`BFS von ${start} erreicht nur ${seen.size}/${ids.length}.` },
+        { text:`Die Plattformen ${isolated.length>0?isolated.join(', '):'—'} sind isoliert (nicht erreichbar).`, correct:!ok,
+          expl:!ok?`Kein Weg von ${start} zu: ${isolated.join(', ')}.`:`Alle Plattformen sind verbunden.` },
+        { text:`Die Anzahl der Seile (${APP.ropes.length}) genügt — Erreichbarkeit immer gegeben.`, correct:false,
+          expl:`Fehler: Anzahl sagt nichts über die Verbindungen. Entscheidend ist der Graph.` },
+        { text:`Nur der Abstand zwischen den Plattformen bestimmt die Erreichbarkeit.`, correct:false,
+          expl:`Fehler: Erreichbarkeit ist eine topologische Eigenschaft des Seil-Netzwerks, kein metrisches Kriterium.` },
+      ])};
+    },
+    ctx(rid){
+      const ids=Object.keys(APP.plats);
+      return `Vorschrift §10: Vom Start aus muss jede Plattform über mindestens einen Seil-/Brückenpfad erreichbar sein.<br>
+        Park: ${ids.length} Plattformen, ${APP.ropes.length} Verbindungen.<br>
+        Prüfe mit dem Konzept des <b>Graph-Zusammenhangs</b> (BFS vom Start).`;
+    },
+    check(rid,vals){
+      const ids=Object.keys(APP.plats);
+      const adj={}; ids.forEach(id=>adj[id]=new Set());
+      APP.ropes.forEach(r=>{ if(adj[r.from]&&adj[r.to]){ adj[r.from].add(r.to); adj[r.to].add(r.from); } });
+      const start=ids.includes('S')?'S':ids[0];
+      const seen=new Set([start]); const queue=[start];
+      while(queue.length){ const cur=queue.shift(); (adj[cur]||[]).forEach(n=>{if(!seen.has(n)){seen.add(n);queue.push(n);}}); }
+      const isolated=ids.filter(id=>!seen.has(id));
+      const ok=isolated.length===0;
+      const steps=[`Start: ${start}`, `BFS-Erreichbar: {${[...seen].join(', ')}}`];
+      if(!ok) steps.push(`Isoliert: {${isolated.join(', ')}} → §10 verletzt`);
+      else steps.push(`Alle ${ids.length} Plattformen erreichbar → §10 erfüllt`);
+      return { ok, steps:steps.join('\n') };
     }
   },
 

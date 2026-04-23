@@ -175,6 +175,46 @@ td{padding:10px 14px;font-size:13px;vertical-align:middle}
   color:var(--text2);font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:13px}
 .detail-close:hover{background:var(--bg5);color:var(--text)}
 
+/* ── LIVE-STUNDE ── */
+.live-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.live-pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);
+  animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.live-lbl{font-size:12px;color:var(--ok);font-weight:700;letter-spacing:1px}
+.live-ts{font-size:11px;color:var(--text2);margin-left:auto}
+
+.phase-dist{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.pd-chip{display:flex;align-items:center;gap:6px;background:var(--bg2);
+  border:1px solid var(--bg3);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700}
+.pd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pd-n{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text)}
+.pd-label{color:var(--text2)}
+
+.live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.lc{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:6px;transition:border-color .2s}
+.lc:hover{border-color:var(--bg5)}
+.lc-code{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;
+  color:var(--gold);letter-spacing:2px}
+.lc-cls{font-size:10px;color:var(--text2);margin-top:-2px}
+.lc-phase{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;
+  font-size:10px;font-weight:700;letter-spacing:.5px;margin-top:2px}
+.lc-phase.p-find   {background:rgba(232,160,48,.12);color:var(--gold);border:1px solid rgba(232,160,48,.3)}
+.lc-phase.p-fehler {background:rgba(255,107,53,.12);color:var(--accent);border:1px solid rgba(255,107,53,.3)}
+.lc-phase.p-repair {background:rgba(91,163,217,.12);color:var(--blue);border:1px solid rgba(91,163,217,.3)}
+.lc-phase.p-grenz  {background:rgba(176,127,255,.12);color:var(--purple);border:1px solid rgba(176,127,255,.3)}
+.lc-phase.p-park   {background:rgba(200,131,58,.12);color:var(--rope);border:1px solid rgba(200,131,58,.3)}
+.lc-phase.p-done   {background:rgba(107,203,119,.12);color:var(--ok);border:1px solid rgba(107,203,119,.3)}
+.lc-phase.p-none   {background:var(--bg4);color:var(--text2);border:1px solid var(--bg5)}
+.lc-xp{font-size:11px;color:var(--text2);margin-top:2px}
+.lc-ago{font-size:10px;color:var(--bg5);margin-top:auto;text-align:right}
+.lc.fresh{border-color:rgba(107,203,119,.4)}
+
+.live-filter{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.live-filter select{background:var(--bg);border:1px solid var(--bg5);border-radius:6px;
+  padding:7px 12px;color:var(--text);font-size:13px;cursor:pointer;outline:none}
+.live-filter select:focus{border-color:var(--rope)}
+
 /* ── RESPONSIVE ── */
 @media(max-width:600px){
   main{padding:16px}
@@ -212,12 +252,30 @@ td{padding:10px 14px;font-size:13px;vertical-align:middle}
 
   <nav>
     <button class="nav-btn active" onclick="showTab('overview')" id="nav-overview">📊 Übersicht</button>
+    <button class="nav-btn" onclick="showTab('live')" id="nav-live">🟢 Live-Stunde</button>
     <button class="nav-btn" onclick="showTab('students')" id="nav-students">👥 Schüler</button>
     <button class="nav-btn" onclick="showTab('codes')" id="nav-codes">🔑 Codes</button>
     <button class="nav-btn" onclick="showTab('create')" id="nav-create">+ Codes erstellen</button>
   </nav>
 
   <main>
+    <!-- LIVE-STUNDE -->
+    <div id="tab-live" class="tab-section">
+      <div class="live-bar">
+        <div class="live-pulse" id="live-pulse"></div>
+        <span class="live-lbl">LIVE</span>
+        <span id="live-ts" class="live-ts"></span>
+      </div>
+      <div id="phase-dist" class="phase-dist"></div>
+      <div class="live-filter">
+        <select id="live-cls-filter" onchange="renderLive()">
+          <option value="all">Alle Klassen</option>
+        </select>
+        <span style="font-size:12px;color:var(--text2)" id="live-count"></span>
+      </div>
+      <div id="live-grid" class="live-grid"></div>
+    </div>
+
     <!-- ÜBERSICHT -->
     <div id="tab-overview" class="tab-section active">
       <div id="tiles" class="tiles">
@@ -403,6 +461,12 @@ async function loadAll(){
     renderOverview();
     renderStudents();
     renderCodes();
+    if(document.getElementById('tab-live')?.classList.contains('active')){
+      updateLiveClsFilter();
+      renderLive();
+      document.getElementById('live-ts').textContent =
+        'Letzte Aktualisierung: ' + _lastFetch.toLocaleTimeString('de-DE');
+    }
     document.getElementById('last-sync-lbl').textContent =
       'Zuletzt geladen: ' + _lastFetch.toLocaleTimeString('de-DE');
   } catch(e){
@@ -418,6 +482,15 @@ function showTab(id){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id)?.classList.add('active');
   document.getElementById('nav-'+id)?.classList.add('active');
+  if(id==='live'){
+    updateLiveClsFilter();
+    renderLive();
+    document.getElementById('live-ts').textContent =
+      'Letzte Aktualisierung: ' + new Date().toLocaleTimeString('de-DE');
+    startLivePolling();
+  } else {
+    stopLivePolling();
+  }
 }
 
 /* ── ÜBERSICHT ── */
@@ -644,6 +717,110 @@ function toast(msg, err=false){
   el.classList.add('show');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+/* ── LIVE-STUNDE ── */
+const PHASE_META = {
+  find:    { label:'A — Verstöße finden', cls:'p-find',   dot:'#e8a030' },
+  fehler:  { label:'B — Fehleranalyse',   cls:'p-fehler', dot:'#ff6b35' },
+  repair:  { label:'C — Reparatur',       cls:'p-repair', dot:'#5ba3d9' },
+  grenzfall:{ label:'D — Grenzfälle',     cls:'p-grenz',  dot:'#b07fff' },
+  park:    { label:'Park',               cls:'p-park',   dot:'#c8833a' },
+  done:    { label:'Fertig ✓',           cls:'p-done',   dot:'#6bcb77' },
+  none:    { label:'Noch nicht gestartet', cls:'p-none', dot:'#3d3630' },
+};
+
+function studentPhase(st){
+  const m = st.mastery || {};
+  if(m.parkComplete) return 'done';
+  if(m.warmupDone)   return 'park';
+  if(m.warmupPhase)  return m.warmupPhase;
+  if(st.xp > 0)     return 'find';
+  return 'none';
+}
+
+function timeAgo(isoStr){
+  if(!isoStr) return '';
+  const sec = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+  if(sec < 10)  return 'gerade eben';
+  if(sec < 60)  return `vor ${sec}s`;
+  if(sec < 3600) return `vor ${Math.floor(sec/60)}min`;
+  return `vor ${Math.floor(sec/3600)}h`;
+}
+
+function renderLive(){
+  const clsFilter = document.getElementById('live-cls-filter')?.value || 'all';
+  const students = _data.students.filter(s => clsFilter === 'all' || s.class === clsFilter);
+
+  // Phase distribution
+  const counts = {};
+  students.forEach(s => { const p = studentPhase(s); counts[p] = (counts[p]||0)+1; });
+  const distOrder = ['find','fehler','repair','grenzfall','park','done','none'];
+  document.getElementById('phase-dist').innerHTML = distOrder
+    .filter(p => counts[p])
+    .map(p => {
+      const meta = PHASE_META[p];
+      return `<div class="pd-chip">
+        <div class="pd-dot" style="background:${meta.dot}"></div>
+        <span class="pd-n">${counts[p]}</span>
+        <span class="pd-label">${meta.label}</span>
+      </div>`;
+    }).join('');
+
+  document.getElementById('live-count').textContent = `${students.length} Schüler`;
+
+  // Cards
+  const sorted = [...students].sort((a,b) => {
+    const order = ['none','find','fehler','repair','grenzfall','park','done'];
+    return order.indexOf(studentPhase(a)) - order.indexOf(studentPhase(b));
+  });
+
+  if(!sorted.length){
+    document.getElementById('live-grid').innerHTML =
+      '<div style="color:var(--text2);font-size:13px;padding:24px">Noch keine Schüler mit dieser Klasse</div>';
+    return;
+  }
+
+  const now = Date.now();
+  document.getElementById('live-grid').innerHTML = sorted.map(st => {
+    const phase = studentPhase(st);
+    const meta  = PHASE_META[phase];
+    const fresh = st.last_sync && (now - new Date(st.last_sync).getTime()) < 30000;
+    const ago   = timeAgo(st.last_sync);
+    return `<div class="lc${fresh?' fresh':''}">
+      <div class="lc-code">${st.code}</div>
+      <div class="lc-cls">${st.class||'—'}</div>
+      <div class="lc-phase ${meta.cls}">${meta.label}</div>
+      <div class="lc-xp">${st.xp||0} XP · ${st.missions_done||0} Regeln</div>
+      ${ago ? `<div class="lc-ago">${ago}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function updateLiveClsFilter(){
+  const sel = document.getElementById('live-cls-filter');
+  if(!sel) return;
+  const cur = sel.value;
+  const classes = [...new Set(_data.students.map(s=>s.class).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">Alle Klassen</option>' +
+    classes.map(c=>`<option value="${c}"${cur===c?' selected':''}>${c}</option>`).join('');
+}
+
+let _liveInterval = null;
+function startLivePolling(){
+  if(_liveInterval) return;
+  _liveInterval = setInterval(async ()=>{
+    if(document.getElementById('tab-live')?.classList.contains('active')){
+      await loadAll();
+      renderLive();
+      document.getElementById('live-ts').textContent =
+        'Letzte Aktualisierung: ' + new Date().toLocaleTimeString('de-DE');
+    }
+  }, 4000);
+}
+function stopLivePolling(){
+  clearInterval(_liveInterval);
+  _liveInterval = null;
 }
 
 /* ── INIT ── */
