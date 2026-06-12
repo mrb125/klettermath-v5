@@ -73,6 +73,23 @@ Stattdessen ein zweiteiliges Prinzip, das selbst zum Serienelement wird:
   zum Ausgießen einfach herausgenommen.
 - Einsatz-Spielmaß: 0,4 mm umlaufend; Grifflasche 12 × 8 mm.
 
+### Riffel-Verzahnung (Kombi-Prinzip)
+
+Weil die Teilung p serienweit konstant ist, ist die Riffelung selbst die
+Verbindungs-Schnittstelle: **Kamm greift in Rille.** Zwei geriffelte
+Flächen, die sich berühren, verzahnen sich formschlüssig — rutschfest
+und ohne sichtbare Verbinder. Daraus folgen drei verbindliche Regeln:
+
+1. **Negativ-Profil:** Aufnahmen (Tablett-Mulden, Clips) tragen das
+   exakte Riffel-Negativ (Rippenradius 2,4 mm, Tiefe 1,2 mm) plus
+   0,25 mm Flankenspiel.
+2. **Andock-Geraden:** Die geraden Seiten aller Rundrechtecke liegen im
+   p-Raster → zwei Objekte verzahnen sich Seite an Seite zu einer
+   durchgehenden Einheit (z. B. zwei Organizer in der Schublade).
+3. **Stapel-Schnittstelle:** Stapelbare Objekte nutzen die 4-mm-Lippe
+   als Schulter: oben 6 mm hoher Stülprand (Außen-Ø = Innen-Ø − 0,4 mm),
+   unten passende Aufnahme im Boden.
+
 ---
 
 ## 3. Objektprogramm
@@ -112,9 +129,31 @@ Benennung: `RIFFEL <Name> <Ø oder L×B>/<H>`. Alle Maße außen, in mm.
 | **Schale flach** (Catch-all) | Rundrechteck R28 | 106 × 90 / H24 | Schlüssel, Münzen, Kabel |
 | **Schwammhalter** | Rundrechteck R28 | 106 × 56 / H40 | = Seifenschale mit höherem Rand + Einsatz |
 
-Bewusste Wiederverwendung: Becher/Stiftebecher, Seifenschale/Schwammhalter
-und Organizer/Caddy teilen sich die Geometrie — weniger Konstruktionsaufwand,
-mehr Serienwirkung.
+### Welle 5 — Kombi-Module (verbinden Bestehendes)
+
+| Objekt | Grundform | Maße | Besonderheit |
+|--------|-----------|------|--------------|
+| **Basis-Tablett S** | Rundrechteck R28 | 157 × 90 / H24 | 4 mm tiefe Mulden im 8-mm-Raster mit Riffel-Negativ: 1× Ø56 + 1× Ø72 + 1× Ø40 — Becher, Dose und Rasierstand docken rutschfest an |
+| **Basis-Tablett L** | Rundrechteck R28 | 207 × 106 / H24 | Wie S, zusätzlich Ø88-Mulde + freies Ablagefeld 50 × 90 mit Abtropfrippen |
+| **Stapeldose** | Kreis Ø72 | Ø72 / H64 je Modul | Stülprand oben (6 mm, Ø −0,4), Aufnahme im Boden → beliebig turmbar; nur der oberste Deckel (H16) wird gebraucht. 3er-Turm = H208 |
+| **Verkettungs-Clip** | Brückenstück | 13 × 12 / H16 | Beidseitig Riffel-Negativ über 3 Rillen (3p ≈ 12,6 mm); Varianten Ø56↔Ø56 und Ø56↔Ø72 — koppelt Becher/Dosen zum Cluster, sieht aus wie aus einem Guss |
+| **Etagere** | Kombi | Fuß 106 × 90, Gesamt-H ≈ 168 | Schale flach unten + Säule Ø16/H120 mit Zapfen Ø8 (Steckprinzip wie KletterMath-Plattformen) + Ø88-Schale H24 oben |
+
+### Welle 6 — Ideenspeicher (Streckung, noch ohne Priorität)
+
+| Objekt | Maße (Vorschlag) | Notiz |
+|--------|------------------|-------|
+| **Übertopf + Untersetzer** | Ø104 / H96 | Erweitert die Ø-Familie um eine Stufe (78 Rillen); Untersetzer = Abtropfeinsatz-Prinzip als Teller Ø112 |
+| **Teelicht-/LED-Votiv** | Ø56 / H64 | Transluzentes PETG — Rillen erzeugen vertikales Lichtspiel; Schmuckstück der Serie |
+| **Kopfhörer-Ständer** | Teller Ø88 + Säule Ø40 / H192 | Konstruktion = Haargummi-Turm, oben 45°-Bügelarme (supportfrei) |
+| **Handy-Ständer** | 80 × 70 / H64 | Geriffelter Keil, Auflage 65°, Ladekabel-Schlitz im Rillental |
+| **Kabelbox** | 157 × 90 / H64 + Deckel H16 | = Organizer L mit Stülpdeckel; Kabelschlitze 8 × 12 mm in Rillentälern — verschwinden optisch in der Riffelung |
+| **Teebeutel-/Pad-Spender Küche** | Ø88 / H120 | = Pad-Spender aus Welle 2, reine Variante |
+| **Untersetzer-Set** | 4× Ø88 / H8 + Ständer Ø96 / H56 | Scheiben mit geriffelter Kante, gestapelt im eigenen Köcher |
+
+Bewusste Wiederverwendung: Becher/Stiftebecher, Seifenschale/Schwammhalter,
+Organizer/Caddy/Kabelbox und Pad-Spender/Küchen-Spender teilen sich die
+Geometrie — weniger Konstruktionsaufwand, mehr Serienwirkung.
 
 ---
 
@@ -163,10 +202,15 @@ Neue Objekte erben den Serien-Look damit automatisch.
 | **1 — Pilot** | `riffel-lib.scad` + Becher + Seifenschale | Design-System im CAD beweisen, Einsatz-Spielmaß testen |
 | **2 — Bad-Basics** | Tubenstand, Rasierstand | Welle 1 komplett |
 | **3 — Organizer** | Organizer L, Dose, Pad-Spender, Haargummi-Turm | Welle 2 |
-| **4 — Dusche & Streckung** | Abtropfständer, Caddy, Schreibtisch-Varianten | Serie komplett |
+| **4 — Dusche & Streckung** | Abtropfständer, Caddy, Schreibtisch-Varianten | Wellen 1–4 komplett |
+| **5 — Kombi-Module** | Basis-Tablett S, Stapeldose, Verkettungs-Clip | Kombinierbarkeit sichtbar machen — Tablett L und Etagere danach |
+| **6 — Ideenspeicher** | Nach Bedarf aus Welle 6 ziehen | Serie lebt weiter |
 
 **Offene Entscheidungen für Phase 0/1:**
 1. Serienfarbe + Kontrastfarbe festlegen
 2. Serienname endgültig wählen (→ Signatur ggf. als Monogramm statt drei Kerben)
 3. Rillentiefe 1,2 mm am Testring bestätigen oder auf 1,0 mm reduzieren
    (Abwägung: Tiefe = stärkerer Look, flacher = leichter zu reinigen)
+4. Verzahnungs-Spielmaß validieren: Zum Testring (Phase 0) gehört ein
+   Gegenstück mit Riffel-Negativ — Flankenspiel 0,25 mm bestätigen oder
+   auf 0,15/0,35 mm korrigieren (entscheidet über alle Kombi-Module)
