@@ -181,16 +181,29 @@ Geometrie — weniger Konstruktionsaufwand, mehr Serienwirkung.
 ```
 design-serie/
 ├── KONZEPT.md            ← dieses Dokument
-├── riffel-lib.scad       ← Design-System: riffel_mantel(), sockel(),
-│                            lippe(), signatur(), abtropfeinsatz()
-├── becher.scad           ← je Objekt eine Datei, nutzt nur die Lib
-├── seifenschale.scad
-└── …
+├── README.md             ← Kurzanleitung zu den .scad-Dateien
+├── riffel-lib.scad       ← Design-System (Module, siehe unten)  ✓ Phase 1
+├── testring.scad         ← Phase-0-Prüfteil: Ring + Verzahnungs-Clip  ✓
+├── becher.scad           ← Pilot: Becher/Stiftebecher Ø56  ✓
+├── seifenschale.scad     ← Pilot: Stadion 106×56  ✓
+└── …                     ← weitere Objekte je eine Datei
 ```
 
-Die Lib bekommt genau eine zentrale Funktion: `riffel_koerper(grundform,
-h, …)` erzeugt Mantel + Sockel + Lippe + Signatur aus einer 2D-Grundform.
-Neue Objekte erben den Serien-Look damit automatisch.
+`riffel-lib.scad` stellt die Serien-Module bereit, aus denen sich jedes
+Objekt zusammensetzt:
+
+| Modul | Zweck |
+|-------|-------|
+| `riffel_round(D, H)` | Geriffelter Rundbehälter (Becher, Dose, Stiftebecher) |
+| `riffel_stadion(L, Wd, H)` | Geriffelter Behälter mit Stadion-Grundriss |
+| `signatur(...)` | Drei Kerben ins Sockelband |
+| `abtropf_round/stadion(...)` | Herausnehmbarer Abtropfeinsatz mit Rippen |
+| `riffel_negativ_arc(D, h)` | Verzahnungs-Negativ für Kombi-Module/Clip |
+
+Beide Körper-Module bauen Sockel (zurückgesetzt) + geriffelten Mantel +
+Lippe (Fase) + optionale Signatur aus den Serien-Konstanten oben in der
+Datei. Neue Objekte erben den Look automatisch, indem sie nur diese
+Module aufrufen.
 
 ---
 
@@ -198,8 +211,8 @@ Neue Objekte erben den Serien-Look damit automatisch.
 
 | Phase | Inhalt | Ziel |
 |-------|--------|------|
-| **0 — Riffel-Test** | Testring Ø56 / H24 drucken | Teilung, Rillentiefe, Naht & Material validieren, bevor irgendetwas Großes gedruckt wird |
-| **1 — Pilot** | `riffel-lib.scad` + Becher + Seifenschale | Design-System im CAD beweisen, Einsatz-Spielmaß testen |
+| **0 — Riffel-Test** | `testring.scad` (Ring Ø56/H24 + Verzahnungs-Clip) | Teilung, Rillentiefe, Naht, Material & Flankenspiel validieren — **CAD fertig, Druck offen** |
+| **1 — Pilot** | `riffel-lib.scad` + `becher.scad` + `seifenschale.scad` | Design-System im CAD bewiesen ✓ — Einsatz-Spielmaß am Druck testen |
 | **2 — Bad-Basics** | Tubenstand, Rasierstand | Welle 1 komplett |
 | **3 — Organizer** | Organizer L, Dose, Pad-Spender, Haargummi-Turm | Welle 2 |
 | **4 — Dusche & Streckung** | Abtropfständer, Caddy, Schreibtisch-Varianten | Wellen 1–4 komplett |
