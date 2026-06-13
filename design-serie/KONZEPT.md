@@ -183,7 +183,8 @@ Geometrie — weniger Konstruktionsaufwand, mehr Serienwirkung.
 ```
 design-serie/
 ├── KONZEPT.md            ← dieses Dokument
-├── README.md             ← Kurzanleitung zu den .scad-Dateien
+├── README.md             ← Kurzanleitung zu den Dateien
+├── konfigurator.html     ← Web-Konfigurator (3D-Vorschau + STL-Export)  ✓
 ├── riffel-lib.scad       ← Design-System (Module, siehe unten)  ✓ Phase 1
 ├── testring.scad         ← Phase-0-Prüfteil: Ring + Verzahnungs-Clip  ✓
 ├── becher.scad           ← Pilot: Becher/Stiftebecher Ø56  ✓

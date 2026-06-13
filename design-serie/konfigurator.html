@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIFFEL — Konfigurator</title>
+<style>
+  :root {
+    --bg: #1a1a1d; --panel: #232328; --line: #34343b;
+    --txt: #e7e7ea; --mut: #9a9aa3; --acc: #c98a3a; --acc2: #6c8f5a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif;
+    background: var(--bg); color: var(--txt); }
+  #app { display: flex; height: 100%; }
+  #view { flex: 1; position: relative; min-width: 0; }
+  #view canvas { display: block; }
+  #badge { position: absolute; left: 14px; top: 12px; font-size: 13px;
+    color: var(--mut); pointer-events: none; line-height: 1.5; }
+  #badge b { color: var(--txt); }
+  #panel { width: 340px; flex: none; background: var(--panel);
+    border-left: 1px solid var(--line); overflow-y: auto; padding: 18px; }
+  h1 { font-size: 18px; margin: 0 0 2px; letter-spacing: .12em; }
+  h1 span { color: var(--acc); }
+  .sub { color: var(--mut); font-size: 12px; margin: 0 0 16px; }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--mut); margin: 18px 0 8px; border-bottom: 1px solid var(--line);
+    padding-bottom: 5px; }
+  .row { display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin: 9px 0; }
+  .row label { font-size: 13px; flex: 1; }
+  .row .val { font-size: 12px; color: var(--acc); width: 56px; text-align: right;
+    font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--acc); }
+  .rng { flex: 1.4; }
+  select, input[type=number] { background: #15151a; color: var(--txt);
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px;
+    font-size: 13px; }
+  select { width: 100%; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .chk input { accent-color: var(--acc); }
+  button { width: 100%; padding: 11px; border: 0; border-radius: 8px;
+    background: var(--acc); color: #1a1a1d; font-weight: 700; font-size: 14px;
+    cursor: pointer; margin-top: 6px; letter-spacing: .03em; }
+  button:hover { filter: brightness(1.08); }
+  button.ghost { background: transparent; color: var(--mut);
+    border: 1px solid var(--line); font-weight: 500; }
+  .info { font-size: 12px; color: var(--mut); line-height: 1.55; margin-top: 10px; }
+  .warn { color: #e2a23a; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <div id="badge"></div>
+  </div>
+  <div id="panel">
+    <h1>RIFFEL<span>·</span>Konfigurator</h1>
+    <p class="sub">Geriffelte Organizer-Serie · Parameter live, Export als STL</p>
+
+    <h2>Objekt</h2>
+    <div class="row"><label>Vorlage</label></div>
+    <select id="preset">
+      <option value="becher">Becher / Zahnbürsten (Ø56 · H96)</option>
+      <option value="stift">Stiftebecher (Ø56 · H96, ohne Einsatz)</option>
+      <option value="seife">Seifenschale (106×56 · H24)</option>
+      <option value="testring">Testring (Ø56 · H24)</option>
+      <option value="custom">Eigene Maße …</option>
+    </select>
+    <div class="row" style="margin-top:12px"><label>Grundform</label></div>
+    <select id="shape">
+      <option value="round">Rund</option>
+      <option value="stadion">Stadion (Rundrechteck)</option>
+    </select>
+
+    <h2>Maße (mm)</h2>
+    <div id="dimRound">
+      <div class="row"><label>Durchmesser Ø</label>
+        <input class="rng" type="range" id="D" min="30" max="120" step="2">
+        <span class="val" id="Dv"></span></div>
+    </div>
+    <div id="dimStadion" class="hidden">
+      <div class="row"><label>Länge L</label>
+        <input class="rng" type="range" id="L" min="60" max="220" step="1">
+        <span class="val" id="Lv"></span></div>
+      <div class="row"><label>Breite Wd</label>
+        <input class="rng" type="range" id="Wd" min="40" max="120" step="2">
+        <span class="val" id="Wdv"></span></div>
+    </div>
+    <div class="row"><label>Höhe H</label>
+      <input class="rng" type="range" id="H" min="16" max="160" step="8">
+      <span class="val" id="Hv"></span></div>
+    <div class="row chk"><input type="checkbox" id="hohl" checked>
+      <label for="hohl">Hohl (Behälter mit Boden)</label></div>
+
+    <h2>Rille</h2>
+    <div class="row"><label>Tiefe</label>
+      <input class="rng" type="range" id="t" min="0.4" max="2.5" step="0.1">
+      <span class="val" id="tv"></span></div>
+    <div class="row"><label>Radius / Breite</label>
+      <input class="rng" type="range" id="r" min="1.2" max="4.0" step="0.1">
+      <span class="val" id="rv"></span></div>
+    <div class="row"><label>Teilung p</label>
+      <input class="rng" type="range" id="p" min="2.5" max="8.0" step="0.05">
+      <span class="val" id="pv"></span></div>
+
+    <h2>Proportionen</h2>
+    <div class="row"><label>Wandstärke</label>
+      <input class="rng" type="range" id="wall" min="1.2" max="4.0" step="0.1">
+      <span class="val" id="wallv"></span></div>
+    <div class="row"><label>Sockelhöhe</label>
+      <input class="rng" type="range" id="sock" min="0" max="16" step="1">
+      <span class="val" id="sockv"></span></div>
+    <div class="row"><label>Lippe</label>
+      <input class="rng" type="range" id="lip" min="0" max="8" step="1">
+      <span class="val" id="lipv"></span></div>
+
+    <h2>Export</h2>
+    <button id="dl">STL herunterladen</button>
+    <button id="reset" class="ghost">Zurücksetzen</button>
+    <div class="info" id="stats"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════
+//  RIFFEL — Geometrie (Portierung von riffel-lib.scad nach JS)
+//  Erzeugt eine wasserdichte Dreiecksliste für Vorschau und STL.
+// ════════════════════════════════════════════════════════════
+const FAS = 1.2, BODEN = 3.2;   // Lippenfase, Bodendicke (wie Lib)
+
+// ── Stadion-Punkt + Außennormale bei Bogenlänge s (vgl. stadion_pt) ──
+function stadionPt(s, sx, Rc) {
+  const L1 = 2*sx, L2 = Math.PI*Rc, d = Math.PI/180;
+  if (s < L1)            return [-sx+s, Rc, 0, 1];
+  if (s < L1+L2)       { const a=(90-(s-L1)/L2*180)*d; return [ sx+Rc*Math.cos(a), Rc*Math.sin(a), Math.cos(a), Math.sin(a)]; }
+  if (s < 2*L1+L2)       return [ sx-(s-L1-L2), -Rc, 0, -1];
+  { const a=(-90-(s-2*L1-L2)/L2*180)*d; return [-sx+Rc*Math.cos(a), Rc*Math.sin(a), Math.cos(a), Math.sin(a)]; }
+}
+
+// Liefert die Kammkontur (x,y,nx,ny,s) als N gleichmäßige Bogenstützstellen
+function crestSamples(P, N) {
+  const out = [];
+  if (P.shape === 'round') {
+    const R = P.D/2;
+    for (let i=0;i<N;i++){ const th=2*Math.PI*i/N;
+      out.push({x:R*Math.cos(th), y:R*Math.sin(th), nx:Math.cos(th), ny:Math.sin(th), s:R*th}); }
+    out.per = 2*Math.PI*R;
+  } else {
+    const Rc=P.Wd/2, sx=(P.L-P.Wd)/2, per=4*sx+2*Math.PI*Rc;
+    for (let i=0;i<N;i++){ const s=per*i/N; const q=stadionPt(s,sx,Rc);
+      out.push({x:q[0], y:q[1], nx:q[2], ny:q[3], s:s}); }
+    out.per = per;
+  }
+  return out;
+}
+
+// Rillenzahl wie riffel_n
+function rilleN(per, p){ return Math.max(1, Math.round(per/p)); }
+
+// Tiefe der Rille an Bogenposition s (flache Hohlkehlen-Näherung)
+function grooveDepth(s, per, n, P) {
+  const off = P.r - P.t, sp = per/n;
+  let x = s - Math.round(s/sp)*sp;          // Abstand zur nächsten Rillenmitte
+  if (x >  per/2) x -= per; if (x < -per/2) x += per;
+  if (Math.abs(x) >= P.r) return 0;
+  return Math.max(0, Math.sqrt(P.r*P.r - x*x) - off);
+}
+
+// z-Verlauf der Rillenpräsenz (Auslauf an Sockel & Lippe)
+function depthFactor(z, P) {
+  const zlo = P.sock + P.r, zhi = P.H - P.lip - P.r, ztop = P.H - P.lip;
+  if (z <= P.sock) return 0;
+  if (z < zlo)  return (z - P.sock) / Math.max(0.01, zlo - P.sock);
+  if (z <= zhi) return 1;
+  if (z < ztop) return (ztop - z) / Math.max(0.01, ztop - zhi);
+  return 0;
+}
+
+// Versatz der Außenkontur nach innen (≤0) an (s,z)
+function outerOffset(s, z, per, n, P) {
+  if (z <= P.sock) return -0.8;                          // Sockel-Rücksprung
+  let o = -depthFactor(z, P) * grooveDepth(s, per, n, P);
+  if (P.lip > 0 && z > P.H - FAS) o = Math.min(o, -(z - (P.H - FAS)));  // Lippenfase
+  return o;
+}
+
+// ── Hauptfunktion: baut Float32Array mit Dreiecks-Vertices ──
+function buildPositions(P, perFlute) {
+  const V = [];
+  const tri=(a,b,c)=>{ V.push(a[0],a[1],a[2], b[0],b[1],b[2], c[0],c[1],c[2]); };
+  const quad=(a,b,c,d)=>{ tri(a,b,c); tri(a,c,d); };
+
+  // Auflösung
+  const samp0 = crestSamples(P, 8);                 // nur für per
+  const per = samp0.per, n = rilleN(per, P.p);
+  const N = Math.min(720, Math.max(96, n*perFlute));
+  const S = crestSamples(P, N);
+  const dw = P.wall + P.t;
+
+  // z-Schichten (Bruchkanten gezielt einstreuen)
+  const breaks = [0, BODEN, P.sock, P.sock+P.r, P.H-P.lip-P.r, P.H-P.lip, P.H-FAS, P.H]
+    .filter(z=>z>=0 && z<=P.H);
+  const zset = new Set(breaks);
+  const M = Math.max(48, Math.round(P.H * (perFlute>=12 ? 2.5 : 1.2)));
+  for (let k=0;k<=M;k++) zset.add(P.H*k/M);
+  const zs = [...zset].sort((a,b)=>a-b);
+
+  const outer=(i,z)=>{ const s=S[i]; const o=outerOffset(s.s,z,per,n,P);
+    return [s.x+s.nx*o, s.y+s.ny*o, z]; };
+  const inner=(i,z)=>{ const s=S[i]; return [s.x-s.nx*dw, s.y-s.ny*dw, z]; };
+
+  // Außenwand
+  for (let zi=0; zi<zs.length-1; zi++){
+    for (let i=0;i<N;i++){ const j=(i+1)%N;
+      quad(outer(i,zs[zi]), outer(j,zs[zi]), outer(j,zs[zi+1]), outer(i,zs[zi+1])); }
+  }
+  // Boden (Außenring, z=0)
+  const c0=[0,0,0];
+  for (let i=0;i<N;i++){ const j=(i+1)%N; tri(c0, outer(j,0), outer(i,0)); }
+
+  if (P.hohl) {
+    // Innenwand (ab Bodendicke)
+    const zi0 = zs.filter(z=>z>=BODEN);
+    for (let k=0;k<zi0.length-1;k++){
+      for (let i=0;i<N;i++){ const j=(i+1)%N;
+        quad(inner(i,zi0[k]), inner(i,zi0[k+1]), inner(j,zi0[k+1]), inner(j,zi0[k])); }
+    }
+    // Innenboden (z=BODEN), nach oben
+    const cf=[0,0,BODEN];
+    for (let i=0;i<N;i++){ const j=(i+1)%N; tri(cf, inner(i,BODEN), inner(j,BODEN)); }
+    // Oberer Ring (Lippe), z=H
+    for (let i=0;i<N;i++){ const j=(i+1)%N;
+      quad(inner(i,P.H), inner(j,P.H), outer(j,P.H), outer(i,P.H)); }
+  } else {
+    // Volles Deckblatt (z=H)
+    const cT=[0,0,P.H];
+    for (let i=0;i<N;i++){ const j=(i+1)%N; tri(cT, outer(i,P.H), outer(j,P.H)); }
+  }
+
+  return { positions: new Float32Array(V), n, per, N, dw };
+}
+
+// ════════════════════════════════════════════════════════════
+//  Three.js Szene
+// ════════════════════════════════════════════════════════════
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a1a1d);
+const camera = new THREE.PerspectiveCamera(45, 1, 1, 4000);
+camera.up.set(0,0,1);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x33323a, 0.85));
+const dir = new THREE.DirectionalLight(0xffffff, 0.7); dir.position.set(120,-160,200); scene.add(dir);
+const dir2 = new THREE.DirectionalLight(0xffffff, 0.3); dir2.position.set(-120,120,60); scene.add(dir2);
+const grid = new THREE.GridHelper(400, 20, 0x3a3a42, 0x2a2a30);
+grid.rotation.x = Math.PI/2; scene.add(grid);
+
+const material = new THREE.MeshStandardMaterial({
+  color:0xc98a3a, roughness:0.82, metalness:0.0, side:THREE.DoubleSide, flatShading:false });
+let mesh = null;
+
+function fitCamera(size){
+  const d = size*2.4;
+  camera.position.set(d*0.8, -d, d*0.7);
+  controls.target.set(0,0,size*0.35);
+  camera.near = size/50; camera.far = size*20; camera.updateProjectionMatrix();
+}
+
+function resize(){
+  const w=view.clientWidth, h=view.clientHeight;
+  renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+// ════════════════════════════════════════════════════════════
+//  Parameter-State + UI
+// ════════════════════════════════════════════════════════════
+const PRESETS = {
+  becher:   {shape:'round',  D:56,            H:96, hohl:true,  t:1.2,r:2.4,p:4.18879, wall:2.0,sock:8,lip:4},
+  stift:    {shape:'round',  D:56,            H:96, hohl:true,  t:1.2,r:2.4,p:4.18879, wall:2.0,sock:8,lip:4},
+  seife:    {shape:'stadion',L:106, Wd:56,    H:24, hohl:true,  t:1.2,r:2.4,p:4.18879, wall:2.0,sock:8,lip:4},
+  testring: {shape:'round',  D:56,            H:24, hohl:true,  t:1.2,r:2.4,p:4.18879, wall:2.0,sock:8,lip:4},
+};
+const DEFAULT = {shape:'round', D:56, L:106, Wd:56, H:96, hohl:true,
+                 t:1.2, r:2.4, p:4.18879, wall:2.0, sock:8, lip:4};
+let P = {...DEFAULT};
+
+const ids = ['D','L','Wd','H','t','r','p','wall','sock','lip'];
+function syncUI(){
+  document.getElementById('shape').value = P.shape;
+  document.getElementById('hohl').checked = P.hohl;
+  ids.forEach(k=>{ const el=document.getElementById(k); if(el) el.value=P[k]; });
+  document.getElementById('dimRound').classList.toggle('hidden', P.shape!=='round');
+  document.getElementById('dimStadion').classList.toggle('hidden', P.shape!=='stadion');
+  // Werte-Anzeigen
+  const fix={p:5,t:1,r:1,wall:1};
+  ['D','L','Wd','H','t','r','p','wall','sock','lip'].forEach(k=>{
+    const v=document.getElementById(k+'v'); if(v) v.textContent = (+P[k]).toFixed(fix[k]??0);
+  });
+}
+
+function rebuild(fit){
+  const res = buildPositions(P, 5);   // Vorschau: 5 Stützstellen/Rille
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(res.positions, 3));
+  g.computeVertexNormals();
+  g.computeBoundingBox();
+  // zentrieren in XY
+  const bb=g.boundingBox, cx=(bb.min.x+bb.max.x)/2, cy=(bb.min.y+bb.max.y)/2;
+  g.translate(-cx,-cy,0);
+  if (mesh){ scene.remove(mesh); mesh.geometry.dispose(); }
+  mesh = new THREE.Mesh(g, material); scene.add(mesh);
+  const size = Math.max(bb.max.x-bb.min.x, bb.max.y-bb.min.y, P.H);
+  if (fit) fitCamera(size);
+  // Badge + Stats
+  const realP = (res.per/res.n).toFixed(2);
+  document.getElementById('badge').innerHTML =
+    `<b>${P.shape==='round'?('Ø'+P.D):(P.L+'×'+P.Wd)} · H${P.H}</b><br>` +
+    `${res.n} Rillen · Teilung ${realP} mm<br>${res.positions.length/9|0} Dreiecke (Vorschau)`;
+  const wallTrough = (P.wall).toFixed(1);
+  const warn = P.wall < 1.5 ? '<span class="warn">⚠ Wand im Rillental dünn</span>' : 'druckbar';
+  document.getElementById('stats').innerHTML =
+    `Wand am Rillental ≈ <b>${wallTrough} mm</b> · ${warn}<br>` +
+    `Aufrecht drucken, ohne Supports. Naht ins Rillental legen.`;
+}
+
+// Events
+document.getElementById('preset').addEventListener('change', e=>{
+  const key=e.target.value;
+  if (key==='custom'){ /* aktuelle Werte behalten */ }
+  else { P = {...DEFAULT, ...PRESETS[key]}; }
+  syncUI(); rebuild(true);
+});
+document.getElementById('shape').addEventListener('change', e=>{
+  P.shape=e.target.value; document.getElementById('preset').value='custom'; syncUI(); rebuild(true);
+});
+document.getElementById('hohl').addEventListener('change', e=>{
+  P.hohl=e.target.checked; document.getElementById('preset').value='custom'; rebuild(false);
+});
+ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return;
+  el.addEventListener('input', ()=>{ P[k]=parseFloat(el.value);
+    document.getElementById('preset').value='custom';
+    const v=document.getElementById(k+'v');
+    const fix={p:5,t:1,r:1,wall:1}; if(v) v.textContent=(+P[k]).toFixed(fix[k]??0);
+    rebuild(false); });
+});
+document.getElementById('reset').addEventListener('click', ()=>{
+  P={...DEFAULT}; document.getElementById('preset').value='custom'; syncUI(); rebuild(true); });
+
+// ── STL-Export (binär), in Druckqualität neu berechnet ──
+function exportSTL(){
+  const res = buildPositions(P, 12);   // fein für den Druck
+  const pos = res.positions, triCount = pos.length/9;
+  const buf = new ArrayBuffer(84 + triCount*50);
+  const dv = new DataView(buf); dv.setUint32(80, triCount, true);
+  let off=84;
+  const setV=(x,y,z)=>{ dv.setFloat32(off,x,true);dv.setFloat32(off+4,y,true);dv.setFloat32(off+8,z,true);off+=12; };
+  for (let i=0;i<triCount;i++){ const p=i*9;
+    const ax=pos[p],ay=pos[p+1],az=pos[p+2], bx=pos[p+3],by=pos[p+4],bz=pos[p+5], cx=pos[p+6],cy=pos[p+7],cz=pos[p+8];
+    const ux=bx-ax,uy=by-ay,uz=bz-az, vx=cx-ax,vy=cy-ay,vz=cz-az;
+    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+    const l=Math.hypot(nx,ny,nz)||1; nx/=l;ny/=l;nz/=l;
+    dv.setFloat32(off,nx,true);dv.setFloat32(off+4,ny,true);dv.setFloat32(off+8,nz,true);off+=12;
+    setV(ax,ay,az); setV(bx,by,bz); setV(cx,cy,cz);
+    dv.setUint16(off,0,true); off+=2;
+  }
+  const name = (P.shape==='round'?`riffel_d${P.D}`:`riffel_${P.L}x${P.Wd}`)+`_h${P.H}${P.hohl?'':'_voll'}.stl`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([buf],{type:'application/octet-stream'}));
+  a.download=name; a.click(); URL.revokeObjectURL(a.href);
+}
+document.getElementById('dl').addEventListener('click', exportSTL);
+
+// Start
+syncUI(); resize(); rebuild(true);
+(function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
+</script>
+</body>
+</html>

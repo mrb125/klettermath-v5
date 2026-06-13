@@ -7,12 +7,23 @@ Konzept, Maßsystem und Objektprogramm stehen in **[KONZEPT.md](KONZEPT.md)**.
 
 | Datei | Inhalt |
 |-------|--------|
+| `konfigurator.html` | **Web-Konfigurator**: Parameter live einstellen, 3D-Vorschau, STL-Export — ganz ohne OpenSCAD |
 | `riffel-lib.scad` | Design-System-Bibliothek (nur Module, kein Objekt) |
 | `testring.scad` | Phase-0-Prüfteil: Testring + Verzahnungs-Clip |
 | `becher.scad` | Becher / Stiftebecher Ø56 + Abtropfeinsatz |
 | `seifenschale.scad` | Seifenschale 106×56 (Stadion) + Abtropfeinsatz |
 
-## Öffnen / Rendern
+## Schnellster Weg: der Web-Konfigurator
+
+`konfigurator.html` einfach im Browser öffnen (Doppelklick) — kein OpenSCAD,
+keine Lib-Datei, keine Installation nötig. Vorlage wählen oder Maße per
+Schieberegler einstellen, das Objekt dreht sich live in 3D, dann
+**„STL herunterladen"** → fertige Datei für den Slicer.
+
+> Lädt Three.js beim ersten Öffnen vom CDN → einmalig Internet nötig.
+> Die Vorschau rechnet gröber, der Export immer in Druckqualität.
+
+## Der OpenSCAD-Weg (parametrisch, voller Funktionsumfang)
 
 [OpenSCAD](https://openscad.org/) installieren, dann z. B.:
 
