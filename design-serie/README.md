@@ -30,6 +30,28 @@ Jede Objektdatei hat oben eine Variable `TEIL`:
 In der GUI über *Customizer* umschaltbar, oder per CLI:
 `openscad -D TEIL=1 -o becher-schale.stl becher.scad`.
 
+## Rille einstellen
+
+Die Riffelung ist frei einstellbar — global im Customizer-Block oben in
+`riffel-lib.scad` (`RILLE_TIEFE`, `RILLE_RADIUS`, `RILLE_TEILUNG`) oder
+pro Objekt als Parameter:
+
+```scad
+riffel_round(56, 96, t = 1.0, r = 2.2, p = 4.18879);  // t=Tiefe, r=Breite, p=Teilung
+```
+
+`testring.scad` mit `TEIL = 3` druckt vier Ringe mit Tiefen
+0,8/1,0/1,2/1,5 mm nebeneinander — zum direkten Vergleich. Hinweis: Die
+ganzzahlige Rillenzahl über die ganze Ø-Familie ergibt sich nur bei der
+Standard-Teilung `4*PI/3`; andere Teilungen werden je Objekt einzeln auf
+eine ganze Zahl gerundet.
+
+## Farbe
+
+Kommt allein übers **Filament** — die Modelle setzen kein `color()`.
+Jede Farbwahl funktioniert; einheitlich wirkt es, wenn Schalen in einer
+und Einsätze/Clips in einer zweiten Filamentfarbe gedruckt werden.
+
 ## Druckeinstellungen (Kurzfassung)
 
 - Aufrecht drucken, **ohne Supports** (Rillen stehen vertikal).

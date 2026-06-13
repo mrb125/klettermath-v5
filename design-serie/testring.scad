@@ -11,6 +11,7 @@
 // TEIL = 0 : Ring + Clip nebeneinander
 // TEIL = 1 : nur Ring (Ø56 / H24)
 // TEIL = 2 : nur Verzahnungs-Clip (greift in die Rillen des Rings)
+// TEIL = 3 : Rillen-Vergleichsreihe (4 Ringe, versch. Rillentiefen)
 // ══════════════════════════════════════════════════════
 use <riffel-lib.scad>
 
@@ -20,8 +21,24 @@ $fn = 96;
 D = 56;     // Ringdurchmesser (Familienmaß)
 H = 24;     // Ringhöhe (3 × 8-mm-Raster)
 
+// Variable Rille des Testrings (überschreibt die Lib-Defaults).
+// 0 lässt den Lib-Standard greifen.
+RILLE_T = 1.2;   // Tiefe
+RILLE_R = 2.4;   // Radius/Breite
+
 module testring() {
-    riffel_round(D, H, hohl = true, sig = true);
+    riffel_round(D, H, hohl = true, sig = true, t = RILLE_T, r = RILLE_R);
+}
+
+// Phase-0-Entscheidungshilfe: vier flache Ringe mit unterschiedlicher
+// Rillentiefe in EINEM Druck vergleichen (tiefer = kräftiger Look,
+// flacher = leichter zu reinigen).
+TIEFEN = [0.8, 1.0, 1.2, 1.5];
+module rillen_vergleich() {
+    for (k = [0 : len(TIEFEN) - 1])
+        translate([k * (D + 12), 0, 0])
+            riffel_round(D, 16, hohl = true, sig = false,
+                         t = TIEFEN[k], r = RILLE_R);
 }
 
 // Clip: 90°-Bogenband, dessen Innenrippen mit 0,25 mm Spiel in die
@@ -43,8 +60,8 @@ module test_clip() {
                     [ (R+6)*cos(100), (R+6)*sin(100) ]]);
         }
     }
-    // Eingreifende Rippen (Negativ der Rillen)
-    riffel_negativ_arc(D, band_h, winkel = 100);
+    // Eingreifende Rippen (Negativ der Rillen) — gleiche Rille wie der Ring
+    riffel_negativ_arc(D, band_h, winkel = 100, t = RILLE_T, r = RILLE_R);
 }
 
 if (TEIL == 0) {
@@ -54,4 +71,6 @@ if (TEIL == 0) {
     testring();
 } else if (TEIL == 2) {
     test_clip();
+} else if (TEIL == 3) {
+    rillen_vergleich();
 }

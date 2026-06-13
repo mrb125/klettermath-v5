@@ -170,9 +170,11 @@ Geometrie — weniger Konstruktionsaufwand, mehr Serienwirkung.
   Schreibtisch/Küche auch PLA matt. Matte Filamente verstärken den
   Keramik-Look deutlich.
 - **Profil:** 0,4er Düse, 0,2 mm Schichten, 3 Perimeter, 4 Boden-/Deckschichten.
-- **Farbkonzept:** Eine Serienfarbe für alle Schalen (z. B. Warmweiß oder
-  Salbeigrün), Abtropfeinsätze und Steckwände einheitlich in einer
-  Kontrastfarbe (z. B. Anthrazit) — zweites Wiedererkennungsmerkmal.
+- **Farbe:** wird allein über das **Filament** bestimmt, nicht im Modell
+  (die `.scad`-Dateien setzen bewusst kein `color()`). Wer den Look
+  einheitlich halten will, druckt die Schalen in einer Filamentfarbe und
+  Abtropfeinsätze/Steckwände/Clips in einer zweiten — nötig ist das aber
+  nicht, jede Farbwahl funktioniert.
 
 ---
 
@@ -219,11 +221,17 @@ Module aufrufen.
 | **5 — Kombi-Module** | Basis-Tablett S, Stapeldose, Verkettungs-Clip | Kombinierbarkeit sichtbar machen — Tablett L und Etagere danach |
 | **6 — Ideenspeicher** | Nach Bedarf aus Welle 6 ziehen | Serie lebt weiter |
 
+> **Rille ist jetzt einstellbar.** Tiefe, Radius/Breite und Teilung
+> stehen als Parameter oben in `riffel-lib.scad` (Customizer) und lassen
+> sich zusätzlich pro Objekt überschreiben: `riffel_round(D, H, t=…,
+> r=…, p=…)`. `testring.scad` mit `TEIL=3` druckt vier Ringe mit
+> verschiedenen Tiefen (0,8/1,0/1,2/1,5) zum direkten Vergleich.
+> Farbe kommt rein übers Filament — im Modell ist nichts farbig.
+
 **Offene Entscheidungen für Phase 0/1:**
-1. Serienfarbe + Kontrastfarbe festlegen
-2. Serienname endgültig wählen (→ Signatur ggf. als Monogramm statt drei Kerben)
-3. Rillentiefe 1,2 mm am Testring bestätigen oder auf 1,0 mm reduzieren
-   (Abwägung: Tiefe = stärkerer Look, flacher = leichter zu reinigen)
-4. Verzahnungs-Spielmaß validieren: Zum Testring (Phase 0) gehört ein
-   Gegenstück mit Riffel-Negativ — Flankenspiel 0,25 mm bestätigen oder
-   auf 0,15/0,35 mm korrigieren (entscheidet über alle Kombi-Module)
+1. Serienname endgültig wählen (→ Signatur ggf. als Monogramm statt drei Kerben)
+2. Rillentiefe am Vergleichsdruck (`testring.scad`, `TEIL=3`) wählen
+   (Abwägung: tiefer = stärkerer Look, flacher = leichter zu reinigen)
+3. Verzahnungs-Spielmaß validieren: Zum Testring gehört ein Gegenstück
+   mit Riffel-Negativ — Flankenspiel 0,25 mm bestätigen oder auf
+   0,15/0,35 mm korrigieren (entscheidet über alle Kombi-Module)

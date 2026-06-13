@@ -11,10 +11,27 @@
 // Einheiten: mm. Druck: aufrecht, supportfrei, Naht ins Rillental.
 // ══════════════════════════════════════════════════════
 
-// ── Serien-Konstanten (verbindlich, nicht pro Objekt ändern) ──
-RIFFEL_P      = 4 * PI / 3;   // Teilung ≈ 4,189 mm  → ganzzahlige Rillen
-RIFFEL_R      = 2.4;          // Rillenradius (Hohlkehle)
-RIFFEL_T      = 1.2;          // Rillentiefe
+// ════════════════════════════════════════════════
+//  RILLE — frei einstellbar (Customizer / pro Objekt überschreibbar)
+// ════════════════════════════════════════════════
+/* [Riffelung] */
+// Rillentiefe in mm
+RILLE_TIEFE    = 1.2;        // [0.4 : 0.1 : 2.5]
+// Rillenradius (Hohlkehle, ~ halbe Rillenbreite) in mm
+RILLE_RADIUS   = 2.4;        // [1.2 : 0.1 : 4.0]
+// Soll-Teilung = Umfang je Rille. 4*PI/3 ≈ 4,19 ist der Serienstandard
+// (ganzzahlige Rillenzahl über die ganze Ø-Familie). Kleiner = mehr,
+// feinere Rillen; größer = weniger, breitere. Die tatsächliche Teilung
+// wird je Objekt auf eine ganze Rillenzahl gerundet.
+RILLE_TEILUNG  = 4.18879;    // [2.0 : 0.05 : 8.0]
+
+// Interne Namen (= einstellbare Werte oben). Module akzeptieren zusätzlich
+// gleichnamige Parameter t/r/p, um die Rille pro Objekt zu variieren.
+RIFFEL_T      = RILLE_TIEFE;
+RIFFEL_R      = RILLE_RADIUS;
+RIFFEL_P      = RILLE_TEILUNG;
+
+/* [Körper-Proportionen] */
 RIFFEL_WALL   = 2.0;          // Mindest-Wandstärke im Rillental
 SOCKEL_H      = 8.0;          // Höhe glattes Sockelband
 SOCKEL_SET    = 0.8;          // Sockel-Rücksprung ggü. Rillenkamm
@@ -24,25 +41,24 @@ LIPPE_STUFEN  = 6;            // Stufen der Stadion-Lippenfase
 BODEN         = 3.2;          // Bodendicke
 FLANKE_SPIEL  = 0.25;         // Verzahnungs-Flankenspiel (Kombi-Module)
 
-// Gesamt-Wandstärke Kamm→innen = WALL + T = 3,2 mm
-RIFFEL_DW     = RIFFEL_WALL + RIFFEL_T;   // 3,2
-
 $fn = 96;
 
+// Abgeleitete Größen als Funktionen der jeweils gewählten Rille:
+//  Wandstärke Kamm→innen = WALL + Tiefe ; Cutter-Versatz = Radius − Tiefe
+function riffel_dw(t = RIFFEL_T)            = RIFFEL_WALL + t;
+function riffel_off(r = RIFFEL_R, t = RIFFEL_T) = r - t;
 // Rillenanzahl aus Umfang: n = round(Umfang / p)
-function riffel_n(umfang) = round(umfang / RIFFEL_P);
-// Cutter-Achse liegt (R - T) außerhalb der Kammfläche
-RIFFEL_OFF    = RIFFEL_R - RIFFEL_T;      // 1,2
+function riffel_n(umfang, p = RIFFEL_P)     = round(umfang / p);
 
 // ══════════════════════════════════════════════════════
 //   1 · EIN-RILLE-CUTTER (vertikal, mit gerundetem Auslauf)
 // ══════════════════════════════════════════════════════
 // Vertikaler Halbkanal von z=zlo bis z=zhi, an beiden Enden durch
 // eine Kugel rund auslaufend → kein harter Absatz an Sockel/Lippe.
-module riffel_cut(zlo, zhi) {
-    translate([0, 0, zlo]) sphere(RIFFEL_R);
-    translate([0, 0, zlo]) cylinder(h = zhi - zlo, r = RIFFEL_R);
-    translate([0, 0, zhi]) sphere(RIFFEL_R);
+module riffel_cut(zlo, zhi, r = RIFFEL_R) {
+    translate([0, 0, zlo]) sphere(r);
+    translate([0, 0, zlo]) cylinder(h = zhi - zlo, r = r);
+    translate([0, 0, zhi]) sphere(r);
 }
 
 // ══════════════════════════════════════════════════════
@@ -63,12 +79,15 @@ module signatur(y_face) {
 // D = Außen-Ø über Kämme, H = Gesamthöhe.
 // hohl = true  → offener Behälter mit Boden BODEN.
 // sig  = true  → Signaturkerben im Sockel.
-module riffel_round(D, H, hohl = true, sig = true) {
-    R  = D / 2;
-    Ri = R - RIFFEL_DW;            // Innenradius
-    n  = riffel_n(PI * D);         // Rillenanzahl (z.B. Ø56 → 42)
-    zlo = SOCKEL_H + RIFFEL_R;     // Rillen-Auslauf über dem Sockel
-    zhi = H - LIPPE_H - RIFFEL_R;  // Auslauf unter der Lippe
+// t/r/p        → Rille pro Objekt überschreiben (Tiefe/Radius/Teilung).
+module riffel_round(D, H, hohl = true, sig = true,
+                    t = RIFFEL_T, r = RIFFEL_R, p = RIFFEL_P) {
+    R   = D / 2;
+    Ri  = R - riffel_dw(t);        // Innenradius
+    off = riffel_off(r, t);        // Cutter-Versatz nach außen
+    n   = riffel_n(PI * D, p);     // Rillenanzahl (z.B. Ø56 → 42)
+    zlo = SOCKEL_H + r;            // Rillen-Auslauf über dem Sockel
+    zhi = H - LIPPE_H - r;         // Auslauf unter der Lippe
 
     difference() {
         union() {
@@ -82,8 +101,8 @@ module riffel_round(D, H, hohl = true, sig = true) {
         // Rillen rundum, nur im Mittelbereich
         for (i = [0 : n - 1])
             rotate([0, 0, i * 360 / n])
-                translate([R + RIFFEL_OFF, 0, 0])
-                    riffel_cut(zlo, zhi);
+                translate([R + off, 0, 0])
+                    riffel_cut(zlo, zhi, r);
         // Lippe: 45°-Fase an der oberen Außenkante. Das abgezogene
         // Profil deckt alles oberhalb der 45°-Geraden (R-FAS,H)→(R,H-FAS)
         // ab und lässt damit eine saubere Fase stehen.
@@ -124,13 +143,15 @@ function stadion_pt(s, sx, Rc) =
         : let (a = -90 - (s - 2 * L1 - L2) / L2 * 180)
           [ -sx + Rc * cos(a), Rc * sin(a), cos(a), sin(a) ];
 
-module riffel_stadion(L, Wd, H, hohl = true, sig = true) {
+module riffel_stadion(L, Wd, H, hohl = true, sig = true,
+                      t = RIFFEL_T, r = RIFFEL_R, p = RIFFEL_P) {
     Rc  = Wd / 2;
     sx  = stadion_sx(L, Wd);
     per = stadion_perim(L, Wd);
-    n   = riffel_n(per);
-    zlo = SOCKEL_H + RIFFEL_R;
-    zhi = H - LIPPE_H - RIFFEL_R;
+    off = riffel_off(r, t);
+    n   = riffel_n(per, p);
+    zlo = SOCKEL_H + r;
+    zhi = H - LIPPE_H - r;
 
     // 2D-Grundriss als Hülle zweier Kreise
     module grundriss(off = 0)
@@ -145,12 +166,12 @@ module riffel_stadion(L, Wd, H, hohl = true, sig = true) {
             translate([0, 0, SOCKEL_H - 0.01])
                 linear_extrude(H - SOCKEL_H) grundriss(0);
         }
-        // Rillen entlang der Kammkontur, Cutter um RIFFEL_OFF nach außen
+        // Rillen entlang der Kammkontur, Cutter um off nach außen
         for (i = [0 : n - 1]) {
-            p = stadion_pt(i * per / n, sx, Rc);
-            translate([p[0] + p[2] * RIFFEL_OFF,
-                       p[1] + p[3] * RIFFEL_OFF, 0])
-                riffel_cut(zlo, zhi);
+            pt = stadion_pt(i * per / n, sx, Rc);
+            translate([pt[0] + pt[2] * off,
+                       pt[1] + pt[3] * off, 0])
+                riffel_cut(zlo, zhi, r);
         }
         // Lippe: umlaufende 45°-Fase oben. Da ein gleichmäßiger Versatz
         // eines Stadions per linear_extrude(scale) verzerren würde, wird
@@ -165,7 +186,7 @@ module riffel_stadion(L, Wd, H, hohl = true, sig = true) {
         // Innenraum
         if (hohl)
             translate([0, 0, BODEN])
-                linear_extrude(H) grundriss(-RIFFEL_DW);
+                linear_extrude(H) grundriss(-riffel_dw(t));
         if (sig) signatur(Rc - SOCKEL_SET);
     }
 }
@@ -190,7 +211,7 @@ module abtropf_rippen(bbox, h0) {
 }
 
 module abtropf_round(D) {
-    Ri = D/2 - RIFFEL_DW - EINSATZ_SPIEL;   // passt in den Innenraum
+    Ri = D/2 - riffel_dw() - EINSATZ_SPIEL;   // passt in den Innenraum
     difference() {
         union() {
             cylinder(h = EINSATZ_PLATTE, r = Ri);
@@ -215,7 +236,7 @@ module abtropf_round(D) {
 }
 
 module abtropf_stadion(L, Wd) {
-    Rc = Wd/2 - RIFFEL_DW - EINSATZ_SPIEL;
+    Rc = Wd/2 - riffel_dw() - EINSATZ_SPIEL;
     sx = stadion_sx(L, Wd);
     module gr(off = 0) hull() {
         translate([ sx, 0]) circle(Rc + off);
@@ -249,13 +270,16 @@ module abtropf_stadion(L, Wd) {
 // Für Kombi-Module (Tablett-Mulden, Clips, Tabletts). Erzeugt n
 // Rippen über einen Bogen, die mit FLANKE_SPIEL in die Rillen eines
 // Rund-Körpers (Ø=D) eingreifen. Als Phase-0-Prüfteil verwendet.
-module riffel_negativ_arc(D, h, winkel = 90) {
-    R = D / 2;
-    n = riffel_n(PI * D);
+// t/r/p MÜSSEN mit dem Gegenstück (riffel_round) übereinstimmen.
+module riffel_negativ_arc(D, h, winkel = 90,
+                          t = RIFFEL_T, r = RIFFEL_R, p = RIFFEL_P) {
+    R   = D / 2;
+    off = riffel_off(r, t);
+    n   = riffel_n(PI * D, p);
     schritt = 360 / n;
     anz = floor(winkel / schritt);
     for (i = [0 : anz])
         rotate([0, 0, i * schritt])
-            translate([R + RIFFEL_OFF - FLANKE_SPIEL, 0, 0])
-                cylinder(h = h, r = RIFFEL_R - FLANKE_SPIEL);
+            translate([R + off - FLANKE_SPIEL, 0, 0])
+                cylinder(h = h, r = r - FLANKE_SPIEL);
 }
