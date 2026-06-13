@@ -46,6 +46,15 @@ ganzzahlige Rillenzahl über die ganze Ø-Familie ergibt sich nur bei der
 Standard-Teilung `4*PI/3`; andere Teilungen werden je Objekt einzeln auf
 eine ganze Zahl gerundet.
 
+## Verzahnungs-Spielmaß einstellen
+
+Das Flankenspiel der Kombi-Module steht in `FLANKE_SPIEL`
+(`riffel-lib.scad`) und ist an `riffel_negativ_arc(..., spiel = …)` pro
+Objekt überschreibbar. `testring.scad` mit `TEIL = 4` druckt drei Clips
+mit 0,15/0,25/0,35 mm (Wert ist ins Band graviert): zusammen mit einem
+Ring aus `TEIL = 1` drucken, jeden aufstecken und den strammsten mit
+sauberem Sitz als `FLANKE_SPIEL` übernehmen.
+
 ## Farbe
 
 Kommt allein übers **Filament** — die Modelle setzen kein `color()`.

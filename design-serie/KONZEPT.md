@@ -232,6 +232,7 @@ Module aufrufen.
 1. Serienname endgültig wählen (→ Signatur ggf. als Monogramm statt drei Kerben)
 2. Rillentiefe am Vergleichsdruck (`testring.scad`, `TEIL=3`) wählen
    (Abwägung: tiefer = stärkerer Look, flacher = leichter zu reinigen)
-3. Verzahnungs-Spielmaß validieren: Zum Testring gehört ein Gegenstück
-   mit Riffel-Negativ — Flankenspiel 0,25 mm bestätigen oder auf
-   0,15/0,35 mm korrigieren (entscheidet über alle Kombi-Module)
+3. Verzahnungs-Spielmaß wählen: `testring.scad` mit `TEIL=4` druckt drei
+   Clips mit Flankenspiel 0,15/0,25/0,35 mm (Wert ins Band graviert). Den
+   strammsten, der sich noch sauber aufstecken lässt, in `FLANKE_SPIEL`
+   (riffel-lib.scad) übernehmen — gilt dann für alle Kombi-Module.

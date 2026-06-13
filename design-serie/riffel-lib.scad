@@ -39,7 +39,11 @@ LIPPE_H       = 4.0;          // Höhe glatte Lippe oben
 LIPPE_FAS     = 1.2;          // Fasen-/Rundungsmaß der Lippe
 LIPPE_STUFEN  = 6;            // Stufen der Stadion-Lippenfase
 BODEN         = 3.2;          // Bodendicke
-FLANKE_SPIEL  = 0.25;         // Verzahnungs-Flankenspiel (Kombi-Module)
+
+/* [Verzahnung] */
+// Flankenspiel der Kombi-Module: Rippe sitzt um diesen Wert schmaler/
+// versetzt in der Rille. Kleiner = strammer, größer = leichtgängiger.
+FLANKE_SPIEL  = 0.25;         // [0.10 : 0.05 : 0.50]
 
 $fn = 96;
 
@@ -271,8 +275,10 @@ module abtropf_stadion(L, Wd) {
 // Rippen über einen Bogen, die mit FLANKE_SPIEL in die Rillen eines
 // Rund-Körpers (Ø=D) eingreifen. Als Phase-0-Prüfteil verwendet.
 // t/r/p MÜSSEN mit dem Gegenstück (riffel_round) übereinstimmen.
+// spiel = Flankenspiel der Rippen (überschreibt FLANKE_SPIEL).
 module riffel_negativ_arc(D, h, winkel = 90,
-                          t = RIFFEL_T, r = RIFFEL_R, p = RIFFEL_P) {
+                          t = RIFFEL_T, r = RIFFEL_R, p = RIFFEL_P,
+                          spiel = FLANKE_SPIEL) {
     R   = D / 2;
     off = riffel_off(r, t);
     n   = riffel_n(PI * D, p);
@@ -280,6 +286,6 @@ module riffel_negativ_arc(D, h, winkel = 90,
     anz = floor(winkel / schritt);
     for (i = [0 : anz])
         rotate([0, 0, i * schritt])
-            translate([R + off - FLANKE_SPIEL, 0, 0])
-                cylinder(h = h, r = r - FLANKE_SPIEL);
+            translate([R + off - spiel, 0, 0])
+                cylinder(h = h, r = r - spiel);
 }
