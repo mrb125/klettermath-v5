@@ -20,7 +20,9 @@ keine Lib-Datei, keine Installation nötig. Vorlage wählen oder Maße per
 Schieberegler einstellen, das Objekt dreht sich live in 3D, dann
 **„STL herunterladen"** → fertige Datei für den Slicer.
 
-> Lädt Three.js beim ersten Öffnen vom CDN → einmalig Internet nötig.
+> Three.js liegt lokal im `vendor/`-Ordner mit → die Seite läuft komplett
+> **offline**, ganz ohne Internet. (Nur falls die HTML allein, ohne
+> `vendor/`, weiterkopiert wird, greift ein CDN-Fallback.)
 > Die Vorschau rechnet gröber, der Export immer in Druckqualität.
 
 ## Der OpenSCAD-Weg (parametrisch, voller Funktionsumfang)
