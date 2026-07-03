@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Loop Physik – Übersicht</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--text:#f0ead8;--text2:#a89880;--blue:#5ba3d9;--purple:#b07fff;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100%}
+.wrap{max-width:960px;margin:0 auto;padding:40px 22px 70px}
+.hero{text-align:center;margin-bottom:36px}
+.hero .emoji{font-size:52px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:46px;letter-spacing:3px;color:var(--rope);margin-top:4px}
+.hero p{color:var(--text2);font-size:15px;max-width:560px;margin:10px auto 0;line-height:1.6}
+.q{background:var(--bg2);border:1px solid var(--bg3);border-left:4px solid var(--gold);border-radius:10px;
+   padding:16px 20px;margin:26px auto;max-width:640px;font-size:16px;font-style:italic;color:var(--text)}
+.q b{color:var(--gold);font-style:normal;font-family:'JetBrains Mono',monospace}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:10px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--bg2);border:1px solid var(--bg3);
+       border-radius:14px;padding:20px;transition:transform .15s,border-color .15s;position:relative}
+a.card:hover{transform:translateY(-3px);border-color:var(--rope)}
+.card .badge{position:absolute;top:14px;right:16px;font-family:'Bebas Neue';font-size:22px;color:var(--bg4)}
+.card .ico{font-size:30px}
+.card h2{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1px;color:var(--gold);margin:8px 0 4px}
+.card .kind{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.card p{font-size:13px;color:var(--text2);line-height:1.5}
+.card .go{margin-top:12px;font-size:12px;font-weight:700;color:var(--rope)}
+.card.doc .go{color:var(--blue)}
+.section-title{font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;color:var(--rope);margin:34px 0 12px}
+.physics{background:var(--bg2);border:1px solid var(--bg3);border-radius:14px;padding:20px 22px;margin-top:10px}
+.physics code{font-family:'JetBrains Mono',monospace;color:var(--gold);background:var(--bg);padding:2px 6px;border-radius:4px;font-size:13px}
+.physics .line{margin:10px 0;font-size:14px;color:var(--text2)}
+.foot{text-align:center;color:var(--text2);font-size:12px;margin-top:40px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="emoji">🎢</div>
+    <h1>Space Loop Physik</h1>
+    <p>Die Mould&nbsp;King „Space&nbsp;Loop"-Achterbahn als roter Faden für die Mechanik der EF (NRW):
+       Energieerhaltung, Kreisbewegung &amp; Zentripetalkraft — in vier Herangehensweisen zum Vergleich.</p>
+  </div>
+
+  <div class="q">Leitfrage: „Wie hoch muss die Startrampe mindestens sein, damit der Wagen den Looping schafft?"
+    &nbsp;→&nbsp; <b>h ≥ 2,5 · r</b></div>
+
+  <div class="section-title">Vier Ansätze</div>
+  <div class="grid">
+    <a class="card" href="ansatz-a-simulation/index.html">
+      <div class="badge">A</div><div class="ico">🕹️</div>
+      <h2>Simulation</h2>
+      <div class="kind">Interaktiv · Canvas</div>
+      <p>Looping am Bildschirm erleben: Starthöhe, Radius und Reibung live verändern, Energie und g-Kräfte in Echtzeit sehen.</p>
+      <div class="go">Öffnen →</div>
+    </a>
+    <a class="card" href="ansatz-b-rechner/index.html">
+      <div class="badge">B</div><div class="ico">🧮</div>
+      <h2>Looping-Rechner</h2>
+      <div class="kind">Werkzeug · KaTeX</div>
+      <p>Starthöhe ↔ Mindestgeschwindigkeit ↔ g-Kräfte berechnen — inklusive vollständiger Schritt-für-Schritt-Herleitung.</p>
+      <div class="go">Öffnen →</div>
+    </a>
+    <a class="card doc" href="ansatz-c-experiment/index.html">
+      <div class="badge">C</div><div class="ico">📹</div>
+      <h2>Experiment</h2>
+      <div class="kind">Videoanalyse · druckbar</div>
+      <p>Echte Fahrt filmen und mit Tracker/phyphox vermessen. Theorie vs. Messung, Reibung &amp; Energieentwertung.</p>
+      <div class="go">Laborblatt öffnen →</div>
+    </a>
+    <a class="card doc" href="ansatz-d-unterrichtsverlauf/unterrichtsverlauf.md">
+      <div class="badge">D</div><div class="ico">📋</div>
+      <h2>Unterrichtsverlauf</h2>
+      <div class="kind">Doppelstunde · Markdown</div>
+      <p>Fertige Doppelstunde mit KLP-Bezug, Arbeitsblatt und Erwartungshorizont — direkt einsetzbar.</p>
+      <div class="go">Verlauf ansehen →</div>
+    </a>
+  </div>
+
+  <div class="section-title">Physikalischer Kern</div>
+  <div class="physics">
+    <div class="line">Bedingung am Scheitel: <code>v_top,min = √(g·r)</code></div>
+    <div class="line">Energieerhaltung: <code>m·g·h = ½·m·v_top² + m·g·(2r)</code> &nbsp;⟹&nbsp; <code>h_min = 2,5·r</code></div>
+    <div class="line">g-Kräfte: <code>n_unten = 2h/r + 1</code>, &nbsp; <code>n_top = 2h/r − 5</code> &nbsp;— bei h=2,5r: unten 6 g, oben 0 g</div>
+  </div>
+
+  <div class="foot">Physik EF · NRW · Inhaltsfeld Mechanik<br>Didaktisches Material — Modellwerte je nach Aufbau anpassen.</div>
+</div>
+</body>
+</html>
