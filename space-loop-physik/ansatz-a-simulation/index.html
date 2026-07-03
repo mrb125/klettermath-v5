@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Loop – Simulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--err:#ff5e5b;--text:#f0ead8;--text2:#a89880;
+  --blue:#5ba3d9;--purple:#b07fff;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;overflow:hidden}
+#app{display:flex;height:100%}
+#stage{flex:1;position:relative;min-width:0}
+#canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#panel{width:340px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--bg3);
+       display:flex;flex-direction:column;overflow-y:auto}
+#panel::-webkit-scrollbar{width:5px}#panel::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:var(--rope)}
+.hdr{padding:14px 16px;border-bottom:1px solid var(--bg3)}
+.hdr p{font-size:11px;color:var(--text2);margin-top:2px}
+.sec{padding:14px 16px;border-bottom:1px solid var(--bg3)}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:var(--gold);margin-bottom:10px}
+.ctrl{margin-bottom:12px}
+.ctrl label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px}
+.ctrl label b{color:var(--text);font-family:'JetBrains Mono',monospace}
+input[type=range]{width:100%;accent-color:var(--rope);cursor:pointer}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{padding:8px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;
+       font-weight:700;font-size:12px;transition:opacity .15s}
+button:hover{opacity:.85}
+.btn-p{background:var(--rope);color:var(--bg)}
+.btn-s{background:var(--bg4);color:var(--text);border:1px solid var(--bg5)}
+.readouts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ro{background:var(--bg);border:1px solid var(--bg4);border-radius:8px;padding:8px 10px}
+.ro .k{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.ro .v{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:var(--gold);margin-top:2px}
+.ro .u{font-size:10px;color:var(--text2)}
+.energy{margin-top:4px}
+.ebar{height:18px;border-radius:4px;background:var(--bg);overflow:hidden;display:flex;margin-bottom:4px;border:1px solid var(--bg4)}
+.ebar .seg{height:100%;transition:width .1s linear}
+.epot{background:var(--blue)}.ekin{background:var(--accent)}.eloss{background:var(--bg5)}
+.elegend{display:flex;gap:12px;font-size:10px;color:var(--text2)}
+.elegend span::before{content:'';display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.lp::before{background:var(--blue)}.lk::before{background:var(--accent)}.ll::before{background:var(--bg5)}
+.verdict{margin-top:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:700;text-align:center;background:var(--bg);border:1px solid var(--bg4);color:var(--text2)}
+.verdict.ok{color:var(--ok);border-color:var(--ok)}
+.verdict.fail{color:var(--err);border-color:var(--err)}
+.hint{font-size:11px;color:var(--text2);line-height:1.5;margin-top:8px}
+.hint code{font-family:'JetBrains Mono',monospace;color:var(--gold);background:var(--bg);padding:1px 4px;border-radius:3px}
+.tag{display:inline-block;font-size:10px;background:var(--bg4);color:var(--text2);padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"><canvas id="canvas"></canvas></div>
+  <div id="panel">
+    <div class="hdr">
+      <h1>Space Loop <span class="tag">Ansatz A · Simulation</span></h1>
+      <p>Energieerhaltung &amp; Zentripetalkraft am Looping erleben</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Stellschrauben</div>
+      <div class="ctrl">
+        <label>Starthöhe h <b><span id="hv">0.30</span> m</b></label>
+        <input type="range" id="h" min="0.05" max="0.60" step="0.005" value="0.30">
+      </div>
+      <div class="ctrl">
+        <label>Loop-Radius r <b><span id="rv">0.08</span> m</b></label>
+        <input type="range" id="r" min="0.04" max="0.14" step="0.005" value="0.08">
+      </div>
+      <div class="ctrl">
+        <label>Reibung (Energieverlust) <b><span id="fv">15</span> %</b></label>
+        <input type="range" id="f" min="0" max="40" step="1" value="15">
+      </div>
+      <div class="btns">
+        <button class="btn-p" id="start">▶ Start</button>
+        <button class="btn-s" id="reset">↻ Reset</button>
+        <button class="btn-s" id="ideal">Ø Reibung</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Live-Messwerte</div>
+      <div class="readouts">
+        <div class="ro"><div class="k">Geschw. v</div><div class="v"><span id="rv-v">0.0</span></div><div class="u">m/s</div></div>
+        <div class="ro"><div class="k">Höhe y</div><div class="v"><span id="rv-y">0.00</span></div><div class="u">m</div></div>
+        <div class="ro"><div class="k">g-Kraft</div><div class="v"><span id="rv-g">0.0</span></div><div class="u">· g (Andruck)</div></div>
+        <div class="ro"><div class="k">v am Loop-Top</div><div class="v"><span id="rv-vt">–</span></div><div class="u">m/s</div></div>
+      </div>
+      <div class="energy" style="margin-top:12px">
+        <div class="ebar" id="ebar">
+          <div class="seg epot" id="seg-p"></div>
+          <div class="seg ekin" id="seg-k"></div>
+          <div class="seg eloss" id="seg-l"></div>
+        </div>
+        <div class="elegend">
+          <span class="lp">E<sub>pot</sub></span>
+          <span class="lk">E<sub>kin</sub></span>
+          <span class="ll">Verlust</span>
+        </div>
+      </div>
+      <div class="verdict" id="verdict">Bereit – drücke Start</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Physik-Check</div>
+      <div class="hint" id="hint"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const g = 9.81;
+const SLOWMO = 0.30;   // Zeitlupe: Physik/Messwerte bleiben real, nur die Darstellung läuft langsamer
+const cv = document.getElementById('canvas'), ctx = cv.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1,2);
+  const st = document.getElementById('stage').getBoundingClientRect();
+  W=st.width; H=st.height;
+  cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize',()=>{resize();buildTrack();draw();});
+
+// ---- parameters (SI, meters) ----
+let P = {h:0.30, r:0.08, f:0.15};
+const el = id=>document.getElementById(id);
+['h','r','f'].forEach(k=>{
+  el(k).addEventListener('input',()=>{
+    P.h=+el('h').value; P.r=+el('r').value; P.f=+el('f').value/100;
+    el('hv').textContent=P.h.toFixed(2); el('rv').textContent=P.r.toFixed(2);
+    el('fv').textContent=Math.round(P.f*100);
+    reset(); buildTrack(); draw(); updateHint();
+  });
+});
+el('ideal').addEventListener('click',()=>{el('f').value=0;el('f').dispatchEvent(new Event('input'));});
+
+// ---- world -> screen mapping ----
+// world x: 0 = ramp start, increases to the right. world y: up positive.
+let scale=1, ox=0, oy=0;
+function W2Sx(x){return ox + x*scale;}
+function W2Sy(y){return oy - y*scale;}
+
+// ---- track model ----
+// Segments as sampled points with cumulative arc length + height.
+let track=[]; // {x,y,s} in world coords
+let loopStartS=0, loopEndS=0, loopCx=0, loopCy=0, totalS=0;
+function buildTrack(){
+  const r=P.r, h=P.h;
+  // geometry (world meters): ramp from (0,h) down to (rampEnd,0), then flat lead-in,
+  // then vertical circular loop, then flat run-out.
+  const rampEndX = 0.35;              // horizontal length of ramp base
+  const leadIn   = 0.10;
+  const loopBaseX= rampEndX + leadIn; // where loop bottom sits
+  loopCx = loopBaseX; loopCy = r;     // circle centre; bottom at y=0, top at y=2r
+  const pts=[];
+  // ramp (straight incline). Slight curve at bottom for smoothness omitted for clarity.
+  const N1=40;
+  for(let i=0;i<=N1;i++){const t=i/N1; pts.push({x:t*rampEndX, y:h*(1-t)});}
+  // lead-in flat
+  const N2=12;
+  for(let i=1;i<=N2;i++){const t=i/N2; pts.push({x:rampEndX+t*leadIn, y:0});}
+  // loop: full circle starting/ending at bottom, going up the RIGHT side first
+  const N3=120; loopStartIdx=pts.length;
+  for(let i=1;i<=N3;i++){
+    const phi = (i/N3)*2*Math.PI;           // 0..2pi from bottom
+    const x = loopCx + r*Math.sin(phi);
+    const y = r - r*Math.cos(phi);          // 0 at bottom, 2r at top
+    pts.push({x,y,phi});
+  }
+  // run-out flat
+  const N4=30; const runX=0.40;
+  for(let i=1;i<=N4;i++){const t=i/N4; pts.push({x:loopCx+t*runX, y:0});}
+  // cumulative arc length
+  let s=0; pts[0].s=0;
+  for(let i=1;i<pts.length;i++){
+    const dx=pts[i].x-pts[i-1].x, dy=pts[i].y-pts[i-1].y;
+    s+=Math.hypot(dx,dy); pts[i].s=s;
+  }
+  totalS=s; track=pts;
+  loopStartS=pts[loopStartIdx].s; loopEndS=pts[loopStartIdx+N3].s;
+  // fit view
+  let maxX=0,maxY=0; pts.forEach(p=>{maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y);});
+  const pad=0.06;
+  const sx=W/(maxX+2*pad), sy=H/(maxY+2*pad);
+  scale=Math.min(sx,sy)*0.92;
+  ox=(W-(maxX)*scale)/2; oy=H-(H-(maxY)*scale)/2;
+}
+let loopStartIdx=0;
+
+// interpolate track point at arc length s
+function atS(s){
+  s=Math.max(0,Math.min(totalS,s));
+  let lo=0,hi=track.length-1;
+  while(lo<hi){const m=(lo+hi)>>1; if(track[m].s<s)lo=m+1; else hi=m;}
+  const b=track[lo], a=track[Math.max(0,lo-1)];
+  const span=(b.s-a.s)||1e-9; const t=(s-a.s)/span;
+  return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t, phi:b.phi, onLoop:(s>=loopStartS&&s<=loopEndS)};
+}
+
+// ---- simulation state ----
+let ball={s:0, v:0, running:false, failed:false, flyX:0, flyY:0, flyVx:0, flyVy:0, flying:false, done:false};
+let lastVtop=null, maxG=0;
+
+function reset(){
+  P.h=+el('h').value; P.r=+el('r').value; P.f=+el('f').value/100;
+  ball={s:0,v:0,running:false,failed:false,flying:false,done:false,flyX:0,flyY:0,flyVx:0,flyVy:0};
+  lastVtop=null; maxG=0;
+  el('verdict').className='verdict'; el('verdict').textContent='Bereit – drücke Start';
+  setReadouts(0,P.h,1,null);
+}
+el('reset').addEventListener('click',()=>{reset();draw();});
+el('start').addEventListener('click',()=>{
+  if(ball.done)reset();
+  // nudge off the very top of the ramp so v>0 and it starts rolling
+  if(ball.s<0.003) ball.s=0.003;
+  ball.running=true;
+});
+
+// speed from energy conservation with proportional friction over distance travelled
+// E_total_start = m g h.  Friction removes P.f * mgh spread over full track length.
+function speedAt(s,y){
+  const startE = g*P.h;                       // per unit mass
+  const lossPerLen = P.f*g*P.h/totalS;        // energy lost per metre
+  const avail = startE - lossPerLen*s - g*y;  // = 0.5 v^2
+  return Math.sqrt(Math.max(0, 2*avail));
+}
+
+let lastT=0;
+function step(dt){
+  if(!ball.running||ball.done) return;
+  if(ball.flying){ // projectile after leaving track
+    ball.flyVy -= g*dt;
+    ball.flyX += ball.flyVx*dt; ball.flyY += ball.flyVy*dt;
+    if(ball.flyY<=0){ball.done=true;ball.running=false;}
+    return;
+  }
+  const pt=atS(ball.s);
+  const v=speedAt(ball.s, pt.y);
+  ball.v=v;
+  // g-force / track normal check on loop
+  if(pt.onLoop){
+    const phi=pt.phi;
+    const N = v*v/P.r + g*Math.cos(phi);   // N/m ; apparent = N/g
+    const gForce = v*v/(g*P.r) + Math.cos(phi);
+    if(phi>Math.PI*0.5 && phi<Math.PI*1.5) maxG=maxG; // track near top
+    if(N<0){ // ball leaves track
+      ball.failed=true; ball.flying=true;
+      ball.flyX=pt.x; ball.flyY=pt.y;
+      // velocity tangent direction (moving forward along increasing phi)
+      const tx=Math.cos(phi), ty=Math.sin(phi); // d/dphi of (sin,−cos)= (cos,sin)
+      const L=Math.hypot(tx,ty)||1;
+      ball.flyVx=v*tx/L; ball.flyVy=v*ty/L;
+      return;
+    }
+  }
+  if(v<=1e-4 && ball.s>0.006){ball.done=true;ball.running=false;return;} // stalled (too little energy)
+  if(v<=1e-3 && pt.y<1e-3 && ball.s>loopEndS){ball.done=true;ball.running=false;} // stopped on run-out
+  // advance
+  ball.s += v*dt;
+  if(ball.s>=totalS){ball.s=totalS;ball.done=true;ball.running=false;}
+}
+
+// ---- readouts + verdict ----
+function setReadouts(v,y,gForce,vtop){
+  el('rv-v').textContent=v.toFixed(1);
+  el('rv-y').textContent=y.toFixed(2);
+  el('rv-g').textContent=gForce.toFixed(1);
+  el('rv-vt').textContent = vtop==null?'–':vtop.toFixed(2);
+  // energy bars
+  const startE=g*P.h;
+  const ep=g*y, ek=0.5*v*v;
+  const eloss=Math.max(0,startE-ep-ek);
+  const tot=startE||1;
+  el('seg-p').style.width=(100*ep/tot)+'%';
+  el('seg-k').style.width=(100*ek/tot)+'%';
+  el('seg-l').style.width=(100*eloss/tot)+'%';
+}
+
+function computeVerdict(){
+  // theoretical: does it clear the loop? need v_top^2 >= g r at top with friction up to top.
+  const topS=loopStartS + (loopEndS-loopStartS)*0.5; // top is halfway around
+  const vt=speedAt(topS, 2*P.r);
+  lastVtop=vt;
+  const need=Math.sqrt(g*P.r);
+  return {vt,need,ok:vt>=need};
+}
+
+function updateAfterRun(){
+  const {vt,need,ok}=computeVerdict();
+  const vd=el('verdict');
+  if(ball.failed){
+    vd.className='verdict fail';
+    vd.innerHTML='Looping NICHT geschafft – Wagen verlässt die Bahn';
+  } else if(ball.done && ok){
+    vd.className='verdict ok';
+    vd.innerHTML='Looping geschafft ✓';
+  } else if(ball.done){
+    vd.className='verdict fail';
+    vd.innerHTML='Zu langsam für den Looping';
+  }
+}
+
+// ---- render ----
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // ground
+  ctx.strokeStyle='#3d3630'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,W2Sy(0));ctx.lineTo(W,W2Sy(0));ctx.stroke();
+  // track
+  ctx.lineWidth=5; ctx.strokeStyle='#c8833a'; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  track.forEach((p,i)=>{const X=W2Sx(p.x),Y=W2Sy(p.y); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);});
+  ctx.stroke();
+  // rail highlight
+  ctx.lineWidth=1.5; ctx.strokeStyle='rgba(232,160,48,.35)';
+  ctx.beginPath();
+  track.forEach((p,i)=>{const X=W2Sx(p.x),Y=W2Sy(p.y); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);});
+  ctx.stroke();
+  // start height marker
+  ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(91,163,217,.5)'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(W2Sx(0),W2Sy(P.h));ctx.lineTo(W2Sx(0)+40,W2Sy(P.h));ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#5ba3d9';ctx.font="11px 'JetBrains Mono'";
+  ctx.fillText('h='+P.h.toFixed(2)+'m', W2Sx(0)+2, W2Sy(P.h)-4);
+  // loop top min-speed marker
+  ctx.fillStyle='rgba(168,152,128,.7)';ctx.font="10px 'JetBrains Mono'";
+  ctx.fillText('Top', W2Sx(loopCx)+6, W2Sy(2*P.r)-2);
+
+  // ball
+  let bx,by;
+  if(ball.flying){bx=W2Sx(ball.flyX);by=W2Sy(ball.flyY);}
+  else{const pt=atS(ball.s);bx=W2Sx(pt.x);by=W2Sy(pt.y);}
+  ctx.beginPath();ctx.arc(bx,by,7,0,7);
+  ctx.fillStyle=ball.failed?'#ff5e5b':'#ff6b35';ctx.fill();
+  ctx.lineWidth=2;ctx.strokeStyle='#1a1614';ctx.stroke();
+  // glow
+  const grd=ctx.createRadialGradient(bx,by,2,bx,by,16);
+  grd.addColorStop(0,'rgba(255,107,53,.4)');grd.addColorStop(1,'rgba(255,107,53,0)');
+  ctx.fillStyle=grd;ctx.beginPath();ctx.arc(bx,by,16,0,7);ctx.fill();
+}
+
+function loop(t){
+  const dt=Math.min(0.032,(t-lastT)/1000||0)*SLOWMO; lastT=t;
+  // sub-step for stability
+  const sub=4;
+  for(let i=0;i<sub;i++) step(dt/sub);
+  // readouts
+  let v=ball.v, y=0, gForce=1;
+  if(ball.flying){y=ball.flyY;v=Math.hypot(ball.flyVx,ball.flyVy);}
+  else{const pt=atS(ball.s); y=pt.y;
+    if(pt.onLoop){gForce=v*v/(g*P.r)+Math.cos(pt.phi);} else {gForce=1;}
+  }
+  setReadouts(v,y,gForce,lastVtop);
+  if(ball.done||ball.failed) updateAfterRun();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function updateHint(){
+  const hMin=2.5*P.r;
+  const gBottom=2*P.h/P.r+1;
+  const gTop=2*P.h/P.r-5;
+  el('hint').innerHTML =
+    `Mindest-Starthöhe für den Looping (reibungsfrei): <code>h ≥ 2,5·r = ${(hMin).toFixed(3)} m</code><br>`+
+    `Bedingung am Scheitel: <code>v²ₜₒₚ ≥ g·r</code><br>`+
+    `Andruck unten ≈ <code>${gBottom.toFixed(1)} g</code>, am Top ≈ <code>${Math.max(0,gTop).toFixed(1)} g</code> (reibungsfrei).<br>`+
+    `Tipp: Stelle die Reibung auf 0 und taste dich an <b>h = 2,5·r</b> heran.`;
+}
+
+// init
+resize(); buildTrack(); reset(); updateHint(); draw();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

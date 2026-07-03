@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Loop – Looping-Rechner</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1614;--bg2:#211e1b;--bg3:#2a2520;--bg4:#332e28;--bg5:#3d3630;
+  --rope:#c8833a;--accent:#ff6b35;--gold:#e8a030;
+  --ok:#6bcb77;--err:#ff5e5b;--text:#f0ead8;--text2:#a89880;--blue:#5ba3d9;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100%}
+.wrap{max-width:760px;margin:0 auto;padding:28px 20px 60px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:var(--rope)}
+.sub{color:var(--text2);font-size:13px;margin:2px 0 24px}
+.tag{font-size:11px;background:var(--bg4);color:var(--text2);padding:2px 8px;border-radius:10px;vertical-align:middle;margin-left:8px}
+.card{background:var(--bg2);border:1px solid var(--bg3);border-radius:14px;padding:20px;margin-bottom:18px}
+.card h2{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--gold);margin-bottom:14px}
+.inrow{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.inrow label{flex:1;min-width:180px;font-size:13px;color:var(--text2)}
+.inrow input{width:110px;background:var(--bg);border:1px solid var(--bg5);border-radius:6px;
+  padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px}
+.inrow input:focus{outline:none;border-color:var(--rope)}
+.inrow .unit{width:38px;color:var(--text2);font-size:12px;font-family:'JetBrains Mono',monospace}
+.results{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.res{background:var(--bg);border:1px solid var(--bg4);border-radius:10px;padding:12px 14px}
+.res .k{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.res .v{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:var(--gold);margin-top:3px}
+.res .u{font-size:11px;color:var(--text2)}
+.res.hi{border-color:var(--rope)}
+.verdict{margin-top:16px;padding:12px 16px;border-radius:10px;font-weight:700;text-align:center;
+  background:var(--bg);border:1px solid var(--bg4);color:var(--text2)}
+.verdict.ok{color:var(--ok);border-color:var(--ok)}
+.verdict.fail{color:var(--err);border-color:var(--err)}
+.step{margin-bottom:16px}
+.step .lab{font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:700}
+.katex-block{background:var(--bg);border:1px solid var(--bg4);border-radius:8px;padding:12px 14px;overflow-x:auto}
+.note{font-size:12px;color:var(--text2);line-height:1.6;margin-top:6px}
+.note code{font-family:'JetBrains Mono',monospace;color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Looping-Rechner <span class="tag">Ansatz B · Werkzeug</span></h1>
+  <div class="sub">Starthöhe ↔ Mindestgeschwindigkeit ↔ Zentripetalkraft &amp; g-Kräfte · Space Loop / EF NRW</div>
+
+  <div class="card">
+    <h2>Eingaben</h2>
+    <div class="inrow"><label>Loop-Radius r</label><input id="r" type="number" value="0.08" step="0.005"><span class="unit">m</span></div>
+    <div class="inrow"><label>Starthöhe h (über Loop-Unterkante)</label><input id="h" type="number" value="0.25" step="0.01"><span class="unit">m</span></div>
+    <div class="inrow"><label>Masse m (Wagen)</label><input id="m" type="number" value="0.05" step="0.005"><span class="unit">kg</span></div>
+    <div class="inrow"><label>Reibungsverlust bis zum Scheitel</label><input id="f" type="number" value="0" step="5"><span class="unit">%</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Ergebnisse</h2>
+    <div class="results">
+      <div class="res hi"><div class="k">Mindest-Starthöhe</div><div class="v"><span id="o-hmin">–</span></div><div class="u">m  (reibungsfrei: 2,5·r)</div></div>
+      <div class="res"><div class="k">v am tiefsten Punkt</div><div class="v"><span id="o-vb">–</span></div><div class="u">m/s</div></div>
+      <div class="res"><div class="k">v am Scheitel (Top)</div><div class="v"><span id="o-vt">–</span></div><div class="u">m/s</div></div>
+      <div class="res"><div class="k">v-min am Scheitel</div><div class="v"><span id="o-vmin">–</span></div><div class="u">m/s  (√(g·r))</div></div>
+      <div class="res"><div class="k">g-Kraft unten</div><div class="v"><span id="o-gb">–</span></div><div class="u">· g</div></div>
+      <div class="res"><div class="k">g-Kraft am Top</div><div class="v"><span id="o-gt">–</span></div><div class="u">· g</div></div>
+    </div>
+    <div class="verdict" id="verdict">–</div>
+  </div>
+
+  <div class="card">
+    <h2>Herleitung (Schritt für Schritt)</h2>
+    <div class="step">
+      <div class="lab">1 · Bedingung am Scheitel — Zentripetalkraft = Gewichtskraft</div>
+      <div class="katex-block" data-tex="F_{Z} = F_{G} \;\Rightarrow\; \frac{m\,v_{\text{top}}^{2}}{r} = m\,g \;\Rightarrow\; v_{\text{top,min}} = \sqrt{g\,r}"></div>
+      <div class="note">Der Wagen fällt aus der Bahn, sobald die nötige Zentripetalkraft kleiner als die Gewichtskraft wird.</div>
+    </div>
+    <div class="step">
+      <div class="lab">2 · Energieerhaltung — Starthöhe ↔ Geschwindigkeit am Scheitel</div>
+      <div class="katex-block" data-tex="m\,g\,h = \tfrac{1}{2}m\,v_{\text{top}}^{2} + m\,g\,(2r) \;\Rightarrow\; v_{\text{top}} = \sqrt{2g\,(h-2r)}"></div>
+    </div>
+    <div class="step">
+      <div class="lab">3 · Mindest-Starthöhe (reibungsfrei)</div>
+      <div class="katex-block" data-tex="2g\,(h_{\min}-2r) = g\,r \;\Rightarrow\; h_{\min} = 2r + \tfrac{r}{2} = 2{,}5\,r"></div>
+    </div>
+    <div class="step">
+      <div class="lab">4 · g-Kräfte (Andruck als Vielfaches von g)</div>
+      <div class="katex-block" data-tex="n_{\text{unten}} = \frac{v_{\text{unten}}^{2}}{g\,r}+1 = \frac{2h}{r}+1 \qquad n_{\text{top}} = \frac{v_{\text{top}}^{2}}{g\,r}-1 = \frac{2h}{r}-5"></div>
+      <div class="note">Bei <code>h = 2,5·r</code> ergibt sich am Top genau <code>0·g</code> (Schwerelosigkeit) und unten <code>6·g</code>.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const g=9.81, $=id=>document.getElementById(id);
+function num(id){const v=parseFloat($(id).value);return isFinite(v)?v:0;}
+function calc(){
+  const r=num('r'), h=num('h'), m=num('m'), f=Math.max(0,Math.min(90,num('f')))/100;
+  const hmin=2.5*r;
+  const vb=Math.sqrt(Math.max(0,2*g*h));
+  // energy available at top after friction loss (loss taken from total mgh, applied by top)
+  const eTop=g*h*(1-f) - g*(2*r);           // per unit mass = 0.5 v_top^2
+  const vt=Math.sqrt(Math.max(0,2*eTop));
+  const vmin=Math.sqrt(g*r);
+  const gb=(vb*vb)/(g*r)+1;
+  const gt=(vt*vt)/(g*r)-1;
+  $('o-hmin').textContent=hmin.toFixed(3);
+  $('o-vb').textContent=vb.toFixed(2);
+  $('o-vt').textContent=vt.toFixed(2);
+  $('o-vmin').textContent=vmin.toFixed(2);
+  $('o-gb').textContent=gb.toFixed(1);
+  $('o-gt').textContent=(vt>0?gt:-1).toFixed(1);
+  const vd=$('verdict');
+  if(vt>=vmin){vd.className='verdict ok';vd.textContent='✓ Looping wird geschafft — v_top = '+vt.toFixed(2)+' m/s ≥ '+vmin.toFixed(2)+' m/s';}
+  else{vd.className='verdict fail';vd.textContent='✗ Looping NICHT geschafft — es fehlen '+(vmin-vt).toFixed(2)+' m/s am Scheitel';}
+}
+['r','h','m','f'].forEach(id=>$(id).addEventListener('input',calc));
+// render KaTeX blocks
+document.querySelectorAll('.katex-block').forEach(el=>{
+  try{katex.render(el.dataset.tex, el, {displayMode:true, throwOnError:false});}catch(e){el.textContent=el.dataset.tex;}
+});
+calc();
+</script>
+</body>
+</html>
