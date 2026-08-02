@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KI-Transparenz-Badge · Vorschau</title>
+<style>
+  :root { color-scheme: light dark; --fg:#111; --bg:#fff; --mut:#666; --line:#ddd; }
+  @media (prefers-color-scheme: dark) { :root { --fg:#e8e8e8; --bg:#161616; --mut:#999; --line:#333; } }
+  body { font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         color: var(--fg); background: var(--bg); margin: 0; padding: 2.5rem 1.5rem; }
+  main { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 .3rem; }
+  h2 { font-size: 1rem; margin: 2.5rem 0 .8rem; padding-bottom: .3rem;
+       border-bottom: 1px solid var(--line); font-weight: 600; }
+  p.lead { color: var(--mut); margin: 0 0 1rem; }
+  .reihe { display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center; margin: .8rem 0; }
+  .fall { border: 1px solid var(--line); border-radius: 8px; padding: 1rem; margin: .8rem 0; }
+  .fall figcaption { color: var(--mut); font-size: .82rem; margin-bottom: .6rem; }
+  code { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace;
+         background: color-mix(in srgb, var(--fg) 8%, transparent); padding: .1em .35em; border-radius: 3px; }
+  .blatt { border: 1px solid var(--line); border-radius: 4px; padding: 1.6rem 1.6rem 1rem;
+           background: color-mix(in srgb, var(--fg) 3%, transparent); }
+  .blatt h3 { margin: 0 0 .5rem; font-size: 1rem; }
+  .blatt ol { margin: 0 0 1.6rem; padding-left: 1.3rem; color: var(--mut); }
+  .fuss { border-top: 1px solid var(--line); padding-top: .8rem; }
+  .sw { filter: grayscale(1) contrast(1.6); }
+  img { display: block; max-width: 100%; height: auto; }
+  pre { font: .85rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; margin: .8rem 0; }
+  .groesse { color: var(--mut); font-size: .75rem; }
+  .reihe > div { display: flex; flex-direction: column; gap: .4rem; align-items: flex-start; }
+</style>
+<link rel="stylesheet" href="assets/ki-badge.css">
+</head>
+<body>
+<main>
+
+<h1>KI-Transparenz-Badge</h1>
+<p class="lead">Vorschau der Darstellungsvarianten · Spezifikation v0.1</p>
+
+<h2>Voll — Fußzeile A4, Materialdatenbank</h2>
+<figure class="fall">
+  <figcaption><code>ktx:3|rec:1|pla:1|erk:2|auf:2|dif:3|prf:0|real:1</code></figcaption>
+  <img src="assets/badge-voll.svg" alt="KI-Transparenz Stufe 3 von 3" width="344" height="130">
+</figure>
+
+<h2>Kompakt — Folien, Kopfzeilen, enge Layouts</h2>
+<figure class="fall">
+  <figcaption><code>ktx:3|rec:1|pla:1|erk:2|auf:2|dif:3|prf:0|real:1</code></figcaption>
+  <img src="assets/badge-kompakt.svg" alt="KI-Transparenz Stufe 3 von 3" width="344" height="42">
+</figure>
+
+<h2>Mini — nur mit Verweis auf die Vollangabe</h2>
+<p class="lead">Alle vier Stufen. Allein stehend nicht zulässig (Spezifikation 8.1).</p>
+<div class="reihe">
+  <img src="assets/badge-mini-0.svg" alt="Stufe 0 von 3" width="74" height="22">
+  <img src="assets/badge-mini-1.svg" alt="Stufe 1 von 3" width="74" height="22">
+  <img src="assets/badge-mini-2.svg" alt="Stufe 2 von 3" width="74" height="22">
+  <img src="assets/badge-mini-3.svg" alt="Stufe 3 von 3" width="74" height="22">
+</div>
+
+<h2>Schwarz-Weiß-Kopie</h2>
+<p class="lead">Das Badge trägt keine Eigenfarbe und bleibt in Graustufen vollständig lesbar.</p>
+<div class="reihe sw">
+  <img src="assets/badge-kompakt.svg" alt="KI-Transparenz Stufe 3 von 3, Graustufen" width="344" height="42">
+</div>
+
+<h2>HTML-Komponente — Lernplattform</h2>
+<p class="lead">Skaliert mit der Schriftgröße, erbt Farbe und Schriftart vom Kontext.
+Stylesheet: <code>assets/ki-badge.css</code></p>
+<div class="fall" id="html-demo">
+  <div class="reihe">
+    <div style="font-size:.85rem"><span class="groesse">0,85 rem</span></div>
+    <div style="font-size:1.25rem"><span class="groesse">1,25 rem</span></div>
+  </div>
+</div>
+
+<template id="badge-vorlage">
+      <div class="ki-badge" role="group" aria-label="KI-Transparenz Stufe 3 von 3: im Wesentlichen KI-erzeugt, freigegeben. Recherche 1 von 3, Planung 1 von 3, Erklärung 2 von 3, Aufgaben 2 von 3, Differenzierung 3 von 3, Überprüfung 0 von 3. Enthält realistisch wirkende KI-Darstellungen.">
+      <div class="ki-badge__kopf"><span class="ki-badge__wert">KI-Transparenz <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(5 5)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(17 5)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(29 5)" fill="currentColor"/></svg> 3/3</span></div>
+      <div class="ki-badge__stufe">im Wesentlichen KI-erzeugt, freigegeben</div>
+      <div class="ki-badge__kat">
+      <span class="ki-badge__zeile"><span>Recherche</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 1/3</span></span>
+      <span class="ki-badge__zeile"><span>Planung</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 1/3</span></span>
+      <span class="ki-badge__zeile"><span>Erklärung</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 2/3</span></span>
+      <span class="ki-badge__zeile"><span>Aufgaben</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 2/3</span></span>
+      <span class="ki-badge__zeile"><span>Differenzierung</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="currentColor"/></svg> 3/3</span></span>
+      <span class="ki-badge__zeile"><span>Überprüfung</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 0/3</span></span>
+      </div>
+      <div class="ki-badge__hinweis">▪ Enthält realistisch wirkende KI-Darstellungen</div>
+      <div class="ki-badge__freigabe">Geprüft und freigegeben: S. Blankenagel, 02.08.2026</div>
+      </div>
+</template>
+
+<h2>Reiner Text — Word, LaTeX, E-Mail</h2>
+<p class="lead">Gleichwertig zur Grafik. Das Badge ist die Darstellung, nicht die Sache.</p>
+<pre class="fall" id="text-demo">KI-Transparenz 3/3 · im Wesentlichen KI-erzeugt, freigegeben
+Recherche 1/3, Planung 1/3, Erklärung 2/3, Aufgaben 2/3, Differenzierung 3/3, Überprüfung 0/3
+Enthält realistisch wirkende KI-Darstellungen
+Geprüft und freigegeben: S. Blankenagel, 02.08.2026</pre>
+
+<h2>Im Arbeitsblatt</h2>
+<div class="blatt">
+  <h3>Lineare Gleichungen — Übungsblatt 3</h3>
+  <ol>
+    <li>Löse die Gleichung 3x + 7 = 22.</li>
+    <li>Ein Kletterseil ist 48 m lang …</li>
+    <li>Bestimme die Lösungsmenge …</li>
+  </ol>
+  <div class="fuss">
+    <img src="assets/badge-voll.svg" alt="KI-Transparenz Stufe 3 von 3" width="344" height="130">
+  </div>
+</div>
+
+</main>
+
+<script>
+  // Vorlage in beide Größencontainer klonen (funktioniert auch über file://).
+  const vorlage = document.querySelector('#badge-vorlage');
+  for (const el of document.querySelectorAll('#html-demo .reihe > div')) {
+    el.appendChild(vorlage.content.cloneNode(true));
+  }
+</script>
+</body>
+</html>
