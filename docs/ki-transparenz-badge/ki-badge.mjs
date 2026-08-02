@@ -7,7 +7,7 @@
  *   node ki-badge.mjs "ktx:2|txt:2|bld:3|did:1|loe:0" \
  *        --variante=voll --name="S. Blankenagel" --datum=02.08.2026
  *
- * Varianten: voll | kompakt | mini
+ * Varianten: voll | kompakt | mini | text | html
  * Ohne Argumente: schreibt den Beispielsatz nach ./assets/
  */
 
@@ -76,17 +76,21 @@ export function altText(daten) {
   return `KI-Transparenz Stufe ${daten.ktx} von ${MAX}: ${STUFEN[daten.ktx]}. ${kat}.`;
 }
 
-/** Drei Sterne ab x, vertikal zentriert auf y. Gefüllt = KI-Anteil. */
-function sterne(x, y, stufe, abstand = 12) {
+/**
+ * Drei Sterne ab x, vertikal zentriert auf y. Gefüllt = KI-Anteil.
+ * `skala` = 1 entspricht 10 px Sternbreite; die Konturstärke wird mitskaliert,
+ * damit gefüllte und leere Sterne bei jeder Größe gleich schwer wirken.
+ */
+function sterne(x, y, stufe, abstand = 12, skala = 1) {
   let out = '';
   for (let i = 0; i < MAX; i++) {
-    const cx = x + 5 + i * abstand;
-    const gefuellt = i < stufe;
+    const cx = x + 5 * skala + i * abstand;
+    const t = `translate(${+cx.toFixed(2)} ${y})${skala === 1 ? '' : ` scale(${skala})`}`;
     out +=
-      `<path d="${STERN}" transform="translate(${cx} ${y})" ` +
-      (gefuellt
+      `<path d="${STERN}" transform="${t}" ` +
+      (i < stufe
         ? 'fill="currentColor"/>'
-        : 'fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>');
+        : `fill="none" stroke="currentColor" stroke-width="${+(1 / skala).toFixed(2)}" stroke-linejoin="round"/>`);
   }
   return out;
 }
@@ -162,7 +166,72 @@ export function badgeMini(daten) {
 export function badge(daten, variante = 'voll', opts = {}) {
   if (variante === 'mini') return badgeMini(daten);
   if (variante === 'kompakt') return badgeKompakt(daten, opts);
+  if (variante === 'text') return badgeText(daten, opts);
+  if (variante === 'html') return badgeHTML(daten, opts);
   return badgeVoll(daten, opts);
+}
+
+// ---------------------------------------------------------------- Text
+
+/** Reiner Text für Word, LaTeX, E-Mail (Spezifikation 11). */
+export function badgeText(daten, { name = '', datum = '' } = {}) {
+  const kat = Object.keys(KATEGORIEN)
+    .filter((k) => k in daten)
+    .map((k) => `${KATEGORIEN[k]} ${daten[k]}/${MAX}`)
+    .join(', ');
+  const zeilen = [`KI-Transparenz ${daten.ktx}/${MAX} · ${STUFEN[daten.ktx]}`, kat];
+  if (name) zeilen.push(`Geprüft und freigegeben: ${name}${datum ? `, ${datum}` : ''}`);
+  return zeilen.join('\n') + '\n';
+}
+
+// ---------------------------------------------------------------- HTML
+
+/** Stylesheet für badgeHTML. Erbt Farbe und Schrift vom umgebenden Kontext. */
+export function badgeCSS() {
+  // Kategorien bewusst einspaltig: Das Badge ist shrink-to-fit, ein mehrspaltiges
+  // Raster hätte keine verlässliche Breite und würde die Labels überlaufen lassen.
+  return `.ki-badge{display:inline-block;min-width:15em;border:1px solid currentColor;
+  border-radius:5px;padding:.5em .7em;font-size:.8rem;line-height:1.5;
+  color:inherit;font-family:inherit}
+.ki-badge__kopf{font-weight:600}
+.ki-badge__stufe,.ki-badge__freigabe{opacity:.75}
+.ki-badge__freigabe{font-size:.9em}
+.ki-badge__kat{display:flex;flex-direction:column;gap:.1em;
+  margin:.4em 0;padding-top:.4em;border-top:1px solid currentColor}
+.ki-badge__zeile{display:flex;align-items:center;gap:.6em;justify-content:space-between}
+.ki-badge__zeile>span:first-child{min-width:0}
+.ki-badge__wert{display:inline-flex;align-items:center;gap:.35em;white-space:nowrap;flex:none}
+.ki-badge svg{flex:none}`;
+}
+
+/** Eingebettetes HTML-Fragment für Lernplattformen. Nutzt badgeCSS(). */
+export function badgeHTML(daten, { name = '', datum = '' } = {}) {
+  const st = (stufe, px = 10) => {
+    const s = px / 10; // Sternbreite 10 px bei skala 1
+    const abstand = 1.2 * px;
+    const w = +(abstand * (MAX - 1) + px).toFixed(1);
+    return (
+      `<svg width="${w}" height="${px}" viewBox="0 0 ${w} ${px}" aria-hidden="true" fill="none">` +
+      `${sterne(0, px / 2, stufe, abstand, s)}</svg>`
+    );
+  };
+  const keys = Object.keys(KATEGORIEN).filter((k) => k in daten);
+  const zeilen = keys
+    .map(
+      (k) =>
+        `    <span class="ki-badge__zeile"><span>${esc(KATEGORIEN[k])}</span>` +
+        `<span class="ki-badge__wert">${st(daten[k], 9)} ${daten[k]}/${MAX}</span></span>`,
+    )
+    .join('\n');
+
+  return `<div class="ki-badge" role="group" aria-label="${esc(altText(daten))}">
+  <div class="ki-badge__kopf"><span class="ki-badge__wert">KI-Transparenz ${st(daten.ktx)} ${daten.ktx}/${MAX}</span></div>
+  <div class="ki-badge__stufe">${esc(STUFEN[daten.ktx])}</div>
+  <div class="ki-badge__kat">
+${zeilen}
+  </div>${name ? `\n  <div class="ki-badge__freigabe">Geprüft und freigegeben: ${esc(name)}${datum ? `, ${esc(datum)}` : ''}</div>` : ''}
+</div>
+`;
 }
 
 // ---------------------------------------------------------------- CLI
@@ -195,6 +264,9 @@ function cli(argv) {
   const dateien = {
     'badge-voll.svg': badgeVoll(parseCode(beispiel), opts),
     'badge-kompakt.svg': badgeKompakt(parseCode(beispiel), opts),
+    'badge.txt': badgeText(parseCode(beispiel), opts),
+    'badge.html': badgeHTML(parseCode(beispiel), opts),
+    'ki-badge.css': badgeCSS() + '\n',
   };
   for (let i = 0; i <= MAX; i++) {
     dateien[`badge-mini-${i}.svg`] = badgeMini(parseCode(`txt:${i}`));

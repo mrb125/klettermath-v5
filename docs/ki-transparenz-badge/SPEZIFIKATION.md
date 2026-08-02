@@ -19,8 +19,8 @@ Erklärvideos, Lernpfade, Feedbacktexte.
 
 | | wofür stattdessen |
 |---|---|
-| Deklaration der KI-Nutzung **durch Lernende** | [Attribution 4 AI](https://attribution4ai.org/), CC BY-SA 4.0 |
-| Festlegung, **wie viel KI in einer Aufgabe erlaubt** ist | [AI Assessment Scale](https://aiassessmentscale.com/), CC BY-NC-SA 4.0 |
+| Deklaration der KI-Nutzung **durch Lernende** | [Attribution 4 AI](https://attribution4ai.org/) |
+| Festlegung, **wie viel KI in einer Aufgabe erlaubt** ist | [AI Assessment Scale](https://aiassessmentscale.com/) |
 | Kennzeichnung KI-**generierter Inhalte gegenüber der Öffentlichkeit** | [EU-Icons](https://digital-strategy.ec.europa.eu/en/policies/eu-icons-labelling-ai-generated-content) |
 
 Diese drei Systeme existieren, sind erprobt und werden hier **nicht nachgebaut**. Das Badge
@@ -275,8 +275,7 @@ funktioniert das Badge bei Sehbeeinträchtigung, in Graustufen und im Fax.
 1. **Keine Wirkungsforschung im Schulkontext.** Studien zu KI-Labels stammen aus Social-Media-
    und Nachrichtenkontexten; mehrere finden, dass „KI-generiert" die *wahrgenommene
    Genauigkeit senkt* (u. a. arXiv 2506.16202). Wie Lernende und Eltern auf ein Badge auf dem
-   Arbeitsblatt reagieren, ist unerforscht. Vor breitem Rollout: kleine Erprobung mit
-   Rückmeldung von Lernenden und Eltern.
+   Arbeitsblatt reagieren, ist unerforscht. → Erprobungsdesign in Abschnitt 13.
 2. **Selbstauskunft bleibt ungeprüft.** Das ist laut Scoping-Review der häufigste Schwachpunkt
    (18,2 % ungeprüfte Selbstauskunft). Das System nimmt das bewusst in Kauf — die Alternative
    wäre eine Kontrollinstanz, die niemand finanzieren wird.
@@ -288,11 +287,113 @@ funktioniert das Badge bei Sehbeeinträchtigung, in Graustufen und im Fax.
 
 ---
 
-## 11. Lizenz
+## 11. Textbausteine ohne Grafik
 
-Vorschlag: **CC BY-SA 4.0** — wie Attribution 4 AI. Erlaubt Anpassung ans Corporate Design
-einer Schule, hält Weiterentwicklungen aber offen.
+Nicht jedes Material bekommt eine SVG-Fußzeile. Für Word, LaTeX, E-Mail und Elternbriefe
+gelten dieselben Regeln in reinem Text. Die Angabe ist gleichwertig — das Badge ist die
+Darstellung, nicht die Sache.
 
-Bewusst *nicht* CC BY-NC-SA (wie AIAS): Der NC-Baustein schließt Schulbuchverlage und
-kommerzielle Plattformen aus — also genau die Akteure, deren Beteiligung das System
-überhaupt erst wirksam machen würde.
+**Einzeilig, Minimum:**
+
+```
+KI-Transparenz 2/3 · Text 2, Bild 3, Didaktik 1, Lösungen 0
+Geprüft und freigegeben: S. Blankenagel, 02.08.2026
+```
+
+**Fließtext, für Elternbriefe und Materialbeschreibungen:**
+
+> Bei der Erstellung dieses Materials wurde generative KI eingesetzt (Stufe 2 von 3:
+> KI-Entwurf, überarbeitet und geprüft). Betroffen sind Aufgabentexte und Abbildungen;
+> Lösungswege und didaktischer Aufbau stammen ohne KI-Beteiligung von mir.
+> Geprüft und freigegeben: S. Blankenagel, 02.08.2026.
+
+**Stufe 0, ausdrücklich benannt:**
+
+```
+KI-Transparenz 0/3 · ohne generative KI erstellt
+Geprüft und freigegeben: S. Blankenagel, 02.08.2026
+```
+
+Stufe 0 wegzulassen ist zulässig, aber schwächer: Wer nur kennzeichnet, wenn KI im Spiel war,
+macht das Badge zum Warnzeichen. Wer immer kennzeichnet, macht es zur Routineangabe — und
+genau das ist das Ziel.
+
+---
+
+## 12. Prüfprotokoll
+
+Die Freigabezeile behauptet eine Prüfung. Damit die Behauptung trägt — und im Streitfall die
+redaktionelle Kontrolle nach Art. 50 belegt (→ 7.2) — braucht es einen minimalen Nachweis.
+Bewusst minimal: Alles, was länger dauert als eine Zeile pro Material, wird nicht geführt.
+
+Eine Zeile je Material, z. B. als CSV in der Materialablage:
+
+```csv
+datum;material;kurzcode;werkzeug;geprueft_von;anmerkung
+2026-08-02;lineare-gleichungen-ub3;ktx:3|txt:2|bld:3|did:1|loe:0;<Modell/Werkzeug>;S. Blankenagel;Bild nicht fotorealistisch
+```
+
+- `werkzeug` — welches KI-Werkzeug, in welcher Version. Wichtig, weil sich Ausgabequalität
+  und Rechtslage je Werkzeug unterscheiden.
+- `anmerkung` — Freitext. Pflicht bei `bld:3`: Festhalten, ob das Bild fotorealistisch ist
+  (→ Deepfake-Frage, 4.1).
+
+**Aufbewahrung:** so lange, wie das Material im Einsatz ist, mindestens aber ein Schuljahr.
+Personenbezogene Daten von Lernenden gehören nicht ins Protokoll.
+
+---
+
+## 13. Erprobung vor dem Rollout
+
+Der ungeklärteste Punkt des Systems (→ 10.1): Es ist unbekannt, wie Lernende und Eltern auf
+das Badge reagieren. Mehrere Studien zeigen, dass ein „KI-generiert"-Label die *wahrgenommene
+Genauigkeit* von Inhalten senkt. Auf einem Arbeitsblatt könnte das erwünscht sein (kritisches
+Lesen) oder schädlich (Vertrauensverlust in die Lehrkraft). Niemand weiß es.
+
+Deshalb: nicht flächendeckend einführen, sondern erst messen.
+
+**Minimaldesign, eine Lerngruppe, vier Wochen**
+
+| | |
+|---|---|
+| **Umfang** | eine Klasse, alle Materialien einer Unterrichtsreihe gekennzeichnet |
+| **Vergleich** | Parallelklasse ohne Kennzeichnung, sonst identisches Material |
+| **Erhebung** | vorher/nachher, je 5 Minuten, anonym |
+
+**Vier Fragen an die Lernenden** (vierstufige Skala, keine Mitte):
+
+1. Ich verstehe, was die Sterne auf dem Arbeitsblatt bedeuten.
+2. Ich vertraue darauf, dass die Aufgaben fachlich richtig sind.
+3. Die Angabe verändert, wie genau ich das Material lese.
+4. Ich finde es gut, dass die Angabe da steht.
+
+**Zwei an die Lehrkraft:** Wie lange dauert das Ausfüllen im Schnitt? Bei welchem Material
+war die Stufe unklar?
+
+**Abbruchkriterium:** Sinkt Frage 2 in der Badge-Gruppe deutlich gegenüber der
+Vergleichsgruppe, ist die Darstellung das Problem, nicht die Transparenz. Dann zuerst
+Wortlaut und Platzierung ändern — nicht das Kennzeichnen aufgeben.
+
+**Was die Erprobung nicht leistet:** Sie ist keine Studie. Eine Klasse, vier Wochen,
+kein Zufallsdesign. Sie soll grobe Fehlgriffe finden, bevor sie in 300 Materialien stecken.
+
+---
+
+## 14. Weitergabe und Anpassung
+
+Keine Standardlizenz. Stattdessen vier Regeln in eigenen Worten:
+
+1. **Frei verwendbar.** Schulen, Lehrkräfte, Verlage und Plattformen dürfen das System
+   einsetzen, weitergeben und ans eigene Erscheinungsbild anpassen — ohne Rückfrage,
+   ohne Gebühr, ohne Unterscheidung zwischen kommerziell und nichtkommerziell.
+2. **Bedeutung der Stufen bleibt unverändert.** Wer Aussehen, Sprache oder Kategorien
+   anpasst, darf die Definition der Stufen 0–3 und die Maximum-Regel nicht verändern.
+   Sonst entstehen gleich aussehende Badges mit verschiedener Bedeutung — der Schaden wäre
+   größer als der Nutzen.
+3. **Kein Gütesiegel.** Das System darf nicht als Zertifizierung, Prüfsiegel oder
+   Qualitätsnachweis dargestellt werden. Es ist eine Selbstauskunft, und nur das.
+4. **Abweichungen kennzeichnen.** Wer die Stufen doch verändert, nennt das Ergebnis nicht
+   mehr „KI-Transparenz-Badge", sondern gibt ihm einen eigenen Namen.
+
+Punkt 2 und 4 sind der einzige Grund, warum hier überhaupt Regeln stehen: Ein
+Kennzeichnungssystem lebt davon, dass dasselbe Zeichen überall dasselbe bedeutet.

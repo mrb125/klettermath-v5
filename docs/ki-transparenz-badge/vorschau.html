@@ -25,8 +25,12 @@
   .blatt ol { margin: 0 0 1.6rem; padding-left: 1.3rem; color: var(--mut); }
   .fuss { border-top: 1px solid var(--line); padding-top: .8rem; }
   .sw { filter: grayscale(1) contrast(1.6); }
-  svg { display: block; max-width: 100%; height: auto; }
+  img { display: block; max-width: 100%; height: auto; }
+  pre { font: .85rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; margin: .8rem 0; }
+  .groesse { color: var(--mut); font-size: .75rem; }
+  .reihe > div { display: flex; flex-direction: column; gap: .4rem; align-items: flex-start; }
 </style>
+<link rel="stylesheet" href="assets/ki-badge.css">
 </head>
 <body>
 <main>
@@ -61,6 +65,36 @@
   <img src="assets/badge-kompakt.svg" alt="KI-Transparenz Stufe 3 von 3, Graustufen" width="344" height="42">
 </div>
 
+<h2>HTML-Komponente — Lernplattform</h2>
+<p class="lead">Skaliert mit der Schriftgröße, erbt Farbe und Schriftart vom Kontext.
+Stylesheet: <code>assets/ki-badge.css</code></p>
+<div class="fall" id="html-demo">
+  <div class="reihe">
+    <div style="font-size:.85rem"><span class="groesse">0,85 rem</span></div>
+    <div style="font-size:1.25rem"><span class="groesse">1,25 rem</span></div>
+  </div>
+</div>
+
+<template id="badge-vorlage">
+      <div class="ki-badge" role="group" aria-label="KI-Transparenz Stufe 3 von 3: im Wesentlichen KI-erzeugt, freigegeben. Text/Aufgaben 2 von 3, Bild/Grafik 3 von 3, Didaktik/Aufbau 1 von 3, Lösungen 0 von 3.">
+      <div class="ki-badge__kopf"><span class="ki-badge__wert">KI-Transparenz <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(5 5)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(17 5)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(29 5)" fill="currentColor"/></svg> 3/3</span></div>
+      <div class="ki-badge__stufe">im Wesentlichen KI-erzeugt, freigegeben</div>
+      <div class="ki-badge__kat">
+      <span class="ki-badge__zeile"><span>Text/Aufgaben</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 2/3</span></span>
+      <span class="ki-badge__zeile"><span>Bild/Grafik</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="currentColor"/></svg> 3/3</span></span>
+      <span class="ki-badge__zeile"><span>Didaktik/Aufbau</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="currentColor"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 1/3</span></span>
+      <span class="ki-badge__zeile"><span>Lösungen</span><span class="ki-badge__wert"><svg width="30.6" height="9" viewBox="0 0 30.6 9" aria-hidden="true" fill="none"><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(4.5 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(15.3 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/><path d="M0,-5 L1.234,-1.699 L4.755,-1.545 L1.997,0.649 L2.939,4.045 L0,2.1 L-2.939,4.045 L-1.997,0.649 L-4.755,-1.545 L-1.234,-1.699 Z" transform="translate(26.1 4.5) scale(0.9)" fill="none" stroke="currentColor" stroke-width="1.11" stroke-linejoin="round"/></svg> 0/3</span></span>
+      </div>
+      <div class="ki-badge__freigabe">Geprüft und freigegeben: S. Blankenagel, 02.08.2026</div>
+      </div>
+</template>
+
+<h2>Reiner Text — Word, LaTeX, E-Mail</h2>
+<p class="lead">Gleichwertig zur Grafik. Das Badge ist die Darstellung, nicht die Sache.</p>
+<pre class="fall" id="text-demo">KI-Transparenz 3/3 · im Wesentlichen KI-erzeugt, freigegeben
+Text/Aufgaben 2/3, Bild/Grafik 3/3, Didaktik/Aufbau 1/3, Lösungen 0/3
+Geprüft und freigegeben: S. Blankenagel, 02.08.2026</pre>
+
 <h2>Im Arbeitsblatt</h2>
 <div class="blatt">
   <h3>Lineare Gleichungen — Übungsblatt 3</h3>
@@ -75,5 +109,13 @@
 </div>
 
 </main>
+
+<script>
+  // Vorlage in beide Größencontainer klonen (funktioniert auch über file://).
+  const vorlage = document.querySelector('#badge-vorlage');
+  for (const el of document.querySelectorAll('#html-demo .reihe > div')) {
+    el.appendChild(vorlage.content.cloneNode(true));
+  }
+</script>
 </body>
 </html>
