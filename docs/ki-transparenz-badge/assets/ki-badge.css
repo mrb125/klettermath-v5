@@ -3,6 +3,7 @@
   color:inherit;font-family:inherit}
 .ki-badge__kopf{font-weight:600}
 .ki-badge__stufe,.ki-badge__freigabe{opacity:.75}
+.ki-badge__hinweis{font-size:.9em;margin-top:.2em}
 .ki-badge__freigabe{font-size:.9em}
 .ki-badge__kat{display:flex;flex-direction:column;gap:.1em;
   margin:.4em 0;padding-top:.4em;border-top:1px solid currentColor}

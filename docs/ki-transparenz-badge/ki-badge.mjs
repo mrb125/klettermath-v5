@@ -4,7 +4,7 @@
  *
  * Erzeugt Badges nach docs/ki-transparenz-badge/SPEZIFIKATION.md
  *
- *   node ki-badge.mjs "ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1" \
+ *   node ki-badge.mjs "rec:1|erk:2|auf:2|dif:3|prf:0|real:1" \
  *        --variante=voll --name="S. Blankenagel" --datum=02.08.2026
  *
  * Varianten: voll | kompakt | mini | text | html
@@ -19,27 +19,26 @@ const HIER = dirname(fileURLToPath(import.meta.url));
 
 export const MAX = 3;
 
-/** Kern — überall gleich, macht Materialien vergleichbar (Spezifikation 4.1). */
-export const KERN = {
-  txt: 'Text/Aufgaben',
-  bld: 'Bild/Grafik',
-  med: 'Audio/Video',
-  loe: 'Lösungen',
-  bew: 'Bewertung',
+/**
+ * Sechs Schritte der Unterrichtsvorbereitung — fachunspezifisch, überall gleich.
+ * Reihenfolge = Reihenfolge im Kurzcode und im Badge (Spezifikation 4).
+ */
+export const KATEGORIEN = {
+  rec: 'Recherche',
+  pla: 'Planung',
+  erk: 'Erklärung',
+  auf: 'Aufgaben',
+  dif: 'Differenzierung',
+  prf: 'Überprüfung',
 };
 
-/** Profil — je Fach oder Einrichtung frei wählbar, höchstens MAX_PROFIL (4.2). */
-export const PROFIL = {
-  dat: 'Daten/Kontexte',
-  fbk: 'Feedback',
-  spr: 'Sprache',
-  cod: 'Code/Interaktiv',
-  did: 'Didaktik/Aufbau',
+/**
+ * Zusatzangaben — Ja/Nein, keine Stufe. Sie gehen nicht in die Gesamtstufe ein,
+ * weil sie eine rechtliche und keine didaktische Frage beantworten (4.3).
+ */
+export const FLAGS = {
+  real: 'Enthält realistisch wirkende KI-Darstellungen',
 };
-
-export const MAX_PROFIL = 2;
-
-export const KATEGORIEN = { ...KERN, ...PROFIL };
 
 export const STUFEN = [
   'ohne generative KI',
@@ -59,36 +58,37 @@ const esc = (s) =>
 /** Kurzcode -> {ktx, txt, bld, ...}. Gesamtstufe wird immer neu als Maximum berechnet. */
 export function parseCode(code) {
   const daten = {};
+  const flags = {};
   for (const teil of String(code).split('|')) {
     const [k, v] = teil.trim().split(':');
     if (!k) continue;
-    const n = Number(v);
-    if (!Number.isInteger(n) || n < 0 || n > MAX) {
-      throw new Error(`Ungültiger Wert für "${k}": "${v}" (erlaubt: 0–${MAX})`);
+    // Number('') ist 0 — ein fehlender Wert würde sonst still als Stufe 0 durchgehen.
+    const n = /^\d+$/.test(String(v ?? '').trim()) ? Number(v) : NaN;
+    const grenze = k in FLAGS ? 1 : MAX;
+    if (!Number.isInteger(n) || n < 0 || n > grenze) {
+      throw new Error(`Ungültiger Wert für "${k}": "${v}" (erlaubt: 0–${grenze})`);
     }
     if (k === 'ktx') continue; // redundant, wird abgeleitet
+    if (k in FLAGS) {
+      if (n) flags[k] = 1;
+      continue;
+    }
     if (!(k in KATEGORIEN)) throw new Error(`Unbekannte Kategorie: "${k}"`);
     daten[k] = n;
   }
   const werte = Object.values(daten);
   if (!werte.length) throw new Error('Kurzcode enthält keine Kategorie.');
-
-  // Die Obergrenze ist kein Formalismus: Das System scheitert an Ausfüllzeit,
-  // nicht an zu grober Differenzierung (Spezifikation 4.2).
-  const profil = Object.keys(daten).filter((k) => k in PROFIL);
-  if (profil.length > MAX_PROFIL) {
-    throw new Error(
-      `Höchstens ${MAX_PROFIL} Profilkategorien erlaubt, ${profil.length} angegeben: ${profil.join(', ')}`,
-    );
-  }
-  return { ktx: Math.max(...werte), ...daten };
+  return { ktx: Math.max(...werte), ...daten, ...flags };
 }
 
-export function formatCode({ ktx, ...kat }) {
+export function formatCode({ ktx, ...rest }) {
   const teile = Object.keys(KATEGORIEN)
-    .filter((k) => k in kat)
-    .map((k) => `${k}:${kat[k]}`);
-  return [`ktx:${ktx}`, ...teile].join('|');
+    .filter((k) => k in rest)
+    .map((k) => `${k}:${rest[k]}`);
+  const fl = Object.keys(FLAGS)
+    .filter((k) => rest[k])
+    .map((k) => `${k}:1`);
+  return [`ktx:${ktx}`, ...teile, ...fl].join('|');
 }
 
 export function altText(daten) {
@@ -96,7 +96,11 @@ export function altText(daten) {
     .filter((k) => k in daten)
     .map((k) => `${KATEGORIEN[k]} ${daten[k]} von ${MAX}`)
     .join(', ');
-  return `KI-Transparenz Stufe ${daten.ktx} von ${MAX}: ${STUFEN[daten.ktx]}. ${kat}.`;
+  const fl = Object.keys(FLAGS)
+    .filter((k) => daten[k])
+    .map((k) => ` ${FLAGS[k]}.`)
+    .join('');
+  return `KI-Transparenz Stufe ${daten.ktx} von ${MAX}: ${STUFEN[daten.ktx]}. ${kat}.${fl}`;
 }
 
 /**
@@ -141,7 +145,8 @@ export function badgeVoll(daten, { name = '', datum = '' } = {}) {
   const KOPF = 46; // Titelzeile + Stufentext + Trennlinie
   const keys = Object.keys(KATEGORIEN).filter((k) => k in daten);
   const zeilen = Math.ceil(keys.length / 2);
-  const H = KOPF + zeilen * 18 + (name ? 18 : 6);
+  const fl = Object.keys(FLAGS).filter((k) => daten[k]);
+  const H = KOPF + zeilen * 18 + fl.length * 12 + (name ? 18 : 6);
 
   let s = '';
   s += `  <text x="13" y="21" font-size="11" font-weight="600" fill="currentColor">KI-Transparenz</text>\n`;
@@ -156,11 +161,17 @@ export function badgeVoll(daten, { name = '', datum = '' } = {}) {
     const x = 13 + spalte * 166;
     const y = KOPF + 10 + zeile * 18;
     s += `  <text x="${x}" y="${y + 4}" font-size="9" fill="currentColor" opacity="0.85">${esc(KATEGORIEN[k])}</text>\n`;
-    s += `  ${sterne(x + 92, y, daten[k], 11)}\n`;
-    s += `  <text x="${x + 128}" y="${y + 4}" font-size="9" fill="currentColor">${daten[k]}/${MAX}</text>\n`;
+    s += `  ${sterne(x + 100, y, daten[k], 11)}\n`;
+    s += `  <text x="${x + 136}" y="${y + 4}" font-size="9" fill="currentColor">${daten[k]}/${MAX}</text>\n`;
   });
 
-  s += freigabezeile(13, KOPF + zeilen * 18 + 12, name, datum);
+  let yy = KOPF + zeilen * 18 + 4;
+  fl.forEach((k) => {
+    yy += 10;
+    s += `  <text x="13" y="${yy}" font-size="8" fill="currentColor">▪ ${esc(FLAGS[k])}</text>\n`;
+  });
+
+  s += freigabezeile(13, yy + (fl.length ? 12 : 8), name, datum);
   return huelle(W, H, daten, s);
 }
 
@@ -203,6 +214,7 @@ export function badgeText(daten, { name = '', datum = '' } = {}) {
     .map((k) => `${KATEGORIEN[k]} ${daten[k]}/${MAX}`)
     .join(', ');
   const zeilen = [`KI-Transparenz ${daten.ktx}/${MAX} · ${STUFEN[daten.ktx]}`, kat];
+  for (const k of Object.keys(FLAGS)) if (daten[k]) zeilen.push(FLAGS[k]);
   if (name) zeilen.push(`Geprüft und freigegeben: ${name}${datum ? `, ${datum}` : ''}`);
   return zeilen.join('\n') + '\n';
 }
@@ -218,6 +230,7 @@ export function badgeCSS() {
   color:inherit;font-family:inherit}
 .ki-badge__kopf{font-weight:600}
 .ki-badge__stufe,.ki-badge__freigabe{opacity:.75}
+.ki-badge__hinweis{font-size:.9em;margin-top:.2em}
 .ki-badge__freigabe{font-size:.9em}
 .ki-badge__kat{display:flex;flex-direction:column;gap:.1em;
   margin:.4em 0;padding-top:.4em;border-top:1px solid currentColor}
@@ -247,12 +260,17 @@ export function badgeHTML(daten, { name = '', datum = '' } = {}) {
     )
     .join('\n');
 
+  const fl = Object.keys(FLAGS)
+    .filter((k) => daten[k])
+    .map((k) => `\n  <div class="ki-badge__hinweis">▪ ${esc(FLAGS[k])}</div>`)
+    .join('');
+
   return `<div class="ki-badge" role="group" aria-label="${esc(altText(daten))}">
   <div class="ki-badge__kopf"><span class="ki-badge__wert">KI-Transparenz ${st(daten.ktx)} ${daten.ktx}/${MAX}</span></div>
   <div class="ki-badge__stufe">${esc(STUFEN[daten.ktx])}</div>
   <div class="ki-badge__kat">
 ${zeilen}
-  </div>${name ? `\n  <div class="ki-badge__freigabe">Geprüft und freigegeben: ${esc(name)}${datum ? `, ${esc(datum)}` : ''}</div>` : ''}
+  </div>${fl}${name ? `\n  <div class="ki-badge__freigabe">Geprüft und freigegeben: ${esc(name)}${datum ? `, ${esc(datum)}` : ''}</div>` : ''}
 </div>
 `;
 }
@@ -282,7 +300,7 @@ function cli(argv) {
   const ziel = join(HIER, 'assets');
   mkdirSync(ziel, { recursive: true });
   const opts = { name: 'S. Blankenagel', datum: '02.08.2026' };
-  const beispiel = 'txt:2|bld:3|loe:0|bew:1|dat:1';
+  const beispiel = 'rec:1|pla:1|erk:2|auf:2|dif:3|prf:0|real:1';
 
   const dateien = {
     'badge-voll.svg': badgeVoll(parseCode(beispiel), opts),
@@ -292,7 +310,7 @@ function cli(argv) {
     'ki-badge.css': badgeCSS() + '\n',
   };
   for (let i = 0; i <= MAX; i++) {
-    dateien[`badge-mini-${i}.svg`] = badgeMini(parseCode(`txt:${i}`));
+    dateien[`badge-mini-${i}.svg`] = badgeMini(parseCode(`auf:${i}`));
   }
   for (const [datei, inhalt] of Object.entries(dateien)) {
     writeFileSync(join(ziel, datei), inhalt);

@@ -122,65 +122,79 @@ Der Mehrwert des Systems liegt hier: Eine einzige Skala verdeckt, *wo* die KI im
 genau die Kritik, die Micallef & Petrovska (arXiv 2606.13389) und der
 Faceted-Attribution-Ansatz an binären Deklarationen üben.
 
-Die Kategorien sind zweistufig: ein **Kern**, der überall gleich ist und Materialien
-vergleichbar macht, und ein **Profil** aus höchstens zwei Zusatzkategorien je Fach oder
-Einrichtung.
+Geschnitten wird nach **Schritten der Unterrichtsvorbereitung**, nicht nach Bestandteilen
+des Materials. Damit sind die Kategorien **fachunspezifisch**: Sie passen für Mathematik
+genauso wie für Sport, Kunst oder Deutsch.
 
-### 4.1 Kern — immer, unverändert
+### 4.1 Die sechs Kategorien
 
 | Code | Kategorie | umfasst |
 |---|---|---|
-| `txt` | **Text/Aufgaben** | Aufgabenstellungen, Erklärtexte, Kontexte, Arbeitsaufträge |
-| `bld` | **Bild/Grafik** | Illustrationen, Fotos, Diagramme, Schaubilder |
-| `med` | **Audio/Video** | Vertonung, Erklärvideos, Podcasts, Avatare, synthetische Stimmen |
-| `loe` | **Lösungen** | Musterlösungen, Erwartungshorizonte, Lösungswege |
-| `bew` | **Bewertung** | Bewertungsraster, Niveauzuordnung, Kompetenz- und Diagnoseeinschätzung |
+| `rec` | **Recherche** | Fachliche Klärung, Sachanalyse, Fakten, Quellen, Hintergrundwissen |
+| `pla` | **Planung** | Aufbau, Reihenfolge, Lernziele, Zeitstruktur, Einstiege, Stundenkonzept |
+| `erk` | **Erklärung** | Erklärtexte, Beispiele, Darstellungen — **und die Ergebnissicherung**: Merksätze, Zusammenfassungen, Tafelbilder |
+| `auf` | **Aufgaben** | Übungen, Anwendungen, Arbeitsaufträge, Aufgabenkontexte, Transfer |
+| `dif` | **Differenzierung** | Niveaustufen, gestufte Hilfen, sprachliche Anpassung, Barrierefreiheit |
+| `prf` | **Überprüfung** | Lösungen, Diagnoseaufgaben, Bewertungsraster, Rückmeldungen, Reflexionsimpulse |
 
 Nicht zutreffende Kategorien werden **weggelassen**, nicht auf 0 gesetzt. Ein Arbeitsblatt
-ohne Bilder trägt keine Bild-Angabe. `0` heißt „geprüft, ohne KI"; Weglassen heißt „nicht
-vorhanden".
+ohne Differenzierungsangebot trägt keine `dif`-Angabe. `0` heißt „geprüft, ohne KI";
+Weglassen heißt „nicht vorhanden".
 
-### 4.2 Profil — höchstens zwei, frei gewählt
+**Trennregel `erk` / `auf`:** Erklärung ist, was die Lehrkraft vermittelt und festhält;
+Aufgabe ist, was die Lernenden tun. Ein durchgerechnetes Musterbeispiel im Erklärteil ist
+`erk`, dieselbe Rechnung als Übung ist `auf`.
 
-| Code | Kategorie | lohnt sich, wenn |
-|---|---|---|
-| `dat` | **Daten/Kontexte** | Zahlenwerte, Statistiken und Sachkontexte eigenes Risiko sind (Mathematik, Sachfächer) |
-| `fbk` | **Feedback** | die Umgebung automatische Rückmeldungen an Lernende erzeugt |
-| `spr` | **Sprache** | sprachliche Differenzierung ein eigener Arbeitsschritt ist (DaZ, Leichte Sprache) |
-| `cod` | **Code/Interaktiv** | Applets, Simulationen oder Auswertungslogik zum Material gehören |
-| `did` | **Didaktik/Aufbau** | die Reihenfolge- und Progressionsentscheidung dokumentiert werden soll |
+**Warum `rec` dabei ist.** Die Recherche erzeugt kein sichtbares Element im Material und
+wäre in einem produktorientierten Schnitt unsichtbar geblieben. Sie trägt aber das größte
+Risiko des ganzen Systems: erfundene Fakten, erfundene Quellen, erfundene Seitenzahlen.
+Genau deshalb steht sie an erster Stelle.
 
-**Warum die Obergrenze zwei.** Das System scheitert nicht an zu wenig Differenzierung,
-sondern an Ausfüllzeit — genau das findet das Scoping-Review als häufigste Ursache
-wirkungsloser Transparenzsysteme (→ 7 und 10.2). Sieben Kategorien werden nicht ausgefüllt,
-und ein nicht ausgefülltes Badge ist schlechter als ein grobes.
+**Warum sechs.** Das System scheitert nicht an zu wenig Differenzierung, sondern an
+Ausfüllzeit — das findet das Scoping-Review als häufigste Ursache wirkungsloser
+Transparenzsysteme (→ 2.6 und 10.2). Sechs ist die Obergrenze des Praktikablen.
 
-**Warum `did` nicht im Kern steht.** „Die KI hat die Progression vorgeschlagen" ist die am
-schwersten zu entscheidende Angabe des ganzen Systems; in der Praxis landet sie fast immer
-auf 0 oder 1. Wer sie führen will, führt sie als Profilkategorie — für die Vergleichbarkeit
-zwischen Materialien trägt sie zu wenig.
+Bewusst *nicht* eigenständig, sondern eingeordnet: Einstieg und Hinführung → `pla` oder
+`erk`; Sicherung → `erk`; Transfer → `auf`; Reflexion und Selbsteinschätzung → `prf`;
+Barrierefreiheit → `dif`.
 
-### 4.3 Warum `bld` und `med` gesondert zählen
+### 4.2 Was der Prozess-Schnitt kostet
 
-Diese beiden Kategorien haben unmittelbare Rechtsfolge. Nach Art. 50 EU AI Act können
-**fotorealistische** KI-Bilder unter die Deepfake-Kennzeichnungspflicht fallen — die
-Faustformel aus dem EU-Verhaltenskodex: eine Sphinx über dem Eiffelturm nicht, das
-fotorealistische Porträt einer Person, die nie existiert hat, schon. Für synthetische
-Stimmen und KI-Avatare gilt dasselbe; sie sind im Kodex ausdrücklich erfasst.
+Er sagt mehr über die **Arbeitsweise** der Lehrkraft und weniger über das **Produkt**.
+Für Lesende — Lernende, Eltern — ist „die Aufgabentexte sind KI-generiert" konkreter als
+„Planung 2 von 3". Wer das Badge primär nach außen richten will, verliert hier etwas; wer
+es als Selbstauskunft und Reflexionsinstrument versteht, gewinnt.
 
-Wer `bld:3` oder `med:3` einträgt, sollte diese Frage bewusst beantwortet und im
-Prüfprotokoll festgehalten haben (→ 12).
+Der zweite Verlust ist der Medienbezug: Bilder, Audio und Video stecken jetzt in `erk` und
+`auf`. Das ist rechtlich relevant, weil die Deepfake-Pflicht am Medium hängt und nicht am
+Vorbereitungsschritt — aufgefangen wird das durch die Zusatzangabe.
 
-### 4.4 Warum `bew` von `loe` getrennt ist
+### 4.3 Zusatzangabe statt Kategorie
 
-Musterlösungen und Bewertung sehen verwandt aus, sind es aber nicht. Der AI Act stuft
-KI-Systeme, die **Lernergebnisse bewerten** oder Lernende Bildungsgängen zuordnen, als
-**Hochrisiko** ein (Anhang III Nr. 3).
+Eine rechtliche Frage gehört nicht in eine didaktische Taxonomie. Deshalb steht sie daneben,
+als Ja/Nein ohne Stufe:
 
-Das trifft eine Lehrkraft nicht, die sich ein Bewertungsraster entwerfen lässt — sie
-betreibt kein Hochrisikosystem. Aber die eigene Kategorie macht sichtbar, wo diese Grenze
-verläuft, und macht den Schritt von „KI half beim Raster" zu „KI bewertet Schülerarbeiten"
-zu einer bewussten Entscheidung statt zu einem Abgleiten.
+| Code | Angabe |
+|---|---|
+| `real` | **Enthält realistisch wirkende KI-Darstellungen** — fotorealistische Bilder, synthetische Stimmen, KI-Avatare |
+
+Die Angabe geht **nicht** in die Gesamtstufe ein. Sie beantwortet eine andere Frage:
+Nach Art. 50 EU AI Act können solche Inhalte unter die Deepfake-Kennzeichnungspflicht
+fallen. Faustformel aus dem EU-Verhaltenskodex: eine Sphinx über dem Eiffelturm nicht,
+das fotorealistische Porträt einer Person, die nie existiert hat, schon. Für synthetische
+Stimmen und KI-Avatare gilt dasselbe.
+
+Wer `real` setzt, hält die Prüfung im Prüfprotokoll fest (→ 12).
+
+### 4.4 Wo die Hochrisiko-Grenze verläuft
+
+`prf` enthält Bewertungsraster — und damit einen Punkt, der Aufmerksamkeit verdient:
+Der AI Act stuft KI-Systeme, die **Lernergebnisse bewerten** oder Lernende Bildungsgängen
+zuordnen, als **Hochrisiko** ein (Anhang III Nr. 3).
+
+Eine Lehrkraft, die sich ein Raster entwerfen lässt, betreibt kein Hochrisikosystem. Eine
+KI, die Schülerarbeiten selbst bewertet, ist etwas anderes. `prf:3` ist deshalb die
+Angabe, bei der sich das Innehalten lohnt.
 
 ---
 
@@ -188,9 +202,9 @@ zu einer bewussten Entscheidung statt zu einem Abgleiten.
 
 > **Die Gesamtstufe ist das Maximum der Kategorien, nicht der Durchschnitt.**
 
-Ein Arbeitsblatt mit `txt:0 bld:3 did:0 loe:0` trägt gesamt **3/3**, nicht 0,75.
+Ein Arbeitsblatt mit `rec:0 erk:3 auf:0 prf:0` trägt gesamt **3/3**, nicht 0,75.
 
-Beim Durchschnitt verschwindet ein vollständig KI-generiertes Bild hinter vier menschlichen
+Beim Durchschnitt verschwindet ein vollständig KI-generierter Erklärtext hinter drei menschlichen
 Kategorien — das Badge würde dann genau das verbergen, was es zeigen soll. Die Maximum-Regel
 macht das Gesamtbadge zur ehrlichen Obergrenze: *„Irgendwo in diesem Material steckt KI auf
 Stufe X."*
@@ -207,14 +221,13 @@ Ein maschinenlesbarer String, der sich in Metadaten, Dateinamen, Datenbankfelder
 HTML-Attribute schreiben lässt:
 
 ```
-ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1
+ktx:3|rec:1|pla:1|erk:2|auf:2|dif:3|prf:0|real:1
 ```
 
 - `ktx` — Gesamtstufe (redundant, aber erlaubt Filtern ohne Parsen der Kategorien)
-- Kategorien in fester Reihenfolge: erst der Kern `txt, bld, med, loe, bew`, dann das Profil
-  `dat, fbk, spr, cod, did`; nicht zutreffende weggelassen
-- Werte `0`–`3`, höchstens zwei Profilkategorien
-- Grammatik: `ktx:[0-3](\|(txt|bld|med|loe|bew|dat|fbk|spr|cod|did):[0-3])*`
+- Kategorien in fester Reihenfolge `rec, pla, erk, auf, dif, prf`, nicht zutreffende weggelassen
+- Werte `0`–`3`; Zusatzangaben (`real`) stehen am Ende und nur, wenn sie zutreffen
+- Grammatik: `ktx:[0-3](\|(rec|pla|erk|auf|dif|prf):[0-3])*(\|real:1)?`
 
 Anschlussfähig an C2PA-Assertions und an das Metadatenfeld einer Materialdatenbank. Der
 Kurzcode ist die **normative Datenform**; das Badge ist die Darstellung davon.
@@ -290,8 +303,8 @@ SVG mit `role="img"`, `<title>` und `<desc>`. Alternativtext nach Muster:
 
 ```
 KI-Transparenz Stufe 2 von 3: KI-Entwurf, überarbeitet und geprüft.
-Text/Aufgaben 2 von 3, Bild/Grafik 3 von 3, Lösungen 0 von 3, Bewertung 1 von 3,
-Daten/Kontexte 1 von 3.
+Recherche 1 von 3, Planung 1 von 3, Erklärung 2 von 3, Aufgaben 2 von 3,
+Differenzierung 0 von 3, Überprüfung 0 von 3.
 ```
 
 Die Sternform ist nie alleiniger Bedeutungsträger — die Zahl steht immer daneben. Damit
@@ -335,15 +348,15 @@ Darstellung, nicht die Sache.
 **Einzeilig, Minimum:**
 
 ```
-KI-Transparenz 2/3 · Text 2, Bild 3, Lösungen 0, Bewertung 1
+KI-Transparenz 2/3 · Recherche 1, Erklärung 2, Aufgaben 2, Überprüfung 0
 Geprüft und freigegeben: S. Blankenagel, 02.08.2026
 ```
 
 **Fließtext, für Elternbriefe und Materialbeschreibungen:**
 
 > Bei der Erstellung dieses Materials wurde generative KI eingesetzt (Stufe 2 von 3:
-> KI-Entwurf, überarbeitet und geprüft). Betroffen sind Aufgabentexte und Abbildungen;
-> Lösungswege und Bewertungsraster stammen ohne KI-Beteiligung von mir.
+> KI-Entwurf, überarbeitet und geprüft). Betroffen sind Erklärtexte und Aufgaben;
+> Lösungen und Bewertungsraster stammen ohne KI-Beteiligung von mir.
 > Geprüft und freigegeben: S. Blankenagel, 02.08.2026.
 
 **Stufe 0, ausdrücklich benannt:**
@@ -369,13 +382,14 @@ Eine Zeile je Material, z. B. als CSV in der Materialablage:
 
 ```csv
 datum;material;kurzcode;werkzeug;geprueft_von;anmerkung
-2026-08-02;lineare-gleichungen-ub3;ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1;<Modell/Werkzeug>;S. Blankenagel;Bild nicht fotorealistisch
+2026-08-02;lineare-gleichungen-ub3;ktx:3|rec:1|pla:1|erk:2|auf:2|dif:3|prf:0|real:1;<Modell/Werkzeug>;S. Blankenagel;Illustration stilisiert, Quellen selbst geprüft
 ```
 
 - `werkzeug` — welches KI-Werkzeug, in welcher Version. Wichtig, weil sich Ausgabequalität
   und Rechtslage je Werkzeug unterscheiden.
-- `anmerkung` — Freitext. Pflicht bei `bld:3`: Festhalten, ob das Bild fotorealistisch ist
-  (→ Deepfake-Frage, 4.1).
+- `anmerkung` — Freitext. Pflicht bei gesetztem `real`: Festhalten, welche Darstellung
+  betroffen ist und wie sie eingeschätzt wurde (→ 4.3). Zweite Pflichtstelle: bei `rec:2`
+  oder `rec:3` festhalten, ob Fakten und Quellen gegengeprüft wurden.
 
 **Aufbewahrung:** so lange, wie das Material im Einsatz ist, mindestens aber ein Schuljahr.
 Personenbezogene Daten von Lernenden gehören nicht ins Protokoll.

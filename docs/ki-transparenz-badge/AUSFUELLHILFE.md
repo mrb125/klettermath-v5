@@ -7,7 +7,7 @@ diese Seite reicht für den Alltag.
 
 ## In vier Schritten
 
-**1 · Kategorien durchgehen.** Für jede: Wo kam generative KI ins Spiel?
+**1 · Sechs Vorbereitungsschritte durchgehen.** Für jeden: Wo kam generative KI ins Spiel?
 
 **2 · Je Kategorie eine Stufe vergeben** — zwei Fragen genügen:
 
@@ -28,26 +28,24 @@ Substanziell verändert (mehr als Korrektur)?     ja  → 2
 
 ## Die Kategorien
 
-**Kern — überall gleich:**
+Sechs Schritte der Vorbereitung — in jedem Fach dieselben:
 
 | | umfasst |
 |---|---|
-| **Text/Aufgaben** | Aufgabenstellungen, Erklärtexte, Kontexte, Arbeitsaufträge |
-| **Bild/Grafik** | Illustrationen, Fotos, Diagramme, Schaubilder |
-| **Audio/Video** | Vertonung, Erklärvideos, Podcasts, Avatare |
-| **Lösungen** | Musterlösungen, Erwartungshorizont, Lösungswege |
-| **Bewertung** | Bewertungsraster, Niveauzuordnung, Kompetenzeinschätzung |
+| **Recherche** | Fachliche Klärung, Sachanalyse, Fakten, Quellen |
+| **Planung** | Aufbau, Reihenfolge, Lernziele, Einstiege, Stundenkonzept |
+| **Erklärung** | Erklärtexte, Beispiele, Darstellungen, Merksätze, Zusammenfassungen |
+| **Aufgaben** | Übungen, Anwendungen, Arbeitsaufträge, Transfer |
+| **Differenzierung** | Niveaustufen, gestufte Hilfen, sprachliche Anpassung, Barrierefreiheit |
+| **Überprüfung** | Lösungen, Diagnose, Bewertungsraster, Rückmeldungen, Reflexion |
 
-**Profil — höchstens zwei, von der Schule oder Fachschaft festgelegt:**
-Daten/Kontexte · Feedback · Sprache · Code/Interaktiv · Didaktik/Aufbau
+Nicht vorhandene Kategorie → **weglassen**. Ein Blatt ohne Differenzierungsangebot bekommt
+keine Differenzierungs-Angabe. `0` heißt „geprüft, ohne KI"; weglassen heißt „gibt es hier
+nicht". In der Praxis füllst du selten mehr als drei Zeilen aus.
 
-Nicht vorhandene Kategorie → **weglassen**. Ein Blatt ohne Bilder bekommt keine Bildangabe,
-ein Arbeitsblatt ohne Ton keine Audio-Angabe. `0` heißt „geprüft, ohne KI"; weglassen heißt
-„gibt es hier nicht". In der Praxis füllst du selten mehr als drei Zeilen aus.
-
-**Lösungen oder Bewertung?** Die Musterlösung sagt, *was* richtig ist — die Bewertung sagt,
-*wie viel es zählt*. Ein Erwartungshorizont mit Punkteverteilung gehört zu beidem: Inhalt
-unter Lösungen, Punkteschlüssel unter Bewertung.
+**Erklärung oder Aufgabe?** Erklärung ist, was du vermittelst und festhältst. Aufgabe ist,
+was die Lernenden tun. Dasselbe Rechenbeispiel ist im Erklärteil `Erklärung`, als Übung
+`Aufgabe`.
 
 ---
 
@@ -71,6 +69,7 @@ Inhalte hervorgebracht** hat.
 | KI um eine Gliederung gebeten, Inhalte selbst verfasst | 1 |
 | Eigenen Text von KI umformulieren lassen, Ergebnis übernommen | 2 |
 | KI-Entwurf einer Textaufgabe, Zahlen und Kontext angepasst, sprachlich überarbeitet | 2 |
+| KI nach Hintergrundwissen gefragt, Fakten und Quellen selbst gegengeprüft | 1 |
 | KI-Bild ohne Nachbearbeitung eingefügt | 3 |
 | KI-Musterlösung geprüft, für richtig befunden, unverändert übernommen | 3 |
 
@@ -85,7 +84,8 @@ untergräbt das ganze System.
 
 ## Zwei Sachen, die du nicht übersehen darfst
 
-**Bei `Bild/Grafik` oder `Audio/Video` auf 3** beantworte zusätzlich diese Frage:
+**Wenn KI-erzeugte Bilder, Stimmen oder Videos im Material stecken**, beantworte zusätzlich
+diese Frage:
 
 > Könnte jemand das für echt halten — für eine Fotografie, eine reale Stimme, eine reale Person?
 
@@ -94,9 +94,11 @@ Faustformel aus dem EU-Verhaltenskodex: eine Sphinx über dem Eiffelturm — nei
 fotorealistische Porträt einer Person, die es nicht gibt — ja. Für synthetische Stimmen und
 KI-Avatare gilt dasselbe.
 
-Halte die Antwort im [Prüfprotokoll](SPEZIFIKATION.md#12-prüfprotokoll) fest.
+Wenn ja, setze die Zusatzangabe **Enthält realistisch wirkende KI-Darstellungen** und halte
+die Antwort im [Prüfprotokoll](SPEZIFIKATION.md#12-prüfprotokoll) fest. Sie ist kein
+Sterne-Wert und geht nicht in die Gesamtstufe ein.
 
-**Bei `Bewertung` auf 2 oder 3** halte kurz inne. Ein KI-entworfenes Bewertungsraster, das du
+**Bei `Überprüfung` auf 2 oder 3** halte kurz inne. Ein KI-entworfenes Bewertungsraster, das du
 prüfst und anwendest, ist unproblematisch. Eine KI, die **Schülerarbeiten selbst bewertet**,
 ist etwas anderes — der AI Act stuft solche Systeme als Hochrisiko ein. Die Kategorie ist
 dazu da, dass dieser Schritt eine bewusste Entscheidung bleibt.
@@ -107,20 +109,21 @@ dazu da, dass dieser Schritt eine bewusste Entscheidung bleibt.
 
 ```
 KI-Transparenz 3/3 · im Wesentlichen KI-erzeugt, freigegeben
-Text/Aufgaben 2/3, Bild/Grafik 3/3, Lösungen 0/3, Bewertung 1/3, Daten/Kontexte 1/3
+Recherche 1/3, Planung 1/3, Erklärung 2/3, Aufgaben 2/3, Differenzierung 3/3, Überprüfung 0/3
+Enthält realistisch wirkende KI-Darstellungen
 Geprüft und freigegeben: S. Blankenagel, 02.08.2026
 ```
 
 Als Kurzcode für Dateinamen und Datenbanken:
 
 ```
-ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1
+ktx:3|rec:1|pla:1|erk:2|auf:2|dif:3|prf:0|real:1
 ```
 
 Grafik erzeugen:
 
 ```bash
-node ki-badge.mjs "txt:2|bld:3|loe:0|bew:1|dat:1" \
+node ki-badge.mjs "rec:1|pla:1|erk:2|auf:2|dif:3|prf:0|real:1" \
      --name="S. Blankenagel" --datum=02.08.2026 > badge.svg
 ```
 

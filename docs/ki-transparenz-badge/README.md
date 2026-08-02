@@ -3,8 +3,10 @@
 Kennzeichnungssystem, mit dem Lehrkräfte den KI-Anteil an selbst erstelltem
 Unterrichtsmaterial ausweisen. Zwei Dimensionen: **Kategorie** (wo) × **Sterne** (wie viel).
 
-Kategorien zweistufig: Kern `txt · bld · med · loe · bew` (überall gleich) plus höchstens
-zwei Profilkategorien aus `dat · fbk · spr · cod · did` je Fach oder Einrichtung.
+Die Kategorien folgen den **Schritten der Unterrichtsvorbereitung** und sind fachunspezifisch:
+`rec` Recherche · `pla` Planung · `erk` Erklärung · `auf` Aufgaben · `dif` Differenzierung ·
+`prf` Überprüfung. Dazu die Zusatzangabe `real` für realistisch wirkende KI-Darstellungen —
+Ja/Nein, ohne Stufe, außerhalb der Gesamtwertung.
 
 - **[AUSFUELLHILFE.md](AUSFUELLHILFE.md)** — eine Seite für den Alltag, 30 Sekunden
 - **[SPEZIFIKATION.md](SPEZIFIKATION.md)** — Skala, Kategorien, Entscheidungsregeln, Rechtsbezug
@@ -19,7 +21,7 @@ zwei Profilkategorien aus `dat · fbk · spr · cod · did` je Fach oder Einrich
 node ki-badge.mjs
 
 # Einzelnes Badge auf stdout
-node ki-badge.mjs "txt:2|bld:3|loe:0|bew:1|dat:1" \
+node ki-badge.mjs "rec:1|erk:2|auf:2|dif:3|prf:0|real:1" \
      --variante=voll --name="S. Blankenagel" --datum=02.08.2026 > badge.svg
 
 node --test          # 15 Tests
@@ -33,7 +35,7 @@ Als Modul:
 ```js
 import { parseCode, badgeVoll, badgeHTML, badgeCSS, altText } from './ki-badge.mjs';
 
-const daten = parseCode('txt:2|bld:3|loe:0|bew:1|dat:1');   // → { ktx: 3, txt: 2, ... }
+const daten = parseCode('rec:1|erk:2|auf:2|real:1');   // → { ktx: 2, rec: 1, erk: 2, auf: 2, real: 1 }
 const svg   = badgeVoll(daten, { name: 'S. Blankenagel', datum: '02.08.2026' });
 ```
 
