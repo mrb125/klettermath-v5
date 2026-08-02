@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 
 import {
   MAX,
+  KERN,
   STUFEN,
   parseCode,
   formatCode,
@@ -16,8 +17,8 @@ import {
 } from './ki-badge.mjs';
 
 test('Gesamtstufe ist das Maximum, nicht der Durchschnitt', () => {
-  assert.equal(parseCode('txt:0|bld:3|did:0|loe:0').ktx, 3);
-  assert.equal(parseCode('txt:1|bld:1|did:1|loe:1').ktx, 1);
+  assert.equal(parseCode('txt:0|bld:3|med:0|loe:0').ktx, 3);
+  assert.equal(parseCode('txt:1|bld:1|bew:1|loe:1').ktx, 1);
   assert.equal(parseCode('txt:0').ktx, 0);
 });
 
@@ -26,9 +27,9 @@ test('mitgegebenes ktx wird ignoriert und neu berechnet', () => {
 });
 
 test('Kurzcode überlebt einen Rundlauf, Reihenfolge normalisiert', () => {
-  const code = 'ktx:3|txt:2|bld:3|did:1|loe:0';
+  const code = 'ktx:3|txt:2|bld:3|loe:0|bew:1';
   assert.equal(formatCode(parseCode(code)), code);
-  assert.equal(formatCode(parseCode('loe:0|did:1|bld:3|txt:2')), code);
+  assert.equal(formatCode(parseCode('bew:1|loe:0|bld:3|txt:2')), code);
 });
 
 test('nicht zutreffende Kategorien fehlen, statt auf 0 zu stehen', () => {
@@ -36,6 +37,16 @@ test('nicht zutreffende Kategorien fehlen, statt auf 0 zu stehen', () => {
   assert.equal(formatCode(daten), 'ktx:2|txt:2');
   assert.ok(!('bld' in daten));
   assert.ok(!badgeText(daten).includes('Bild/Grafik'));
+});
+
+test('Kern ist unbegrenzt, Profil auf zwei Kategorien gedeckelt', () => {
+  assert.equal(Object.keys(KERN).length, 5);
+  assert.doesNotThrow(() => parseCode('txt:1|bld:1|med:1|loe:1|bew:1|dat:1|fbk:1'));
+  assert.throws(() => parseCode('txt:1|dat:1|fbk:1|spr:1'), /Höchstens 2 Profilkategorien/);
+});
+
+test('Kern steht im Kurzcode vor dem Profil', () => {
+  assert.equal(formatCode(parseCode('dat:1|bew:2|txt:0')), 'ktx:2|txt:0|bew:2|dat:1');
 });
 
 test('ungültige Eingaben werden abgewiesen', () => {
@@ -59,7 +70,7 @@ test('jede Stufe hat genau so viele gefüllte Sterne wie ihr Wert', () => {
 });
 
 test('Zahl steht immer neben den Sternen — nie Symbol ohne Text', () => {
-  const daten = parseCode('txt:2|bld:3|did:1|loe:0');
+  const daten = parseCode('txt:2|bld:3|loe:0|bew:1');
   for (const svg of [badgeVoll(daten), badgeKompakt(daten), badgeMini(daten)]) {
     assert.match(svg, /3\/3/);
   }
@@ -85,10 +96,10 @@ test('Textvariante ist vollwertig und maschinell wieder lesbar', () => {
 });
 
 test('HTML-Fragment ist beschriftet und enthält alle Kategorien', () => {
-  const html = badgeHTML(parseCode('txt:2|bld:3|did:1|loe:0'), { name: 'S. B.' });
+  const html = badgeHTML(parseCode('txt:2|bld:3|loe:0|bew:1'), { name: 'S. B.' });
   assert.match(html, /role="group"/);
   assert.match(html, /aria-label="KI-Transparenz Stufe 3 von 3/);
-  for (const label of ['Text/Aufgaben', 'Bild/Grafik', 'Didaktik/Aufbau', 'Lösungen']) {
+  for (const label of ['Text/Aufgaben', 'Bild/Grafik', 'Lösungen', 'Bewertung']) {
     assert.ok(html.includes(label), `fehlt: ${label}`);
   }
   assert.equal(html.match(/<svg /g).length, 5); // Gesamt + 4 Kategorien

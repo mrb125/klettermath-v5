@@ -118,32 +118,69 @@ Freigabezeile dokumentiert, nicht durch Absenken der Stufe belohnt.
 
 ## 4. Kategorien
 
-Vier Kategorien. Der Mehrwert des Systems liegt hier: Eine einzige Skala verdeckt, *wo* die
-KI im Spiel war — genau die Kritik, die Micallef & Petrovska (arXiv 2606.13389) und der
+Der Mehrwert des Systems liegt hier: Eine einzige Skala verdeckt, *wo* die KI im Spiel war —
+genau die Kritik, die Micallef & Petrovska (arXiv 2606.13389) und der
 Faceted-Attribution-Ansatz an binären Deklarationen üben.
+
+Die Kategorien sind zweistufig: ein **Kern**, der überall gleich ist und Materialien
+vergleichbar macht, und ein **Profil** aus höchstens zwei Zusatzkategorien je Fach oder
+Einrichtung.
+
+### 4.1 Kern — immer, unverändert
 
 | Code | Kategorie | umfasst |
 |---|---|---|
 | `txt` | **Text/Aufgaben** | Aufgabenstellungen, Erklärtexte, Kontexte, Arbeitsaufträge |
 | `bld` | **Bild/Grafik** | Illustrationen, Fotos, Diagramme, Schaubilder |
-| `did` | **Didaktik/Aufbau** | Reihenfolge, Progression, Schwierigkeitsstufen, Differenzierung, Lernziele |
-| `loe` | **Lösungen** | Musterlösungen, Erwartungshorizonte, Lösungswege, Bewertungsraster |
+| `med` | **Audio/Video** | Vertonung, Erklärvideos, Podcasts, Avatare, synthetische Stimmen |
+| `loe` | **Lösungen** | Musterlösungen, Erwartungshorizonte, Lösungswege |
+| `bew` | **Bewertung** | Bewertungsraster, Niveauzuordnung, Kompetenz- und Diagnoseeinschätzung |
 
 Nicht zutreffende Kategorien werden **weggelassen**, nicht auf 0 gesetzt. Ein Arbeitsblatt
 ohne Bilder trägt keine Bild-Angabe. `0` heißt „geprüft, ohne KI"; Weglassen heißt „nicht
 vorhanden".
 
-**Optionale fünfte Kategorie:** `spr` — *Sprache* (Übersetzung, sprachliche Vereinfachung,
-DaZ-Anpassung). Empfehlung: nur einführen, wo sprachliche Differenzierung ein eigener
-Arbeitsschritt ist. Sonst fällt sie unter `txt`.
+### 4.2 Profil — höchstens zwei, frei gewählt
 
-### 4.1 Warum `bld` gesondert zählt
+| Code | Kategorie | lohnt sich, wenn |
+|---|---|---|
+| `dat` | **Daten/Kontexte** | Zahlenwerte, Statistiken und Sachkontexte eigenes Risiko sind (Mathematik, Sachfächer) |
+| `fbk` | **Feedback** | die Umgebung automatische Rückmeldungen an Lernende erzeugt |
+| `spr` | **Sprache** | sprachliche Differenzierung ein eigener Arbeitsschritt ist (DaZ, Leichte Sprache) |
+| `cod` | **Code/Interaktiv** | Applets, Simulationen oder Auswertungslogik zum Material gehören |
+| `did` | **Didaktik/Aufbau** | die Reihenfolge- und Progressionsentscheidung dokumentiert werden soll |
 
-Die Bildkategorie ist die einzige mit unmittelbarer Rechtsfolge. Nach Art. 50 EU AI Act
-können **fotorealistische** KI-Bilder unter die Deepfake-Kennzeichnungspflicht fallen —
-die Faustformel aus dem EU-Verhaltenskodex: eine Sphinx über dem Eiffelturm nicht, das
-fotorealistische Porträt einer Person, die nie existiert hat, schon. Wer `bld:3` einträgt,
-sollte diese Frage bewusst beantwortet haben.
+**Warum die Obergrenze zwei.** Das System scheitert nicht an zu wenig Differenzierung,
+sondern an Ausfüllzeit — genau das findet das Scoping-Review als häufigste Ursache
+wirkungsloser Transparenzsysteme (→ 7 und 10.2). Sieben Kategorien werden nicht ausgefüllt,
+und ein nicht ausgefülltes Badge ist schlechter als ein grobes.
+
+**Warum `did` nicht im Kern steht.** „Die KI hat die Progression vorgeschlagen" ist die am
+schwersten zu entscheidende Angabe des ganzen Systems; in der Praxis landet sie fast immer
+auf 0 oder 1. Wer sie führen will, führt sie als Profilkategorie — für die Vergleichbarkeit
+zwischen Materialien trägt sie zu wenig.
+
+### 4.3 Warum `bld` und `med` gesondert zählen
+
+Diese beiden Kategorien haben unmittelbare Rechtsfolge. Nach Art. 50 EU AI Act können
+**fotorealistische** KI-Bilder unter die Deepfake-Kennzeichnungspflicht fallen — die
+Faustformel aus dem EU-Verhaltenskodex: eine Sphinx über dem Eiffelturm nicht, das
+fotorealistische Porträt einer Person, die nie existiert hat, schon. Für synthetische
+Stimmen und KI-Avatare gilt dasselbe; sie sind im Kodex ausdrücklich erfasst.
+
+Wer `bld:3` oder `med:3` einträgt, sollte diese Frage bewusst beantwortet und im
+Prüfprotokoll festgehalten haben (→ 12).
+
+### 4.4 Warum `bew` von `loe` getrennt ist
+
+Musterlösungen und Bewertung sehen verwandt aus, sind es aber nicht. Der AI Act stuft
+KI-Systeme, die **Lernergebnisse bewerten** oder Lernende Bildungsgängen zuordnen, als
+**Hochrisiko** ein (Anhang III Nr. 3).
+
+Das trifft eine Lehrkraft nicht, die sich ein Bewertungsraster entwerfen lässt — sie
+betreibt kein Hochrisikosystem. Aber die eigene Kategorie macht sichtbar, wo diese Grenze
+verläuft, und macht den Schritt von „KI half beim Raster" zu „KI bewertet Schülerarbeiten"
+zu einer bewussten Entscheidung statt zu einem Abgleiten.
 
 ---
 
@@ -170,13 +207,14 @@ Ein maschinenlesbarer String, der sich in Metadaten, Dateinamen, Datenbankfelder
 HTML-Attribute schreiben lässt:
 
 ```
-ktx:2|txt:2|bld:3|did:1|loe:0
+ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1
 ```
 
 - `ktx` — Gesamtstufe (redundant, aber erlaubt Filtern ohne Parsen der Kategorien)
-- Kategorien in fester Reihenfolge `txt, bld, did, loe`, nicht zutreffende weggelassen
-- Werte `0`–`3`
-- Grammatik: `ktx:[0-3](\|(txt|bld|did|loe|spr):[0-3])*`
+- Kategorien in fester Reihenfolge: erst der Kern `txt, bld, med, loe, bew`, dann das Profil
+  `dat, fbk, spr, cod, did`; nicht zutreffende weggelassen
+- Werte `0`–`3`, höchstens zwei Profilkategorien
+- Grammatik: `ktx:[0-3](\|(txt|bld|med|loe|bew|dat|fbk|spr|cod|did):[0-3])*`
 
 Anschlussfähig an C2PA-Assertions und an das Metadatenfeld einer Materialdatenbank. Der
 Kurzcode ist die **normative Datenform**; das Badge ist die Darstellung davon.
@@ -252,7 +290,8 @@ SVG mit `role="img"`, `<title>` und `<desc>`. Alternativtext nach Muster:
 
 ```
 KI-Transparenz Stufe 2 von 3: KI-Entwurf, überarbeitet und geprüft.
-Text/Aufgaben 2 von 3, Bild/Grafik 3 von 3, Didaktik/Aufbau 1 von 3, Lösungen 0 von 3.
+Text/Aufgaben 2 von 3, Bild/Grafik 3 von 3, Lösungen 0 von 3, Bewertung 1 von 3,
+Daten/Kontexte 1 von 3.
 ```
 
 Die Sternform ist nie alleiniger Bedeutungsträger — die Zahl steht immer daneben. Damit
@@ -296,7 +335,7 @@ Darstellung, nicht die Sache.
 **Einzeilig, Minimum:**
 
 ```
-KI-Transparenz 2/3 · Text 2, Bild 3, Didaktik 1, Lösungen 0
+KI-Transparenz 2/3 · Text 2, Bild 3, Lösungen 0, Bewertung 1
 Geprüft und freigegeben: S. Blankenagel, 02.08.2026
 ```
 
@@ -304,7 +343,7 @@ Geprüft und freigegeben: S. Blankenagel, 02.08.2026
 
 > Bei der Erstellung dieses Materials wurde generative KI eingesetzt (Stufe 2 von 3:
 > KI-Entwurf, überarbeitet und geprüft). Betroffen sind Aufgabentexte und Abbildungen;
-> Lösungswege und didaktischer Aufbau stammen ohne KI-Beteiligung von mir.
+> Lösungswege und Bewertungsraster stammen ohne KI-Beteiligung von mir.
 > Geprüft und freigegeben: S. Blankenagel, 02.08.2026.
 
 **Stufe 0, ausdrücklich benannt:**
@@ -330,7 +369,7 @@ Eine Zeile je Material, z. B. als CSV in der Materialablage:
 
 ```csv
 datum;material;kurzcode;werkzeug;geprueft_von;anmerkung
-2026-08-02;lineare-gleichungen-ub3;ktx:3|txt:2|bld:3|did:1|loe:0;<Modell/Werkzeug>;S. Blankenagel;Bild nicht fotorealistisch
+2026-08-02;lineare-gleichungen-ub3;ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1;<Modell/Werkzeug>;S. Blankenagel;Bild nicht fotorealistisch
 ```
 
 - `werkzeug` — welches KI-Werkzeug, in welcher Version. Wichtig, weil sich Ausgabequalität

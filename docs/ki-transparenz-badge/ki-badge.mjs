@@ -4,7 +4,7 @@
  *
  * Erzeugt Badges nach docs/ki-transparenz-badge/SPEZIFIKATION.md
  *
- *   node ki-badge.mjs "ktx:2|txt:2|bld:3|did:1|loe:0" \
+ *   node ki-badge.mjs "ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1" \
  *        --variante=voll --name="S. Blankenagel" --datum=02.08.2026
  *
  * Varianten: voll | kompakt | mini | text | html
@@ -19,13 +19,27 @@ const HIER = dirname(fileURLToPath(import.meta.url));
 
 export const MAX = 3;
 
-export const KATEGORIEN = {
+/** Kern — überall gleich, macht Materialien vergleichbar (Spezifikation 4.1). */
+export const KERN = {
   txt: 'Text/Aufgaben',
   bld: 'Bild/Grafik',
-  did: 'Didaktik/Aufbau',
+  med: 'Audio/Video',
   loe: 'Lösungen',
-  spr: 'Sprache',
+  bew: 'Bewertung',
 };
+
+/** Profil — je Fach oder Einrichtung frei wählbar, höchstens MAX_PROFIL (4.2). */
+export const PROFIL = {
+  dat: 'Daten/Kontexte',
+  fbk: 'Feedback',
+  spr: 'Sprache',
+  cod: 'Code/Interaktiv',
+  did: 'Didaktik/Aufbau',
+};
+
+export const MAX_PROFIL = 2;
+
+export const KATEGORIEN = { ...KERN, ...PROFIL };
 
 export const STUFEN = [
   'ohne generative KI',
@@ -58,6 +72,15 @@ export function parseCode(code) {
   }
   const werte = Object.values(daten);
   if (!werte.length) throw new Error('Kurzcode enthält keine Kategorie.');
+
+  // Die Obergrenze ist kein Formalismus: Das System scheitert an Ausfüllzeit,
+  // nicht an zu grober Differenzierung (Spezifikation 4.2).
+  const profil = Object.keys(daten).filter((k) => k in PROFIL);
+  if (profil.length > MAX_PROFIL) {
+    throw new Error(
+      `Höchstens ${MAX_PROFIL} Profilkategorien erlaubt, ${profil.length} angegeben: ${profil.join(', ')}`,
+    );
+  }
   return { ktx: Math.max(...werte), ...daten };
 }
 
@@ -259,7 +282,7 @@ function cli(argv) {
   const ziel = join(HIER, 'assets');
   mkdirSync(ziel, { recursive: true });
   const opts = { name: 'S. Blankenagel', datum: '02.08.2026' };
-  const beispiel = 'txt:2|bld:3|did:1|loe:0';
+  const beispiel = 'txt:2|bld:3|loe:0|bew:1|dat:1';
 
   const dateien = {
     'badge-voll.svg': badgeVoll(parseCode(beispiel), opts),

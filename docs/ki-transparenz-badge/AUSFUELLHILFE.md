@@ -7,7 +7,7 @@ diese Seite reicht für den Alltag.
 
 ## In vier Schritten
 
-**1 · Vier Kategorien durchgehen.** Für jede: Wo kam generative KI ins Spiel?
+**1 · Kategorien durchgehen.** Für jede: Wo kam generative KI ins Spiel?
 
 **2 · Je Kategorie eine Stufe vergeben** — zwei Fragen genügen:
 
@@ -26,17 +26,28 @@ Substanziell verändert (mehr als Korrektur)?     ja  → 2
 
 ---
 
-## Die vier Kategorien
+## Die Kategorien
+
+**Kern — überall gleich:**
 
 | | umfasst |
 |---|---|
 | **Text/Aufgaben** | Aufgabenstellungen, Erklärtexte, Kontexte, Arbeitsaufträge |
 | **Bild/Grafik** | Illustrationen, Fotos, Diagramme, Schaubilder |
-| **Didaktik/Aufbau** | Reihenfolge, Progression, Differenzierung, Lernziele |
-| **Lösungen** | Musterlösungen, Erwartungshorizont, Lösungswege, Bewertungsraster |
+| **Audio/Video** | Vertonung, Erklärvideos, Podcasts, Avatare |
+| **Lösungen** | Musterlösungen, Erwartungshorizont, Lösungswege |
+| **Bewertung** | Bewertungsraster, Niveauzuordnung, Kompetenzeinschätzung |
 
-Nicht vorhandene Kategorie → **weglassen**. Ein Blatt ohne Bilder bekommt keine Bildangabe.
-`0` heißt „geprüft, ohne KI"; weglassen heißt „gibt es hier nicht".
+**Profil — höchstens zwei, von der Schule oder Fachschaft festgelegt:**
+Daten/Kontexte · Feedback · Sprache · Code/Interaktiv · Didaktik/Aufbau
+
+Nicht vorhandene Kategorie → **weglassen**. Ein Blatt ohne Bilder bekommt keine Bildangabe,
+ein Arbeitsblatt ohne Ton keine Audio-Angabe. `0` heißt „geprüft, ohne KI"; weglassen heißt
+„gibt es hier nicht". In der Praxis füllst du selten mehr als drei Zeilen aus.
+
+**Lösungen oder Bewertung?** Die Musterlösung sagt, *was* richtig ist — die Bewertung sagt,
+*wie viel es zählt*. Ein Erwartungshorizont mit Punkteverteilung gehört zu beidem: Inhalt
+unter Lösungen, Punkteschlüssel unter Bewertung.
 
 ---
 
@@ -72,17 +83,23 @@ untergräbt das ganze System.
 
 ---
 
-## Eine Sache, die du nicht übersehen darfst
+## Zwei Sachen, die du nicht übersehen darfst
 
-Trägst du bei **Bild/Grafik** eine 3 ein, beantworte zusätzlich diese Frage:
+**Bei `Bild/Grafik` oder `Audio/Video` auf 3** beantworte zusätzlich diese Frage:
 
-> Wirkt das Bild fotorealistisch — könnte es jemand für eine echte Fotografie halten?
+> Könnte jemand das für echt halten — für eine Fotografie, eine reale Stimme, eine reale Person?
 
 Wenn ja, kann die Kennzeichnungspflicht nach Art. 50 EU AI Act greifen (Deepfake-Regel).
 Faustformel aus dem EU-Verhaltenskodex: eine Sphinx über dem Eiffelturm — nein. Das
-fotorealistische Porträt einer Person, die es nicht gibt — ja.
+fotorealistische Porträt einer Person, die es nicht gibt — ja. Für synthetische Stimmen und
+KI-Avatare gilt dasselbe.
 
 Halte die Antwort im [Prüfprotokoll](SPEZIFIKATION.md#12-prüfprotokoll) fest.
+
+**Bei `Bewertung` auf 2 oder 3** halte kurz inne. Ein KI-entworfenes Bewertungsraster, das du
+prüfst und anwendest, ist unproblematisch. Eine KI, die **Schülerarbeiten selbst bewertet**,
+ist etwas anderes — der AI Act stuft solche Systeme als Hochrisiko ein. Die Kategorie ist
+dazu da, dass dieser Schritt eine bewusste Entscheidung bleibt.
 
 ---
 
@@ -90,21 +107,20 @@ Halte die Antwort im [Prüfprotokoll](SPEZIFIKATION.md#12-prüfprotokoll) fest.
 
 ```
 KI-Transparenz 3/3 · im Wesentlichen KI-erzeugt, freigegeben
-Text/Aufgaben 2/3   Bild/Grafik 3/3
-Didaktik/Aufbau 1/3  Lösungen 0/3
+Text/Aufgaben 2/3, Bild/Grafik 3/3, Lösungen 0/3, Bewertung 1/3, Daten/Kontexte 1/3
 Geprüft und freigegeben: S. Blankenagel, 02.08.2026
 ```
 
 Als Kurzcode für Dateinamen und Datenbanken:
 
 ```
-ktx:3|txt:2|bld:3|did:1|loe:0
+ktx:3|txt:2|bld:3|loe:0|bew:1|dat:1
 ```
 
 Grafik erzeugen:
 
 ```bash
-node ki-badge.mjs "txt:2|bld:3|did:1|loe:0" \
+node ki-badge.mjs "txt:2|bld:3|loe:0|bew:1|dat:1" \
      --name="S. Blankenagel" --datum=02.08.2026 > badge.svg
 ```
 
