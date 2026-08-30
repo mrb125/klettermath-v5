@@ -30,12 +30,17 @@ class Listing:
     seller_feedback: Optional[int] = None      # Anzahl Bewertungen
     condition: str = ""
     image_url: str = ""
+    images: List[str] = field(default_factory=list)
     posted_at: str = ""
     shipping: Optional[float] = None
     listing_id: str = ""
     raw: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        if self.image_url and self.image_url not in self.images:
+            self.images.insert(0, self.image_url)
+        if not self.image_url and self.images:
+            self.image_url = self.images[0]
         if not self.listing_id:
             self.listing_id = f"{self.source}:{_slug(self.url or self.title, self.title)}"
         self.currency = (self.currency or "EUR").upper()

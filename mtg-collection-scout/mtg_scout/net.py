@@ -162,6 +162,38 @@ class HttpClient:
             time.sleep(min(2 ** attempt, 10))
         raise FetchError(f"Abruf von {url} fehlgeschlagen: {last_error}")
 
+    def fetch_bytes(self, url: str, max_bytes: int = 5_000_000) -> bytes:
+        """Binaerdaten (Bilder) laden - mit Dateicache, ohne Textdekodierung."""
+        cache_path = None
+        if self.cache_dir:
+            binary_dir = self.cache_dir / "bin"
+            binary_dir.mkdir(parents=True, exist_ok=True)
+            cache_path = binary_dir / hashlib.sha1(url.encode("utf-8")).hexdigest()
+            if cache_path.exists():
+                return cache_path.read_bytes()
+        if self.offline:
+            raise FetchError(f"Offline-Modus: {url} nicht im Cache")
+        if not self.robots_allows(url):
+            raise FetchError(f"robots.txt verbietet den Abruf von {url}")
+
+        self._throttle(urllib.parse.urlsplit(url).netloc)
+        request = urllib.request.Request(
+            url, headers={"User-Agent": self.user_agent, "Accept": "image/*,*/*"}
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                payload = response.read(max_bytes + 1)
+        except Exception as exc:
+            raise FetchError(f"Bild {url} nicht ladbar: {exc}") from exc
+        if len(payload) > max_bytes:
+            raise FetchError(f"Bild {url} groesser als {max_bytes} Bytes")
+        if cache_path:
+            try:
+                cache_path.write_bytes(payload)
+            except OSError as exc:
+                log.debug("Bildcache nicht schreibbar: %s", exc)
+        return payload
+
     def fetch_json(self, url: str, **kwargs: Any) -> Any:
         headers = dict(kwargs.pop("headers", {}) or {})
         headers.setdefault("Accept", "application/json")

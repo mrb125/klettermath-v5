@@ -147,6 +147,13 @@ class EbaySource(Source):
             if cost is not None:
                 shipping = float(cost)
                 break
+        images: List[str] = []
+        for candidate in [(item.get("image") or {}).get("imageUrl")] + [
+            entry.get("imageUrl")
+            for entry in (item.get("thumbnailImages") or []) + (item.get("additionalImages") or [])
+        ]:
+            if candidate and candidate not in images:
+                images.append(candidate)
         seller = item.get("seller") or {}
         location = item.get("itemLocation") or {}
         return Listing(
@@ -164,7 +171,8 @@ class EbaySource(Source):
             seller_rating=_as_float(seller.get("feedbackPercentage")),
             seller_feedback=_as_int(seller.get("feedbackScore")),
             condition=item.get("condition") or "",
-            image_url=(item.get("image") or {}).get("imageUrl", ""),
+            image_url=images[0] if images else "",
+            images=images,
             posted_at=item.get("itemCreationDate") or "",
             shipping=shipping,
             listing_id=f"ebay:{item.get('itemId') or item.get('legacyItemId') or ''}",

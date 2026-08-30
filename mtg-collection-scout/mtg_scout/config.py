@@ -61,6 +61,14 @@ DEFAULTS: Dict[str, Any] = {
         "spread_low": 0.6,     # untere Grenze der Wertspanne = mid * 0.6
         "spread_high": 1.7,
     },
+    "vision": {
+        "enabled": False,              # Fotoauswertung standardmaessig aus (API-Kosten)
+        "model": "claude-opus-5",
+        "max_listings": 8,             # nur die besten Treffer werden bebildert geprueft
+        "max_images_per_listing": 3,
+        "use_ocr": False,              # netzfreie Alternative via tesseract
+        "fetch_detail_pages": True,    # Anzeigenseite fuer mehr Fotos/Text nachladen
+    },
     "scoring": {
         "min_score_report": 0.0,
         "risk_penalty": 8.0,

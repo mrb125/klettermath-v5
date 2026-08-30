@@ -5,6 +5,7 @@ Dachbodenfunde, versiegelte Ware) und **bewertet jedes Angebot automatisch**: ge
 Sammlungswert, Verhältnis Wert/Preis, Risikohinweise und eine Schulnote von A+ bis F.
 
 Läuft mit **reiner Python-Standardbibliothek** – kein `pip install` von Fremdpaketen nötig.
+Optional wertet es zusätzlich die **Fotos der Anzeigen** aus (Claude-Bildanalyse oder OCR).
 
 ```
 Note  Score      Preis   Wert ca.     x  Quelle        Land Titel
@@ -24,6 +25,7 @@ A+       87      450 €    1.894 €  4.2x  demo          DE   Magic Sammlung A
 - [eBay-Zugang einrichten](#ebay-zugang-einrichten)
 - [Echte Kartenpreise laden](#echte-kartenpreise-laden)
 - [Wie bewertet wird](#wie-bewertet-wird)
+- [Fotos auswerten](#fotos-auswerten)
 - [Alle Befehle](#alle-befehle)
 - [Konfiguration](#konfiguration)
 - [Eigene Marktplätze ergänzen](#eigene-marktplätze-ergänzen)
@@ -168,6 +170,48 @@ Zahlung ohne Käuferschutz, schwache Verkäuferbewertung).
 Gesuche („Suche Magic Sammlung“, „Ankauf“) werden automatisch als solche erkannt und
 nicht als Angebot bewertet.
 
+## Fotos auswerten
+
+Der Anzeigentext verschweigt oft das Wichtigste – die Fotos zeigen es. Deshalb kann der
+Scout die Bilder der aussichtsreichsten Treffer zusätzlich ansehen:
+
+```bash
+# Bildanalyse mit Claude (braucht SDK + API-Schlüssel)
+pip install anthropic
+export ANTHROPIC_API_KEY=sk-ant-...
+python3 -m mtg_scout suchen -q kleinanzeigen --fotos --fotos-limit 5 --details
+
+# Ohne API-Schlüssel: OCR über tesseract (liest Kartennamen aus den Bildern)
+sudo apt install tesseract-ocr tesseract-ocr-deu
+python3 -m mtg_scout suchen -q kleinanzeigen --fotos-ocr
+
+# Einzelne Anzeige samt eigener Fotos bewerten
+python3 -m mtg_scout bewerten --preis 450 --bild foto1.jpg --bild foto2.jpg     --text "Magic Sammlung Konvolut, wenig Angaben"
+```
+
+Was dabei aus den Bildern gelesen wird:
+
+- **Kartennamen** samt Anzahl und Sicherheit – erkannte Karten werden mit den echten
+  Marktpreisen bewertet und fließen in die Wertschätzung ein
+- **Versiegelte Produkte**: Displays, Bundles, Commander-Decks
+- **Kartenmenge**: sichtbare Stapel, Ordnerseiten, Kisten – füllt die Lücke, wenn der
+  Text keine Stückzahl nennt
+- **Zustand** und **Auffälligkeiten**: Proxys, Fälschungen, Knicke, Wasserschäden,
+  fremde Sammelkartenspiele im Stapel, offensichtliche Symbolbilder
+
+Erkenntnisse aus den Fotos erhöhen die Sicherheit der Schätzung, Auffälligkeiten landen
+als Risiko in der Bewertung (`Foto: …`). Bei kleinanzeigen.de wird für diese Treffer
+zusätzlich die Anzeigenseite geladen – dort stehen der vollständige Beschreibungstext und
+alle Fotos statt nur des Vorschaubilds.
+
+**Kosten und Grenzen.** Jede Bildanalyse ist ein API-Aufruf und kostet Geld. Deshalb
+werden standardmäßig nur die **besten 8 Treffer** bebildert geprüft (`--fotos-limit`) und
+je Anzeige höchstens 3 Bilder (`--fotos-pro-anzeige`). Modell wählbar über
+`--vision-modell` (Standard `claude-opus-5`). Fehlt SDK oder Schlüssel, läuft die Suche
+ohne Fotoauswertung normal weiter – sie ist eine Ergänzung, keine Voraussetzung. Die OCR-
+Variante ist kostenlos und offline, erkennt aber deutlich weniger: sie liest gedruckte
+Namenszeilen, ordnet aber kein Artwork zu.
+
 ## Alle Befehle
 
 ```
@@ -194,6 +238,10 @@ Wichtige Optionen von `suchen` / `beobachten`:
 | `--sortierung` | `score`, `preis`, `wert`, `verhaeltnis` |
 | `--details` | vollständige Wertherleitung |
 | `--json`, `--csv`, `--html` | Ergebnisse in Datei schreiben |
+| `--fotos` | Fotos der besten Treffer mit Claude auswerten |
+| `--fotos-ocr` | Fotos per OCR (tesseract) auswerten, ohne API-Schlüssel |
+| `--fotos-limit`, `--fotos-pro-anzeige` | wie viele Anzeigen bzw. Bilder ausgewertet werden |
+| `--vision-modell` | Claude-Modell für die Bildanalyse |
 | `--offline` | nur Cache und lokale Daten nutzen |
 | `--ignore-robots` | robots.txt bewusst übergehen (Standard: beachten) |
 
@@ -274,12 +322,15 @@ Quelle 0 Treffer liefert – das ist kein Fehler des Tools, sondern die Antwort 
 
 ## Grenzen der Schätzung
 
-Die Bewertung liest **nur den Anzeigentext**, nicht die Bilder. Sie ist ein Filter für die
-Frage „welche der 200 Treffer schaue ich mir überhaupt an?“ – keine Wertermittlung.
+Die Bewertung ist ein Filter für die Frage „welche der 200 Treffer schaue ich mir
+überhaupt an?“ – keine Wertermittlung.
 
-- Ohne Stückzahl, Edition oder Kartennamen bleibt nur „zu wenig Information“.
+- Ohne Stückzahl, Edition oder Kartennamen bleibt nur „zu wenig Information“ – solange
+  die Fotoauswertung nicht eingeschaltet ist.
 - Verkäufer nennen gern die drei besten Karten und verschweigen den Rest.
-- Bilder, in denen die eigentlichen Schätze liegen, wertet das Tool nicht aus.
+- Die Bildanalyse sieht nur, was fotografiert wurde: verdeckte Stapel, Kartenrückseiten
+  und unscharfe Bilder bleiben unbekannt, und auch sie kann sich vertun – jeder
+  Fototreffer trägt deshalb eine Sicherheit unter 1,0 in die Rechnung.
 - Die Sicherheit in Prozent sagt, wie belastbar eine Schätzung ist – bei < 40 % ist sie
   kaum mehr als eine Vermutung.
 - Preise für versiegelte Ware sind Pauschalen und altern schnell; sie stehen deshalb in
@@ -288,7 +339,7 @@ Frage „welche der 200 Treffer schaue ich mir überhaupt an?“ – keine Werte
 ## Entwicklung
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 56 Tests, ohne Netzzugriff
+python3 -m unittest discover -s tests -t . -v     # 77 Tests, ohne Netzzugriff
 python3 -m mtg_scout suchen --quelle demo --details
 ```
 
@@ -307,6 +358,11 @@ mtg_scout/
   analyze/
     parse.py         Fakten aus dem Anzeigentext (Menge, Ära, Zustand, Risiken)
     score.py         Wertschätzung und Deal-Score
+  vision/
+    claude.py        Bildanalyse mit Claude (Anthropic-SDK, strukturiertes JSON)
+    ocr.py           OCR-Alternative über tesseract
+    images.py        Bilder laden, prüfen, kodieren
+    facts.py         Ergebnisstruktur der Fotoauswertung
   pricing/
     scryfall.py      Preisspiegel von Scryfall
     index.py         Kartennamen im Freitext erkennen

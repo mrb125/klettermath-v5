@@ -91,11 +91,14 @@ class ProfileSource(Source):
         if not name or not url:
             return None
         price, currency = offer_price(node)
-        image = node.get("image")
-        if isinstance(image, list):
-            image = image[0] if image else ""
-        if isinstance(image, dict):
-            image = image.get("url", "")
+        raw_images = node.get("image")
+        if isinstance(raw_images, (str, dict)):
+            raw_images = [raw_images]
+        images: List[str] = []
+        for entry in raw_images or []:
+            url_value = entry.get("url", "") if isinstance(entry, dict) else entry
+            if url_value and url_value not in images:
+                images.append(str(url_value))
         return Listing(
             source=self.name,
             title=name,
@@ -104,7 +107,8 @@ class ProfileSource(Source):
             currency=currency or self.currency,
             description=strip_html(str(node.get("description") or "")),
             country=(self.countries or [""])[0],
-            image_url=str(image or ""),
+            image_url=images[0] if images else "",
+            images=images,
             raw={"profile": self.name, "via": "json-ld"},
         )
 

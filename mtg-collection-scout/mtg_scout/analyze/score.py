@@ -9,6 +9,7 @@ from ..currency import CurrencyConverter
 from ..models import CardHit, Evaluation, Listing, ValueEstimate
 from ..pricing.index import CardIndex
 from ..util import money
+from ..vision.facts import PhotoFacts
 from .parse import VINTAGE_ERAS, ListingFacts, parse_listing
 
 GRADES = [
@@ -36,14 +37,22 @@ class Evaluator:
         self.converter = converter or CurrencyConverter()
 
     # ------------------------------------------------------------------ public
-    def evaluate(self, listing: Listing) -> Evaluation:
+    def evaluate(self, listing: Listing, photos: Optional[PhotoFacts] = None) -> Evaluation:
+        """Ein Angebot bewerten - optional mit den Fakten aus der Fotoauswertung."""
         facts = parse_listing(listing.text)
         price_eur = self.converter.to_eur(listing.price, listing.currency)
         shipping_eur = self.converter.to_eur(listing.shipping, listing.currency) or 0.0
         total_eur = None if price_eur is None else round(price_eur + shipping_eur, 2)
 
         card_hits = self.index.find(listing.text)
+        if photos:
+            self._merge_photo_facts(facts, photos)
+            card_hits = self._merge_photo_cards(card_hits, photos)
         estimate = self._estimate_value(facts, card_hits, listing)
+        if photos and photos.images_analyzed:
+            estimate.confidence = round(min(0.95, estimate.confidence + 0.15), 2)
+            if photos.summary:
+                estimate.breakdown.append(f"Fotobefund: {photos.summary[:200]}")
 
         evaluation = Evaluation(
             listing=listing,
@@ -56,6 +65,42 @@ class Evaluator:
         )
         self._score(evaluation, facts)
         return evaluation
+
+    # -------------------------------------------------------------- Fotobefunde
+    @staticmethod
+    def _merge_photo_facts(facts: ListingFacts, photos: PhotoFacts) -> None:
+        """Erkenntnisse aus den Bildern in die Textfakten uebernehmen."""
+        for kind, quantity in photos.sealed.items():
+            facts.sealed[kind] = max(facts.sealed.get(kind, 0), quantity)
+        if facts.card_count is None and photos.card_count:
+            facts.card_count = photos.card_count
+            facts.card_count_source = "auf Fotos geschaetzt"
+        if facts.condition == "unknown" and photos.condition:
+            facts.condition = photos.condition
+        for flag in photos.flags:
+            label = f"Foto: {flag}"
+            if label not in facts.risks:
+                facts.risks.append(label)
+        if photos.images_analyzed:
+            facts.signals.append(f"{photos.images_analyzed} Foto(s) ausgewertet")
+
+    def _merge_photo_cards(self, hits: List[CardHit], photos: PhotoFacts) -> List[CardHit]:
+        """Auf Fotos erkannte Karten bepreisen und mit den Textreffern zusammenfuehren."""
+        merged = {hit.name: hit for hit in hits}
+        for card in photos.cards:
+            entry = self.index.lookup(card.name)
+            if entry is None:
+                continue
+            name, price, reserved = entry
+            candidate = CardHit(
+                name=name, price_eur=price,
+                confidence=round(min(0.95, card.confidence * 0.85), 2),
+                count=card.count, reserved=reserved, source="foto",
+            )
+            existing = merged.get(name)
+            if existing is None or candidate.weighted_eur > existing.weighted_eur:
+                merged[name] = candidate
+        return sorted(merged.values(), key=lambda h: h.weighted_eur, reverse=True)
 
     # ------------------------------------------------------------ Wertermittlung
     def _estimate_value(self, facts: ListingFacts, hits: List[CardHit],

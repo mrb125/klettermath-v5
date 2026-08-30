@@ -43,8 +43,18 @@ def attr(block: str, name: str) -> str:
 
 def element_with_class(block: str, class_fragment: str) -> str:
     """Inhalt des ersten Elements, dessen class-Attribut das Fragment enthaelt."""
+    return _element_with_attr(block, "class", class_fragment)
+
+
+def element_with_id(block: str, element_id: str) -> str:
+    """Inhalt des ersten Elements mit dieser id."""
+    return _element_with_attr(block, "id", element_id, exact=True)
+
+
+def _element_with_attr(block: str, attribute: str, value: str, exact: bool = False) -> str:
+    inner = re.escape(value) if exact else f'[^"]*{re.escape(value)}[^"]*'
     pattern = re.compile(
-        rf'<(?P<tag>[a-z0-9]+)\b[^>]*class="[^"]*{re.escape(class_fragment)}[^"]*"[^>]*>',
+        rf'<(?P<tag>[a-z0-9]+)\b[^>]*{attribute}="{inner}"[^>]*>',
         re.IGNORECASE,
     )
     match = pattern.search(block)
@@ -67,6 +77,31 @@ def element_with_class(block: str, class_fragment: str) -> str:
 
 def text_of_class(block: str, class_fragment: str) -> str:
     return strip_html(element_with_class(block, class_fragment))
+
+
+def meta_contents(html: str, property_name: str) -> List[str]:
+    """Alle <meta property="..." content="..."> Werte einer Seite."""
+    pattern = re.compile(
+        rf'<meta[^>]+(?:property|name)="{re.escape(property_name)}"[^>]+content="([^"]+)"',
+        re.IGNORECASE,
+    )
+    alternate = re.compile(
+        rf'<meta[^>]+content="([^"]+)"[^>]+(?:property|name)="{re.escape(property_name)}"',
+        re.IGNORECASE,
+    )
+    return pattern.findall(html) + alternate.findall(html)
+
+
+def image_sources(html: str) -> List[str]:
+    """Bild-URLs einer Seite in Reihenfolge des Auftretens, ohne Duplikate."""
+    found: List[str] = []
+    for match in re.finditer(r'<img\b[^>]*?(?:data-imgsrc|data-src|src)="([^"]+)"',
+                             html, re.IGNORECASE):
+        url = match.group(1)
+        if url.startswith("data:") or url in found:
+            continue
+        found.append(url)
+    return found
 
 
 def first_link(block: str, prefix: str = "") -> str:

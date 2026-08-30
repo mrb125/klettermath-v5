@@ -32,6 +32,34 @@ class TestKleinanzeigen(unittest.TestCase):
         listings = self.source.parse((FIXTURES / "kleinanzeigen_search.html").read_text("utf-8"))
         self.assertEqual(listings[1].price, 0.0)
 
+    def test_bilder_werden_gesammelt(self):
+        listings = self.source.parse((FIXTURES / "kleinanzeigen_search.html").read_text("utf-8"))
+        self.assertTrue(listings[0].images)
+        self.assertEqual(listings[0].image_url, listings[0].images[0])
+
+    def test_detailseite_liefert_text_und_fotos(self):
+        beschreibung, bilder = self.source.parse_detail(
+            (FIXTURES / "kleinanzeigen_detail.html").read_text("utf-8")
+        )
+        self.assertIn("Tundra", beschreibung)
+        self.assertIn("Zustand gut", beschreibung)
+        self.assertEqual(len(bilder), 2)
+        self.assertTrue(all("prod-ads/images" in url for url in bilder))
+
+    def test_detailseite_ergaenzt_das_angebot(self):
+        from mtg_scout.models import Listing
+
+        class _Client:
+            def fetch(self, url, **kwargs):
+                return (FIXTURES / "kleinanzeigen_detail.html").read_text("utf-8")
+
+        quelle = KleinanzeigenSource(DEFAULTS, _Client())
+        listing = Listing(source="kleinanzeigen", title="Magic Sammlung",
+                          url="https://www.kleinanzeigen.de/s-anzeige/x/1", description="kurz")
+        self.assertTrue(quelle.fetch_detail(listing))
+        self.assertIn("Tundra", listing.description)
+        self.assertEqual(len(listing.images), 2)
+
     def test_kaputtes_html_wirft_nicht(self):
         self.assertEqual(self.source.parse("<html><body>nichts</body></html>"), [])
 

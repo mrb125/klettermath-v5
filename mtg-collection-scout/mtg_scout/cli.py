@@ -19,6 +19,8 @@ from .pricing import ScryfallPrices
 from .report import render_console, summary_line, write_csv, write_html, write_json
 from .sources import SearchQuery, available_source_names, build_sources, load_listings_file
 from .store import Store
+from .vision import ClaudeVision, PhotoFacts, VisionError, build_ocr
+from .vision import images as vision_images
 from .util import Color, money, supports_color
 
 log = logging.getLogger("mtg_scout")
@@ -76,6 +78,11 @@ def build_parser() -> argparse.ArgumentParser:
     rate.add_argument("--preis", type=float, default=None, help="Preis der Anzeige")
     rate.add_argument("--waehrung", default="EUR", help="Waehrung des Preises (Standard EUR)")
     rate.add_argument("--datei", type=Path, default=None, help="JSON/CSV mit Angeboten")
+    rate.add_argument("--bild", action="append", type=Path, default=[],
+                      help="Foto der Anzeige (mehrfach moeglich)")
+    rate.add_argument("--fotos-ocr", action="store_true",
+                      help="Fotos per OCR statt mit Claude auswerten")
+    rate.add_argument("--vision-modell", default="", help="Claude-Modell fuer die Bildanalyse")
     rate.add_argument("--details", action="store_true", help="Wertherleitung anzeigen")
     rate.add_argument("--json", dest="json_out", type=Path, default=None)
     rate.add_argument("--html", dest="html_out", type=Path, default=None)
@@ -119,6 +126,16 @@ def _add_search_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--json", dest="json_out", type=Path, default=None)
     parser.add_argument("--csv", dest="csv_out", type=Path, default=None)
     parser.add_argument("--html", dest="html_out", type=Path, default=None)
+    parser.add_argument("--fotos", action="store_true",
+                        help="Fotos der besten Treffer mit Claude auswerten (API-Kosten)")
+    parser.add_argument("--fotos-ocr", action="store_true",
+                        help="Fotos per OCR (tesseract) auswerten - ohne API-Schluessel")
+    parser.add_argument("--fotos-limit", type=int, default=None,
+                        help="wie viele Anzeigen bebildert geprueft werden (Standard 8)")
+    parser.add_argument("--fotos-pro-anzeige", type=int, default=None,
+                        help="maximale Anzahl Bilder je Anzeige (Standard 3)")
+    parser.add_argument("--vision-modell", default="",
+                        help="Claude-Modell fuer die Bildanalyse (Standard claude-opus-5)")
     parser.add_argument("--offline", action="store_true", help="nur Cache/lokale Daten nutzen")
     parser.add_argument("--ignore-robots", action="store_true",
                         help="robots.txt ignorieren (bewusste Entscheidung, Standard: beachten)")
@@ -145,11 +162,52 @@ class Context:
         self.converter = CurrencyConverter(self.client, cache_dir() / "kurse.json")
         self.store = Store(data_dir() / "mtg-scout.sqlite3")
         self.prices = ScryfallPrices(self.store, self.client)
-        self.evaluator = Evaluator(self.config, self.prices.index(), self.converter)
+        self.card_index = self.prices.index()
+        self.evaluator = Evaluator(self.config, self.card_index, self.converter)
         self.color = not args.no_color and supports_color()
+        self.sources_by_name: Dict[str, Any] = {}
 
     def close(self) -> None:
         self.store.close()
+
+    # ------------------------------------------------------------ Fotoauswertung
+    def vision_settings(self) -> Dict[str, Any]:
+        args = self.args
+        cfg = dict(self.config.get("vision", {}))
+        if getattr(args, "fotos", False):
+            cfg["enabled"] = True
+        if getattr(args, "fotos_ocr", False):
+            cfg["use_ocr"] = True
+        if getattr(args, "fotos_limit", None):
+            cfg["max_listings"] = args.fotos_limit
+        if getattr(args, "fotos_pro_anzeige", None):
+            cfg["max_images_per_listing"] = args.fotos_pro_anzeige
+        if getattr(args, "vision_modell", ""):
+            cfg["model"] = args.vision_modell
+            cfg["enabled"] = True
+        return cfg
+
+    def analyzer(self) -> tuple[Optional[ClaudeVision], Optional[Any]]:
+        """(Claude-Bildanalyse, OCR-Alternative) - je None, wenn nicht nutzbar."""
+        settings = self.vision_settings()
+        claude: Optional[ClaudeVision] = None
+        if settings.get("enabled"):
+            candidate = ClaudeVision(
+                model=settings.get("model", "claude-opus-5"),
+                max_images=int(settings.get("max_images_per_listing", 3)),
+            )
+            ok, reason = candidate.available()
+            if ok:
+                claude = candidate
+            else:
+                print(f"· Bildanalyse mit Claude nicht moeglich: {reason}", file=sys.stderr)
+        ocr = build_ocr(self.card_index) if settings.get("use_ocr") else None
+        if settings.get("use_ocr") and ocr is None:
+            print("· OCR nicht moeglich: tesseract ist nicht installiert", file=sys.stderr)
+        if claude is None and ocr is None and settings.get("enabled"):
+            print("· Fotoauswertung wird uebersprungen - Angebote werden nur aus dem "
+                  "Text bewertet.", file=sys.stderr)
+        return claude, ocr
 
     def query(self) -> SearchQuery:
         args = self.args
@@ -184,6 +242,7 @@ def run_search(ctx: Context) -> List[Evaluation]:
         ctx.config.get("sources", ["demo"])
     )
     sources = build_sources(names, ctx.config, ctx.client, ctx.converter, args.datei)
+    ctx.sources_by_name = {source.name: source for source in sources}
     query = ctx.query()
 
     listings: List[Listing] = []
@@ -205,11 +264,70 @@ def run_search(ctx: Context) -> List[Evaluation]:
     evaluations = [ctx.evaluator.evaluate(listing) for listing in listings]
     evaluations = _filter(ctx, evaluations)
     evaluations = _sort(evaluations, args.sortierung)
+    evaluations = analyze_photos(ctx, evaluations)
 
     for ev in evaluations:
         ctx.store.mark_seen(ev.listing.listing_id, ev.listing.source, ev.listing.title,
                             ev.listing.url, ev.price_eur, ev.score)
     return evaluations
+
+
+def analyze_photos(ctx: Context, evaluations: List[Evaluation]) -> List[Evaluation]:
+    """Die aussichtsreichsten Treffer zusaetzlich anhand ihrer Fotos bewerten.
+
+    Bewusst nur fuer die Spitze der Liste: jede Bildanalyse kostet Zeit und - bei
+    Claude - Geld. Die Reihenfolge wird danach neu berechnet.
+    """
+    settings = ctx.vision_settings()
+    if not settings.get("enabled") and not settings.get("use_ocr"):
+        return evaluations
+    claude, ocr = ctx.analyzer()
+    if claude is None and ocr is None:
+        return evaluations
+
+    limit = int(settings.get("max_listings", 8))
+    per_listing = int(settings.get("max_images_per_listing", 3))
+    candidates = [ev for ev in evaluations if ev.grade != "-"][:limit]
+    if not candidates:
+        return evaluations
+    engine = "Claude " + claude.model if claude else "OCR (tesseract)"
+    print(f"· Fotoauswertung mit {engine} fuer {len(candidates)} Anzeige(n) ...",
+          file=sys.stderr)
+
+    updated: Dict[str, Evaluation] = {}
+    for ev in candidates:
+        listing = ev.listing
+        source = ctx.sources_by_name.get(listing.source)
+        if settings.get("fetch_detail_pages", True) and hasattr(source, "fetch_detail"):
+            try:
+                source.fetch_detail(listing)
+            except FetchError as exc:
+                log.info("Detailseite nicht ladbar: %s", exc)
+        payloads = vision_images.download(ctx.client, listing.images, limit=per_listing)
+        if not payloads:
+            continue
+        photos = _run_analyzers(claude, ocr, payloads, listing.title)
+        if not photos:
+            continue
+        updated[listing.listing_id] = ctx.evaluator.evaluate(listing, photos)
+
+    if not updated:
+        return evaluations
+    merged = [updated.get(ev.listing.listing_id, ev) for ev in evaluations]
+    return _sort(merged, ctx.args.sortierung)
+
+
+def _run_analyzers(claude: Optional[ClaudeVision], ocr: Optional[Any],
+                   payloads: List[bytes], title: str) -> Optional[PhotoFacts]:
+    """Erst Claude, bei Fehler OCR - je nachdem, was verfuegbar ist."""
+    if claude is not None:
+        try:
+            return claude.analyze(vision_images.to_blocks(payloads), context=title)
+        except VisionError as exc:
+            print(f"· Bildanalyse fehlgeschlagen: {exc}", file=sys.stderr)
+    if ocr is not None:
+        return ocr.analyze(payloads, context=title)
+    return None
 
 
 def _filter(ctx: Context, evaluations: List[Evaluation]) -> List[Evaluation]:
@@ -287,6 +405,9 @@ def cmd_watch(args: argparse.Namespace) -> int:
 def cmd_rate(args: argparse.Namespace) -> int:
     args.offline = getattr(args, "offline", False)
     args.ignore_robots = False
+    args.fotos = bool(args.bild) and not args.fotos_ocr
+    args.fotos_limit = None
+    args.fotos_pro_anzeige = None
     ctx = Context(args)
     try:
         listings: List[Listing] = []
@@ -299,15 +420,36 @@ def cmd_rate(args: argparse.Namespace) -> int:
                         currency=args.waehrung, description=description)
             )
         if not listings:
-            print("Nichts zu bewerten - --text oder --datei angeben.", file=sys.stderr)
+            print("Nichts zu bewerten - --text, --datei oder --bild angeben.", file=sys.stderr)
             return 2
-        evaluations = _sort([ctx.evaluator.evaluate(l) for l in listings], "score")
+
+        photos = _photos_from_files(ctx, args.bild, listings[0].title if listings else "")
+        evaluations = _sort(
+            [ctx.evaluator.evaluate(listing, photos if index == 0 else None)
+             for index, listing in enumerate(listings)],
+            "score",
+        )
         args.details = True
         args.csv_out = None
         _output(ctx, evaluations)
         return 0
     finally:
         ctx.close()
+
+
+def _photos_from_files(ctx: Context, paths: List[Path], title: str) -> Optional[PhotoFacts]:
+    """Lokale Bilddateien auswerten (Befehl 'bewerten --bild')."""
+    if not paths:
+        return None
+    ctx.args.fotos = True
+    claude, ocr = ctx.analyzer()
+    if claude is None and ocr is None:
+        return None
+    payloads = vision_images.load_local(paths)
+    if not payloads:
+        print("· Keine lesbaren Bilddateien gefunden.", file=sys.stderr)
+        return None
+    return _run_analyzers(claude, ocr, payloads, title)
 
 
 def cmd_prices(args: argparse.Namespace) -> int:

@@ -11,12 +11,13 @@ from __future__ import annotations
 import logging
 import re
 import urllib.parse
-from typing import List
+from typing import List, Tuple
 
-from ..htmlparse import attr, iter_tag_blocks, text_of_class
+from ..htmlparse import (attr, element_with_id, image_sources, iter_tag_blocks,
+                         meta_contents, text_of_class)
 from ..models import Listing
 from ..net import FetchError
-from ..util import parse_price
+from ..util import parse_price, strip_html
 from .base import SearchQuery, Source
 
 log = logging.getLogger("mtg_scout.sources.kleinanzeigen")
@@ -87,9 +88,52 @@ class KleinanzeigenSource(Source):
                     country="DE",
                     location=text_of_class(block, "top--left"),
                     posted_at=text_of_class(block, "top--right"),
-                    image_url=attr(block, "data-imgsrc") or attr(block, "src"),
+                    images=image_sources(block)[:3],
                     listing_id=f"kleinanzeigen:{ad_id}" if ad_id else "",
                     raw={"price_text": price_text},
                 )
             )
         return listings
+
+    # ----------------------------------------------------------- Detailseite
+    def fetch_detail(self, listing) -> bool:
+        """Anzeigenseite nachladen: vollstaendiger Text und alle Fotos.
+
+        Die Trefferliste kuerzt die Beschreibung und zeigt nur ein Bild - fuer die
+        Fotoauswertung lohnt sich der zusaetzliche Abruf. Gibt False zurueck, wenn
+        die Seite nicht geladen werden konnte.
+        """
+        if not listing.url.startswith("http"):
+            return False
+        try:
+            html = self.client.fetch(listing.url)
+        except FetchError as exc:
+            log.info("Detailseite %s nicht ladbar: %s", listing.url, exc)
+            return False
+        description, images = self.parse_detail(html)
+        if description and len(description) > len(listing.description):
+            listing.description = description
+        for url in images:
+            if url not in listing.images:
+                listing.images.append(url)
+        if listing.images and not listing.image_url:
+            listing.image_url = listing.images[0]
+        return True
+
+    @staticmethod
+    def parse_detail(html: str) -> Tuple[str, List[str]]:
+        """(Beschreibung, Bild-URLs) einer Anzeigenseite."""
+        description = strip_html(element_with_id(html, "viewad-description-text"))
+        images: List[str] = []
+        seen: set[str] = set()
+        for url in meta_contents(html, "og:image") + image_sources(html):
+            if not any(marker in url for marker in
+                       ("/api/v1/prod-ads/images", "ebayimg", "img.kleinanzeigen")):
+                continue
+            # Dieselbe Aufnahme taucht in mehreren Groessen auf (?rule=...)
+            key = url.split("?")[0]
+            if key in seen:
+                continue
+            seen.add(key)
+            images.append(url)
+        return description, images

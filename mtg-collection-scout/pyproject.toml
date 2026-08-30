@@ -17,7 +17,11 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Topic :: Games/Entertainment",
 ]
-dependencies = []          # bewusst abhaengigkeitsfrei: nur Standardbibliothek
+dependencies = []          # Kernprogramm: bewusst nur Standardbibliothek
+
+[project.optional-dependencies]
+# Nur fuer die Fotoauswertung mit Claude noetig (siehe README, Abschnitt "Fotos auswerten")
+fotos = ["anthropic>=1.0"]
 
 [project.scripts]
 mtg-scout = "mtg_scout.cli:main"

@@ -76,6 +76,20 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("Karten x", out)
 
+    def test_fotos_ohne_sdk_bricht_nicht_ab(self):
+        code, out = self._run("suchen", "--quelle", "demo", "--offline", "--keine-farben",
+                              "--fotos")
+        self.assertEqual(code, 0)
+        self.assertIn("Angebote bewertet", out)
+
+    def test_bewerten_mit_unlesbarem_bild(self):
+        bild = self.base / "kaputt.jpg"
+        bild.write_bytes(b"kein bild")
+        code, out = self._run("bewerten", "--text", "Magic Sammlung 2000 Karten",
+                              "--preis", "200", "--bild", str(bild), "--keine-farben")
+        self.assertEqual(code, 0)
+        self.assertIn("Karten x", out)
+
     def test_quellen_und_status(self):
         code, out = self._run("quellen")
         self.assertEqual(code, 0)
