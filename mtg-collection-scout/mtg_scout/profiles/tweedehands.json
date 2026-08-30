@@ -1,0 +1,9 @@
+{
+  "name": "2dehands",
+  "label": "2dehands.be (Belgien)",
+  "countries": ["BE"],
+  "currency": "EUR",
+  "base_url": "https://www.2dehands.be",
+  "search_url": "https://www.2dehands.be/q/{query}/p/{page}/",
+  "note": "Best effort: liest JSON-LD der Suchseite."
+}

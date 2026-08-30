@@ -1,0 +1,9 @@
+{
+  "name": "leboncoin",
+  "label": "leboncoin.fr (Frankreich)",
+  "countries": ["FR"],
+  "currency": "EUR",
+  "base_url": "https://www.leboncoin.fr",
+  "search_url": "https://www.leboncoin.fr/recherche?text={query}&page={page}",
+  "note": "Starker Bot-Schutz - haeufig 0 Treffer. Nur mit Bedacht und niedriger Frequenz nutzen."
+}

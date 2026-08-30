@@ -1,0 +1,9 @@
+{
+  "name": "subito",
+  "label": "subito.it (Italien)",
+  "countries": ["IT"],
+  "currency": "EUR",
+  "base_url": "https://www.subito.it",
+  "search_url": "https://www.subito.it/annunci-italia/vendita/usato/?q={query}&o={page}",
+  "note": "Best effort: liest JSON-LD der Suchseite."
+}

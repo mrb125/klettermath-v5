@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtg-collection-scout"
+version = "1.0.0"
+description = "Findet Magic-the-Gathering-Sammlungen auf Online-Marktplaetzen (eBay, Kleinanzeigen, Ausland) und bewertet sie automatisch."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["magic the gathering", "mtg", "sammlung", "ebay", "kleinanzeigen", "scraper", "bewertung"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Games/Entertainment",
+]
+dependencies = []          # bewusst abhaengigkeitsfrei: nur Standardbibliothek
+
+[project.scripts]
+mtg-scout = "mtg_scout.cli:main"
+
+[project.urls]
+Quelltext = "https://github.com/mrb125/klettermath-v5/tree/main/mtg-collection-scout"
+
+[tool.setuptools]
+packages = ["mtg_scout", "mtg_scout.sources", "mtg_scout.pricing", "mtg_scout.analyze"]
+
+[tool.setuptools.package-data]
+mtg_scout = ["profiles/*.json", "data/*.json"]

@@ -1,0 +1,72 @@
+[
+  {
+    "source": "demo",
+    "title": "Magic the Gathering Sammlung Auflösung - ca. 4.500 Karten, Revised und Legends",
+    "url": "https://example.invalid/anzeige/1",
+    "price": 450,
+    "currency": "EUR",
+    "country": "DE",
+    "location": "50667 Köln",
+    "description": "Verkaufe die Sammlung meines Bruders aus den 90ern. Ca. 4.500 Karten, überwiegend Revised, Legends und The Dark, dazu 3 Sammelordner. Zustand gespielt bis gut, alles sortiert. Dabei ist auch eine Tundra und ein Scrubland. Nur Abholung."
+  },
+  {
+    "source": "demo",
+    "title": "MTG Konvolut 10000 Karten Bulk, nur Commons",
+    "url": "https://example.invalid/anzeige/2",
+    "price": 300,
+    "currency": "EUR",
+    "country": "DE",
+    "location": "20095 Hamburg",
+    "description": "Große Kiste unsortierte Karten, überwiegend Commons aus neueren Editionen. Keine Rares. Wie gesehen."
+  },
+  {
+    "source": "demo",
+    "title": "Magic Sammlung mit 4x Force of Will und Underground Sea",
+    "url": "https://example.invalid/anzeige/3",
+    "price": 1200,
+    "currency": "EUR",
+    "country": "AT",
+    "location": "1010 Wien",
+    "description": "Near Mint Karten aus Sammlerhand, Liste und Bilder vorhanden, dazu ca. 800 weitere Rares. Versand versichert."
+  },
+  {
+    "source": "demo",
+    "title": "Vintage MTG collection lot ~2000 cards, dual lands included",
+    "url": "https://example.invalid/anzeige/4",
+    "price": 1600,
+    "currency": "USD",
+    "country": "US",
+    "location": "Portland, OR",
+    "description": "Collection from the 90s: Revised, Antiquities, Arabian Nights. Played condition, sorted in binders. Ships worldwide."
+  },
+  {
+    "source": "demo",
+    "title": "Suche Magic Sammlungen jeder Größe - zahle fair",
+    "url": "https://example.invalid/anzeige/5",
+    "price": null,
+    "currency": "EUR",
+    "country": "DE",
+    "location": "80331 München",
+    "description": "Ankauf von Sammlungen, gerne Dachbodenfunde. Melde dich mit Bildern."
+  },
+  {
+    "source": "demo",
+    "title": "2x Display Modern Horizons 3 versiegelt OVP",
+    "url": "https://example.invalid/anzeige/6",
+    "price": 520,
+    "currency": "EUR",
+    "country": "CH",
+    "location": "8001 Zürich",
+    "description": "Zwei versiegelte Displays, originalverpackt, Versand aus der Schweiz möglich. Zahlung per Überweisung."
+  },
+  {
+    "source": "demo",
+    "title": "Magic Karten Sammlung 1200 Stück mit Proxys",
+    "url": "https://example.invalid/anzeige/7",
+    "price": 200,
+    "currency": "EUR",
+    "country": "DE",
+    "location": "04109 Leipzig",
+    "description": "Sammlung mit einigen Proxy-Karten, Rest echt. Zustand gemischt, teilweise beschädigt."
+  }
+]

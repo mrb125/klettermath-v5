@@ -1,0 +1,9 @@
+{
+  "name": "marktplaats",
+  "label": "marktplaats.nl (Niederlande)",
+  "countries": ["NL"],
+  "currency": "EUR",
+  "base_url": "https://www.marktplaats.nl",
+  "search_url": "https://www.marktplaats.nl/q/{query}/p/{page}/",
+  "note": "Best effort: liest JSON-LD der Suchseite."
+}

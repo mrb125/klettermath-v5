@@ -1,0 +1,9 @@
+{
+  "name": "tutti",
+  "label": "tutti.ch (Schweiz)",
+  "countries": ["CH"],
+  "currency": "CHF",
+  "base_url": "https://www.tutti.ch",
+  "search_url": "https://www.tutti.ch/de/q/{query}?page={page}",
+  "note": "Best effort: liest JSON-LD der Suchseite. Preise in CHF werden automatisch in EUR umgerechnet."
+}

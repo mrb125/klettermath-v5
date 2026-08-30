@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    paths: ["mtg-collection-scout/**"]
+  pull_request:
+    paths: ["mtg-collection-scout/**"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: mtg-collection-scout
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Tests
+        run: python -m unittest discover -s tests -t . -v
+      - name: Demo-Lauf
+        run: python -m mtg_scout suchen --quelle demo --offline --keine-farben
