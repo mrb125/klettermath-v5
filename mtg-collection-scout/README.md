@@ -342,7 +342,7 @@ Die Bewertung ist ein Filter für die Frage „welche der 200 Treffer schaue ich
 ## Entwicklung
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 80 Tests, ohne Netzzugriff
+python3 -m unittest discover -s tests -t . -v     # 89 Tests, ohne Netzzugriff
 python3 -m mtg_scout suchen --quelle demo --details
 ```
 

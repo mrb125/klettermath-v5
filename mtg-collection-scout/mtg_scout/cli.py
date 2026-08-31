@@ -460,7 +460,7 @@ def cmd_prices(args: argparse.Namespace) -> int:
     ctx = Context(args)
     try:
         if args.aktualisieren:
-            print("Lade Scryfall-Bulkdaten (einige hundert MB Download, dauert etwas) ...")
+            print("Lade Scryfall-Bulkdaten (rund 100-200 MB Download, dauert etwas) ...")
             try:
                 count = ctx.prices.refresh()
             except FetchError as exc:

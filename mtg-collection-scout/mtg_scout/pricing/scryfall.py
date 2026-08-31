@@ -13,6 +13,8 @@ from .index import CardIndex
 log = logging.getLogger("mtg_scout.scryfall")
 
 BULK_ENDPOINT = "https://api.scryfall.com/bulk-data"
+# Direktabruf einer Bulk-Datei; leitet auf die aktuelle Datei weiter
+BULK_FILE_ENDPOINT = "https://api.scryfall.com/bulk-data/{slug}?format=file"
 NAMED_ENDPOINT = "https://api.scryfall.com/cards/named?fuzzy="
 
 
@@ -28,19 +30,47 @@ class ScryfallPrices:
         """Bulk-Datei von Scryfall laden und Preise in die Datenbank schreiben."""
         if self.client is None:
             raise FetchError("Kein HTTP-Client verfuegbar (Offline-Modus?)")
-        catalog = self.client.fetch_json(BULK_ENDPOINT, use_cache=False)
-        entry = next(
-            (e for e in catalog.get("data", []) if e.get("type") == bulk_type), None
-        )
-        if entry is None:
-            raise FetchError(f"Bulk-Typ {bulk_type} nicht im Scryfall-Katalog gefunden")
-        log.info("Lade %s (%s MB) ...", entry.get("name"),
-                 round((entry.get("size") or 0) / 1e6, 1))
-        payload = self.client.fetch(entry["download_uri"], use_cache=False)
-        cards = json.loads(payload)
+        payload = self.client.fetch(self.download_uri(bulk_type), use_cache=False)
+        try:
+            cards = json.loads(payload)
+        except json.JSONDecodeError as exc:
+            raise FetchError(f"Bulk-Datei liess sich nicht lesen: {exc}") from exc
+        if not isinstance(cards, list):
+            raise FetchError("Bulk-Datei hat ein unerwartetes Format (keine Kartenliste)")
         count = self.store.replace_cards(self._rows(cards))
         log.info("%s Karten gespeichert", count)
         return count
+
+    def download_uri(self, bulk_type: str = "oracle_cards") -> str:
+        """Adresse der Bulk-Datei ermitteln - mit Direktabruf als Rueckfallebene.
+
+        Der Katalog nennt die Datei normalerweise unter "download_uri". Fehlt der
+        Eintrag oder ist der Katalog nicht erreichbar, tut es der Direktabruf
+        /bulk-data/<typ>?format=file, der auf dieselbe Datei weiterleitet.
+        """
+        direct = BULK_FILE_ENDPOINT.format(slug=bulk_type.replace("_", "-"))
+        if self.client is None:
+            return direct
+        try:
+            catalog = self.client.fetch_json(BULK_ENDPOINT, use_cache=False)
+        except FetchError as exc:
+            log.info("Bulk-Katalog nicht abrufbar (%s) - nutze Direktabruf", exc)
+            return direct
+
+        entry = next(
+            (e for e in (catalog.get("data") or []) if e.get("type") == bulk_type), None
+        )
+        if entry is None:
+            log.info("Bulk-Typ %s steht nicht im Katalog - nutze Direktabruf", bulk_type)
+            return direct
+        uri = entry.get("download_uri")
+        if not uri:
+            log.warning("Katalogeintrag ohne download_uri (Felder: %s) - nutze Direktabruf",
+                        ", ".join(sorted(entry)) or "keine")
+            return direct
+        log.info("Lade %s (%s MB) ...", entry.get("name") or bulk_type,
+                 round((entry.get("size") or 0) / 1e6, 1))
+        return uri
 
     @staticmethod
     def _rows(cards: List[dict]) -> Iterator[Tuple[str, Optional[float], Optional[float], str, bool, str]]:
