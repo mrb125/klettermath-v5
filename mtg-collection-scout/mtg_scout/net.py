@@ -185,10 +185,11 @@ class HttpClient:
         self._note_failure(host)
         raise FetchError(f"Abruf von {url} fehlgeschlagen: {last_error}")
 
-    def fetch_bytes(self, url: str, max_bytes: int = 5_000_000) -> bytes:
-        """Binaerdaten (Bilder) laden - mit Dateicache, ohne Textdekodierung."""
+    def fetch_bytes(self, url: str, max_bytes: int = 5_000_000,
+                    use_cache: bool = True) -> bytes:
+        """Binaerdaten (Bilder, Bulk-Dateien) laden - ohne Textdekodierung."""
         cache_path = None
-        if self.cache_dir:
+        if self.cache_dir and use_cache:
             binary_dir = self.cache_dir / "bin"
             binary_dir.mkdir(parents=True, exist_ok=True)
             cache_path = binary_dir / hashlib.sha1(url.encode("utf-8")).hexdigest()

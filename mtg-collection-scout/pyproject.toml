@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mtg-collection-scout"
-version = "1.0.1"
+version = "1.0.2"
 description = "Findet Magic-the-Gathering-Sammlungen auf Online-Marktplaetzen (eBay, Kleinanzeigen, Ausland) und bewertet sie automatisch."
 readme = "README.md"
 requires-python = ">=3.9"

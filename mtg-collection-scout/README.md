@@ -118,6 +118,10 @@ python3 -m mtg_scout preise --aktualisieren      # lädt die Bulk-Datei "oracle_
 python3 -m mtg_scout preise --karte "Force of Will"
 ```
 
+Gelesen werden beide Formate, die Scryfall ausliefert (JSON-Lines und das ältere
+JSON-Array), auch gzip-komprimiert; die Adresse der Datei kommt aus dem Bulk-Katalog,
+mit Direktabruf als Rückfallebene.
+
 Danach erkennt der Scout jeden Kartennamen aus dem Anzeigentext und rechnet mit
 aktuellen Cardmarket-/TCGplayer-Preisen (EUR bevorzugt, sonst USD umgerechnet).
 Die Daten landen in einer lokalen SQLite-Datei, ein erneuter Lauf ist jederzeit möglich.
@@ -342,7 +346,7 @@ Die Bewertung ist ein Filter für die Frage „welche der 200 Treffer schaue ich
 ## Entwicklung
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 89 Tests, ohne Netzzugriff
+python3 -m unittest discover -s tests -t . -v     # 93 Tests, ohne Netzzugriff
 python3 -m mtg_scout suchen --quelle demo --details
 ```
 

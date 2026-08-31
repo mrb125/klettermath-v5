@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import logging
-from typing import Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 from ..net import FetchError, HttpClient
 from ..store import Store
@@ -16,6 +17,11 @@ BULK_ENDPOINT = "https://api.scryfall.com/bulk-data"
 # Direktabruf einer Bulk-Datei; leitet auf die aktuelle Datei weiter
 BULK_FILE_ENDPOINT = "https://api.scryfall.com/bulk-data/{slug}?format=file"
 NAMED_ENDPOINT = "https://api.scryfall.com/cards/named?fuzzy="
+
+# Scryfall nennt die Datei je nach Format unterschiedlich; JSON-Lines ist der
+# aktuelle Stand, das alte JSON-Array bleibt als Zweitschluessel unterstuetzt.
+URI_KEYS = ("download_uri", "jsonl_download_uri")
+MAX_BULK_BYTES = 1_500_000_000
 
 
 class ScryfallPrices:
@@ -30,14 +36,10 @@ class ScryfallPrices:
         """Bulk-Datei von Scryfall laden und Preise in die Datenbank schreiben."""
         if self.client is None:
             raise FetchError("Kein HTTP-Client verfuegbar (Offline-Modus?)")
-        payload = self.client.fetch(self.download_uri(bulk_type), use_cache=False)
-        try:
-            cards = json.loads(payload)
-        except json.JSONDecodeError as exc:
-            raise FetchError(f"Bulk-Datei liess sich nicht lesen: {exc}") from exc
-        if not isinstance(cards, list):
-            raise FetchError("Bulk-Datei hat ein unerwartetes Format (keine Kartenliste)")
-        count = self.store.replace_cards(self._rows(cards))
+        raw = self.client.fetch_bytes(
+            self.download_uri(bulk_type), max_bytes=MAX_BULK_BYTES, use_cache=False
+        )
+        count = self.store.replace_cards(self._rows(self.iter_cards(raw)))
         log.info("%s Karten gespeichert", count)
         return count
 
@@ -63,9 +65,9 @@ class ScryfallPrices:
         if entry is None:
             log.info("Bulk-Typ %s steht nicht im Katalog - nutze Direktabruf", bulk_type)
             return direct
-        uri = entry.get("download_uri")
+        uri = next((entry[key] for key in URI_KEYS if entry.get(key)), "")
         if not uri:
-            log.warning("Katalogeintrag ohne download_uri (Felder: %s) - nutze Direktabruf",
+            log.warning("Katalogeintrag ohne Download-Adresse (Felder: %s) - nutze Direktabruf",
                         ", ".join(sorted(entry)) or "keine")
             return direct
         log.info("Lade %s (%s MB) ...", entry.get("name") or bulk_type,
@@ -73,7 +75,51 @@ class ScryfallPrices:
         return uri
 
     @staticmethod
-    def _rows(cards: List[dict]) -> Iterator[Tuple[str, Optional[float], Optional[float], str, bool, str]]:
+    def iter_cards(raw: bytes) -> Iterator[Dict[str, Any]]:
+        """Kartenobjekte aus einer Bulk-Datei lesen.
+
+        Verkraftet beide Formate, die Scryfall ausliefert: JSON-Lines (ein Objekt
+        je Zeile, aktueller Stand) und das frueher uebliche JSON-Array - jeweils
+        auch gzip-komprimiert.
+        """
+        if raw[:2] == b"\x1f\x8b":                  # gzip-Kennung
+            try:
+                raw = gzip.decompress(raw)
+            except OSError as exc:
+                raise FetchError(f"Bulk-Datei nicht entpackbar: {exc}") from exc
+        text = raw.decode("utf-8", "replace").lstrip("\ufeff \t\r\n")
+        if not text:
+            raise FetchError("Bulk-Datei ist leer")
+
+        if text[0] == "[":
+            try:
+                cards = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise FetchError(f"Bulk-Datei liess sich nicht lesen: {exc}") from exc
+            if not isinstance(cards, list):
+                raise FetchError("Bulk-Datei hat ein unerwartetes Format")
+            yield from cards
+            return
+
+        if text[0] != "{":
+            raise FetchError(
+                "Bulk-Datei enthaelt keine Kartendaten (Antwort beginnt mit "
+                f"{text[:40]!r})"
+            )
+        fehlerhafte = 0
+        for line in text.splitlines():
+            line = line.strip().rstrip(",")
+            if not line or line in ("[", "]"):
+                continue
+            try:
+                yield json.loads(line)
+            except json.JSONDecodeError:
+                fehlerhafte += 1
+        if fehlerhafte:
+            log.warning("%s Zeilen der Bulk-Datei waren unlesbar", fehlerhafte)
+
+    @staticmethod
+    def _rows(cards: Iterable[dict]) -> Iterator[Tuple[str, Optional[float], Optional[float], str, bool, str]]:
         for card in cards:
             name = card.get("name")
             if not name:

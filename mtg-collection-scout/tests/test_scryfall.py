@@ -1,5 +1,6 @@
 """Preisspiegel: Adresse der Bulk-Datei robust ermitteln."""
 
+import gzip
 import json
 import tempfile
 import unittest
@@ -15,6 +16,11 @@ KATALOG_OK = {"data": [
      "download_uri": "https://data.example/oracle-cards.json"},
 ]}
 KATALOG_OHNE_URI = {"data": [{"type": "oracle_cards", "name": "Oracle Cards", "size": 1}]}
+# Format, das Scryfall inzwischen ausliefert: JSON-Lines statt JSON-Array
+KATALOG_JSONL = {"data": [{
+    "type": "oracle_cards", "name": "Oracle Cards", "compressed_size": 42,
+    "jsonl_download_uri": "https://data.example/oracle-cards.jsonl.gz",
+}]}
 KARTEN = [
     {"name": "Underground Sea", "set": "lea", "rarity": "rare", "reserved": True,
      "prices": {"eur": "900.00", "usd": "1100.00"}},
@@ -41,6 +47,21 @@ class _Client:
     def fetch(self, url, **kwargs):
         self.geholt.append(url)
         return json.dumps(KARTEN)
+
+    def fetch_bytes(self, url, **kwargs):
+        self.geholt.append(url)
+        return self.inhalt()
+
+    def inhalt(self) -> bytes:
+        return json.dumps(KARTEN).encode("utf-8")
+
+
+class _JsonlClient(_Client):
+    """Liefert die Karten als gzip-komprimierte JSON-Lines."""
+
+    def inhalt(self) -> bytes:
+        zeilen = "\n".join(json.dumps(karte) for karte in KARTEN)
+        return gzip.compress(zeilen.encode("utf-8"))
 
 
 class TestBulkAdresse(unittest.TestCase):
@@ -80,15 +101,38 @@ class TestBulkAdresse(unittest.TestCase):
         self.assertAlmostEqual(self.store.lookup_card("Nur Dollar")["eur"], 92.0, places=1)
         self.assertIn(BULK_ENDPOINT, client.geholt)
 
+    def test_nutzt_jsonl_adresse(self):
+        prices = ScryfallPrices(self.store, _JsonlClient(KATALOG_JSONL))
+        self.assertEqual(prices.download_uri(),
+                         "https://data.example/oracle-cards.jsonl.gz")
+
+    def test_refresh_liest_gepackte_json_lines(self):
+        prices = ScryfallPrices(self.store, _JsonlClient(KATALOG_JSONL))
+        self.assertEqual(prices.refresh(), 2)
+        self.assertEqual(self.store.lookup_card("Underground Sea")["eur"], 900.0)
+
+    def test_beide_formate_werden_gelesen(self):
+        array = json.dumps(KARTEN).encode("utf-8")
+        jsonl = "\n".join(json.dumps(k) for k in KARTEN).encode("utf-8")
+        for rohdaten in (array, jsonl, gzip.compress(jsonl), gzip.compress(array)):
+            karten = list(ScryfallPrices.iter_cards(rohdaten))
+            self.assertEqual(len(karten), 3)
+            self.assertEqual(karten[0]["name"], "Underground Sea")
+
+    def test_leere_und_fremde_inhalte_melden_fehler(self):
+        for rohdaten in (b"", b"   ", b"<html>Wartung</html>"):
+            with self.assertRaises(FetchError):
+                list(ScryfallPrices.iter_cards(rohdaten))
+
     def test_kaputte_bulk_datei_meldet_klaren_fehler(self):
         class _Kaputt(_Client):
-            def fetch(self, url, **kwargs):
-                return "<html>Wartungsarbeiten</html>"
+            def inhalt(self):
+                return b"<html>Wartungsarbeiten</html>"
 
         prices = ScryfallPrices(self.store, _Kaputt(KATALOG_OK))
         with self.assertRaises(FetchError) as fehler:
             prices.refresh()
-        self.assertIn("lesen", str(fehler.exception))
+        self.assertIn("Kartendaten", str(fehler.exception))
 
     def test_index_faellt_auf_katalog_zurueck(self):
         prices = ScryfallPrices(self.store, _Client(KATALOG_OK))
