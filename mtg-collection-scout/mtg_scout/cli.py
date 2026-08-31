@@ -196,6 +196,7 @@ class Context:
         if settings.get("enabled"):
             candidate = ClaudeVision(
                 model=settings.get("model", "claude-opus-5"),
+                api_key=settings.get("api_key", "") or None,
                 max_images=int(settings.get("max_images_per_listing", 3)),
             )
             ok, reason = candidate.available()

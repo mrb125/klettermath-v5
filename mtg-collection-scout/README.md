@@ -104,7 +104,9 @@ export EBAY_CLIENT_ID="DeineAppId"
 export EBAY_CLIENT_SECRET="DeinCertId"
 ```
 
-Alternativ dauerhaft in die Konfigurationsdatei (siehe unten) unter `ebay`.
+Alternativ dauerhaft in die Konfigurationsdatei (siehe unten) unter `ebay`. Dasselbe gilt
+für den Anthropic-Schlüssel der Fotoauswertung: entweder `ANTHROPIC_API_KEY` setzen oder
+`vision.api_key` in der Konfiguration füllen.
 
 ## Echte Kartenpreise laden
 
@@ -346,7 +348,7 @@ Die Bewertung ist ein Filter für die Frage „welche der 200 Treffer schaue ich
 ## Entwicklung
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 93 Tests, ohne Netzzugriff
+python3 -m unittest discover -s tests -t . -v     # 94 Tests, ohne Netzzugriff
 python3 -m mtg_scout suchen --quelle demo --details
 ```
 

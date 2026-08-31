@@ -134,6 +134,13 @@ class TestClaudeVision(unittest.TestCase):
         self.assertFalse(bool(ClaudeVision(client=client).analyze([])))
         self.assertEqual(client.calls, [])
 
+    def test_schluessel_aus_der_konfiguration(self):
+        """Der Schluessel darf in der Config stehen, nicht nur in der Umgebung."""
+        from mtg_scout.config import DEFAULTS
+        self.assertIn("api_key", DEFAULTS["vision"])
+        vision = ClaudeVision(api_key="sk-ant-test")
+        self.assertEqual(vision.api_key, "sk-ant-test")
+
     def test_ohne_sdk_nicht_verfuegbar(self):
         ok, reason = ClaudeVision(api_key="").available()
         self.assertFalse(ok)

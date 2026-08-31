@@ -65,6 +65,7 @@ DEFAULTS: Dict[str, Any] = {
     "vision": {
         "enabled": False,              # Fotoauswertung standardmaessig aus (API-Kosten)
         "model": "claude-opus-5",
+        "api_key": "",                 # leer = ANTHROPIC_API_KEY aus der Umgebung
         "max_listings": 8,             # nur die besten Treffer werden bebildert geprueft
         "max_images_per_listing": 3,
         "use_ocr": False,              # netzfreie Alternative via tesseract
