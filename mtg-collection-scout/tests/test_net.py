@@ -29,6 +29,34 @@ class TestHttpClient(unittest.TestCase):
         self.assertTrue(HttpClient(respect_robots=False).robots_allows("https://example.invalid/x"))
 
 
+class TestAusfallzaehler(unittest.TestCase):
+    """Ein nicht erreichbarer Host wird im laufenden Durchgang uebersprungen."""
+
+    def test_toter_host_bricht_sofort_ab(self):
+        client = HttpClient(host_failure_limit=2, retries=1)
+        client._note_failure("www.example.invalid")
+        self.assertFalse(client._host_is_dead("www.example.invalid"))
+        client._note_failure("www.example.invalid")
+        self.assertTrue(client._host_is_dead("www.example.invalid"))
+
+        with self.assertRaises(FetchError) as fehler:
+            client.fetch("https://www.example.invalid/suche")
+        self.assertIn("nicht erreichbar", str(fehler.exception))
+        with self.assertRaises(FetchError):
+            client.fetch_bytes("https://www.example.invalid/bild.jpg")
+
+    def test_andere_hosts_bleiben_unberuehrt(self):
+        client = HttpClient(host_failure_limit=1)
+        client._note_failure("tot.example")
+        self.assertTrue(client._host_is_dead("tot.example"))
+        self.assertFalse(client._host_is_dead("lebt.example"))
+
+    def test_robots_pruefung_entfaellt_fuer_tote_hosts(self):
+        client = HttpClient(host_failure_limit=1, respect_robots=True)
+        client._note_failure("tot.example")
+        self.assertTrue(client.robots_allows("https://tot.example/x"))
+
+
 class TestWaehrung(unittest.TestCase):
     def test_fallback_kurse_ohne_netz(self):
         from mtg_scout.currency import CurrencyConverter

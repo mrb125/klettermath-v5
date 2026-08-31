@@ -29,6 +29,7 @@ DEFAULTS: Dict[str, Any] = {
         "retries": 3,
         "cache_ttl_seconds": 900,
         "respect_robots": True,
+        "host_failure_limit": 2,      # danach wird ein toter Host im Lauf uebersprungen
     },
     "ebay": {
         "client_id": "",

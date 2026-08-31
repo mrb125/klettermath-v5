@@ -158,6 +158,7 @@ class Context:
             respect_robots=bool(http_cfg.get("respect_robots", True))
             and not getattr(args, "ignore_robots", False),
             offline=bool(getattr(args, "offline", False)),
+            host_failure_limit=int(http_cfg.get("host_failure_limit", 2)),
         )
         self.converter = CurrencyConverter(self.client, cache_dir() / "kurse.json")
         self.store = Store(data_dir() / "mtg-scout.sqlite3")

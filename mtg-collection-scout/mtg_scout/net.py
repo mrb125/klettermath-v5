@@ -37,6 +37,7 @@ class HttpClient:
         respect_robots: bool = True,
         offline: bool = False,
         user_agent: str = USER_AGENT,
+        host_failure_limit: int = 2,
     ) -> None:
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.delay = delay
@@ -46,7 +47,9 @@ class HttpClient:
         self.respect_robots = respect_robots
         self.offline = offline
         self.user_agent = user_agent
+        self.host_failure_limit = max(1, host_failure_limit)
         self._last_request: Dict[str, float] = {}
+        self._host_failures: Dict[str, int] = {}
         self._robots: Dict[str, Optional[urllib.robotparser.RobotFileParser]] = {}
         if self.cache_dir:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -82,6 +85,8 @@ class HttpClient:
         if not self.respect_robots:
             return True
         parts = urllib.parse.urlsplit(url)
+        if self._host_is_dead(parts.netloc):
+            return True          # der Abruf selbst bricht gleich ohnehin ab
         base = f"{parts.scheme}://{parts.netloc}"
         if base not in self._robots:
             parser: Optional[urllib.robotparser.RobotFileParser] = urllib.robotparser.RobotFileParser()
@@ -96,6 +101,18 @@ class HttpClient:
         return True if parser is None else parser.can_fetch(self.user_agent, url)
 
     # ------------------------------------------------------------------ fetch
+    def _note_failure(self, host: str) -> None:
+        """Fehlgeschlagene Hosts zaehlen - siehe _host_is_dead()."""
+        self._host_failures[host] = self._host_failures.get(host, 0) + 1
+
+    def _host_is_dead(self, host: str) -> bool:
+        """Nach mehreren erfolglosen Anlaeufen wird ein Host im Lauf uebersprungen.
+
+        Ohne das wartet ein Lauf bei fehlender Internetverbindung fuer jede
+        einzelne URL die komplette Retry-Kette ab.
+        """
+        return self._host_failures.get(host, 0) >= self.host_failure_limit
+
     def _throttle(self, host: str) -> None:
         last = self._last_request.get(host)
         if last is not None:
@@ -128,6 +145,10 @@ class HttpClient:
             )
 
         host = urllib.parse.urlsplit(url).netloc
+        if self._host_is_dead(host):
+            raise FetchError(
+                f"{host} ist in diesem Lauf nicht erreichbar - uebersprungen"
+            )
         req_headers = {
             "User-Agent": self.user_agent,
             "Accept": "*/*",
@@ -149,6 +170,7 @@ class HttpClient:
                     body = raw.decode(charset, "replace")
                 if use_cache and method == "GET":
                     self._cache_write(cache_key, body)
+                self._host_failures.pop(host, None)
                 return body
             except urllib.error.HTTPError as exc:
                 last_error = exc
@@ -159,7 +181,8 @@ class HttpClient:
             except Exception as exc:
                 last_error = exc
                 log.debug("Netzwerkfehler %s (Versuch %s/%s)", exc, attempt, self.retries)
-            time.sleep(min(2 ** attempt, 10))
+            time.sleep(min(2 ** (attempt - 1), 8))   # 1s, 2s, 4s ...
+        self._note_failure(host)
         raise FetchError(f"Abruf von {url} fehlgeschlagen: {last_error}")
 
     def fetch_bytes(self, url: str, max_bytes: int = 5_000_000) -> bytes:
@@ -176,7 +199,10 @@ class HttpClient:
         if not self.robots_allows(url):
             raise FetchError(f"robots.txt verbietet den Abruf von {url}")
 
-        self._throttle(urllib.parse.urlsplit(url).netloc)
+        host = urllib.parse.urlsplit(url).netloc
+        if self._host_is_dead(host):
+            raise FetchError(f"{host} ist in diesem Lauf nicht erreichbar - uebersprungen")
+        self._throttle(host)
         request = urllib.request.Request(
             url, headers={"User-Agent": self.user_agent, "Accept": "image/*,*/*"}
         )
@@ -184,6 +210,7 @@ class HttpClient:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 payload = response.read(max_bytes + 1)
         except Exception as exc:
+            self._note_failure(host)
             raise FetchError(f"Bild {url} nicht ladbar: {exc}") from exc
         if len(payload) > max_bytes:
             raise FetchError(f"Bild {url} groesser als {max_bytes} Bytes")

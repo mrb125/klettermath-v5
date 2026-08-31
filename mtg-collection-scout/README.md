@@ -313,6 +313,9 @@ Das Tool ist für den **privaten Gebrauch** gedacht und verhält sich entspreche
   untersagt, wird abgebrochen (bewusst übergehbar mit `--ignore-robots`).
 - Zwischen zwei Abrufen liegt eine Pause (Standard 1,5 s), Antworten werden 15 Minuten
   zwischengespeichert, damit wiederholte Läufe keine unnötige Last erzeugen.
+- Antwortet ein Portal wiederholt nicht (kein Netz, Bot-Schutz, Sperre), wird es für den
+  restlichen Lauf übersprungen statt bei jeder URL erneut angeklopft
+  (`http.host_failure_limit`).
 - Der User-Agent identifiziert das Tool ehrlich.
 
 Trotzdem gilt: Die AGB der Portale erlauben automatisiertes Auslesen nicht überall. Prüfe
@@ -339,7 +342,7 @@ Die Bewertung ist ein Filter für die Frage „welche der 200 Treffer schaue ich
 ## Entwicklung
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 77 Tests, ohne Netzzugriff
+python3 -m unittest discover -s tests -t . -v     # 80 Tests, ohne Netzzugriff
 python3 -m mtg_scout suchen --quelle demo --details
 ```
 
