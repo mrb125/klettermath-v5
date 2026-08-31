@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -542,3 +543,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except KeyboardInterrupt:
         print("\nAbgebrochen.", file=sys.stderr)
         return 130
+    except BrokenPipeError:
+        # Ausgabe wurde abgeschnitten (z.B. "| head") - kein Fehlerfall.
+        # stdout auf devnull umbiegen, sonst meckert Python beim Beenden.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        return 0

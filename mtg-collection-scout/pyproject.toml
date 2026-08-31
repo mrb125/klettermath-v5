@@ -29,8 +29,10 @@ mtg-scout = "mtg_scout.cli:main"
 [project.urls]
 Quelltext = "https://github.com/mrb125/klettermath-v5/tree/main/mtg-collection-scout"
 
-[tool.setuptools]
-packages = ["mtg_scout", "mtg_scout.sources", "mtg_scout.pricing", "mtg_scout.analyze"]
+[tool.setuptools.packages.find]
+# Automatisch finden statt aufzaehlen - eine handgepflegte Liste vergisst
+# frueher oder spaeter ein neues Unterpaket (siehe mtg_scout.vision).
+include = ["mtg_scout*"]
 
 [tool.setuptools.package-data]
 mtg_scout = ["profiles/*.json", "data/*.json"]
